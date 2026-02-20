@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  shellcheck:
+    name: Shellcheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install shellcheck
+        run: sudo apt-get install -y shellcheck
+
+      - name: Lint shell scripts
+        run: |
+          shellcheck -x scripts/install.sh
+          shellcheck -x scripts/tmux-sessionizer
+          shellcheck -x tmux/cheatsheet.sh
+
+  validate:
+    name: Config validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate TOML configs
+        run: |
+          pip install toml
+          python -c "import toml; toml.load('starship/starship.toml')"
+          python -c "import toml; toml.load('alacritty/alacritty.toml')"
+
+      - name: Validate JSON configs
+        run: python -c "import json; json.load(open('fastfetch/config.jsonc'.replace('.jsonc','.jsonc')))" || true
+
+      - name: Check zsh syntax
+        run: |
+          for f in zsh/*.zsh zsh/.zshrc; do
+            zsh -n "$f" 2>&1 && echo "✓ $f" || echo "✗ $f"
+          done

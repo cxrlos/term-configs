@@ -9,10 +9,13 @@ BOLD=$'\033[1m'
 DIM=$'\033[2m'
 NC=$'\033[0m'
 
-info()    { printf "%s\n" "${BLUE}→${NC} $*"; }
+info() { printf "%s\n" "${BLUE}→${NC} $*"; }
 success() { printf "%s\n" "${GREEN}✓${NC} $*"; }
-warn()    { printf "%s\n" "${YELLOW}!${NC} $*"; }
-die()     { printf "%s\n" "${RED}✗${NC} $*"; exit 1; }
+warn() { printf "%s\n" "${YELLOW}!${NC} $*"; }
+die() {
+    printf "%s\n" "${RED}✗${NC} $*"
+    exit 1
+}
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TIMESTAMP="$(date +%Y%m%d%H%M%S)"
@@ -33,7 +36,7 @@ fi
 
 # ── Dependencies ──────────────────────────────────────────────────────────────
 
-BREW_DEPS=(starship fzf gum bat ripgrep eza zoxide git-delta tldr fastfetch thefuck)
+BREW_DEPS=(starship fzf gum bat ripgrep eza zoxide git-delta tldr fastfetch thefuck tmux lazygit)
 for dep in "${BREW_DEPS[@]}"; do
     if brew list "$dep" &>/dev/null; then
         success "$dep"
@@ -67,7 +70,7 @@ backup_if_exists() {
 
 # ── Existing configs ──────────────────────────────────────────────────────────
 
-TARGETS=("$HOME/.zshrc" "$HOME/.zsh" "$HOME/.config/starship.toml" "$HOME/.config/alacritty" "$HOME/.config/fastfetch")
+TARGETS=("$HOME/.zshrc" "$HOME/.zsh" "$HOME/.config/starship.toml" "$HOME/.config/alacritty" "$HOME/.config/fastfetch" "$HOME/.tmux.conf")
 HAS_EXISTING=false
 for t in "${TARGETS[@]}"; do
     [[ -e "$t" || -L "$t" ]] && HAS_EXISTING=true && break
@@ -76,7 +79,10 @@ done
 if $HAS_EXISTING; then
     warn "Existing config(s) found"
     read -r -p "  Replace them? Originals will be backed up. [y/N] " response
-    [[ "$response" =~ ^[yY]$ ]] || { echo "Aborted."; exit 0; }
+    [[ "$response" =~ ^[yY]$ ]] || {
+        echo "Aborted."
+        exit 0
+    }
 
     for t in "${TARGETS[@]}"; do
         backup_if_exists "$t"
@@ -102,11 +108,15 @@ link_or_copy() {
     fi
 }
 
-link_or_copy "$REPO_DIR/zsh"                     "$HOME/.zsh"
-link_or_copy "$REPO_DIR/zsh/.zshrc"              "$HOME/.zshrc"
-link_or_copy "$REPO_DIR/starship/starship.toml"  "$HOME/.config/starship.toml"
-link_or_copy "$REPO_DIR/alacritty"               "$HOME/.config/alacritty"
-link_or_copy "$REPO_DIR/fastfetch"               "$HOME/.config/fastfetch"
+link_or_copy "$REPO_DIR/zsh" "$HOME/.zsh"
+link_or_copy "$REPO_DIR/zsh/.zshrc" "$HOME/.zshrc"
+link_or_copy "$REPO_DIR/starship/starship.toml" "$HOME/.config/starship.toml"
+link_or_copy "$REPO_DIR/alacritty" "$HOME/.config/alacritty"
+link_or_copy "$REPO_DIR/fastfetch" "$HOME/.config/fastfetch"
+link_or_copy "$REPO_DIR/tmux/tmux.conf" "$HOME/.tmux.conf"
+link_or_copy "$REPO_DIR/tmux/cheatsheet.sh" "$HOME/.tmux-cheatsheet.sh"
+mkdir -p "$HOME/.local/bin"
+link_or_copy "$REPO_DIR/scripts/tmux-sessionizer" "$HOME/.local/bin/tmux-sessionizer"
 
 if [[ "${install_mode:-1}" == "2" ]]; then
     success "Configs copied"
@@ -116,6 +126,7 @@ else
     success "Symlinked: ~/.config/starship.toml → starship/starship.toml"
     success "Symlinked: ~/.config/alacritty/ → alacritty/"
     success "Symlinked: ~/.config/fastfetch/ → fastfetch/"
+    success "Symlinked: ~/.tmux.conf → tmux/tmux.conf"
 fi
 
 # ── Local config ─────────────────────────────────────────────────────────────
@@ -126,7 +137,7 @@ else
     _mode="symlink"
 fi
 
-cat > "$HOME/.zsh/.local" <<EOF
+cat >"$HOME/.zsh/.local" <<EOF
 TERM_CONFIGS_DIR="$REPO_DIR"
 TERM_CONFIGS_MODE="$_mode"
 EOF
@@ -143,6 +154,13 @@ if [[ ! -d "$ZINIT_HOME" ]]; then
 else
     success "zinit"
 fi
+
+# ── macOS key repeat ─────────────────────────────────────────────────────────
+
+defaults write -g ApplePressAndHoldEnabled -bool false
+defaults write -g InitialKeyRepeat -int 15
+defaults write -g KeyRepeat -int 2
+success "Key repeat configured (logout required to take effect)"
 
 # ── Git config ───────────────────────────────────────────────────────────────
 
@@ -168,6 +186,21 @@ if command -v delta &>/dev/null; then
     git config --global delta.line-numbers true
     success "delta configured as git pager"
 fi
+
+# ── TPM (tmux plugin manager) ────────────────────────────────────────────────
+
+TPM_DIR="$HOME/.tmux/plugins/tpm"
+if [[ ! -d "$TPM_DIR" ]]; then
+    info "Installing TPM..."
+    git clone https://github.com/tmux-plugins/tpm "$TPM_DIR"
+    success "TPM ready"
+else
+    success "TPM"
+fi
+
+info "Installing tmux plugins..."
+"$TPM_DIR/bin/install_plugins" >/dev/null 2>&1 || true
+success "tmux plugins installed"
 
 # ── Done ──────────────────────────────────────────────────────────────────────
 

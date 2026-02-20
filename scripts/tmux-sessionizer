@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCAN_DIRS=("$HOME/Documents/ps" "$HOME/dev")
+
+selected=$(
+    {
+        for dir in "${SCAN_DIRS[@]}"; do
+            [[ -d "$dir" ]] && find "$dir" -mindepth 1 -maxdepth 1 -type d 2>/dev/null
+        done
+    } | sed "s|$HOME|~|" | sort \
+      | fzf --prompt="  " --print-query \
+            --color="fg:#908caa,hl:#c4a7e7,fg+:#e0def4,hl+:#eb6f92,info:#9ccfd8,pointer:#eb6f92,header:#9ccfd8,bg+:#26233a" \
+            --header="Type path or pick project" \
+      | tail -1
+) || exit 0
+
+[[ -n "$selected" ]] || exit 0
+
+selected="${selected/#\~/$HOME}"
+
+[[ -d "$selected" ]] || { echo "Not a directory: $selected"; exit 1; }
+
+session_name=$(basename "$selected" | tr '.' '_')
+
+if ! tmux has-session -t="$session_name" 2>/dev/null; then
+    tmux new-session -ds "$session_name" -c "$selected"
+fi
+
+if [[ -n "${TMUX:-}" ]]; then
+    tmux switch-client -t "$session_name"
+else
+    tmux attach-session -t "$session_name"
+fi

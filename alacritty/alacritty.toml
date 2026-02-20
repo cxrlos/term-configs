@@ -1,7 +1,8 @@
+[general]
 live_config_reload = true
 ipc_socket = true
 
-[shell]
+[terminal.shell]
 program = "/bin/zsh"
 args = ["-l"]
 
@@ -26,10 +27,10 @@ history = 65535
 multiplier = 3
 
 [font]
-normal = { family = "Hack Nerd Font Mono", style = "Regular" }
-bold = { family = "Hack Nerd Font Mono", style = "Bold" }
-italic = { family = "Hack Nerd Font Mono", style = "Italic" }
-bold_italic = { family = "Hack Nerd Font Mono", style = "Bold Italic" }
+normal = { family = "BerkeleyMono Nerd Font Mono", style = "Regular" }
+bold = { family = "BerkeleyMono Nerd Font Mono", style = "Bold" }
+italic = { family = "BerkeleyMono Nerd Font Mono", style = "Oblique" }
+bold_italic = { family = "BerkeleyMono Nerd Font Mono", style = "Bold Oblique" }
 size = 12.0
 offset = { x = 0, y = 1 }
 builtin_box_drawing = true
@@ -60,9 +61,8 @@ save_to_clipboard = true
 
 [keyboard]
 bindings = [
-    { key = "N",      mods = "Command",               action = "SpawnNewInstance" },
+    { key = "N",      mods = "Command",               action = "CreateNewWindow" },
     { key = "T",      mods = "Command",               action = "CreateNewTab" },
-    { key = "W",      mods = "Command",               action = "CloseTab" },
 
     { key = "]",      mods = "Command|Shift",          action = "SelectNextTab" },
     { key = "[",      mods = "Command|Shift",          action = "SelectPreviousTab" },
