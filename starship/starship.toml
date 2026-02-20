@@ -1,0 +1,146 @@
+palette = 'rose-pine'
+
+format = """
+$directory\
+$git_branch\
+$git_status\
+$git_state\
+$python\
+$nodejs\
+$rust\
+$docker_context\
+$fill\
+$cmd_duration\
+$time\
+$line_break\
+$character"""
+
+add_newline = true
+scan_timeout = 15
+command_timeout = 1000
+
+[palettes.rose-pine]
+overlay = '#26233a'
+muted   = '#6e6a86'
+subtle  = '#908caa'
+text    = '#e0def4'
+love    = '#eb6f92'
+gold    = '#f6c177'
+rose    = '#ebbcba'
+pine    = '#31748f'
+foam    = '#9ccfd8'
+iris    = '#c4a7e7'
+
+[directory]
+truncation_length = 3
+truncation_symbol = '…/'
+style = 'bold foam'
+read_only = ' 󰌾'
+read_only_style = 'love'
+format = '[$path]($style)[$read_only]($read_only_style) '
+
+[fill]
+symbol = '─'
+style = 'overlay'
+
+[git_branch]
+format = '[$symbol$branch]($style) '
+style = 'iris'
+symbol = ' '
+
+[git_status]
+format = '([$all_status$ahead_behind]($style) )'
+style = 'love'
+conflicted = '~'
+ahead      = '⇡${count}'
+behind     = '⇣${count}'
+diverged   = '⇕⇡${ahead_count}⇣${behind_count}'
+untracked  = '?'
+stashed    = '≡'
+modified   = '!'
+staged     = '+'
+renamed    = '»'
+deleted    = '-'
+ignore_submodules = true
+
+[git_state]
+format = '[$state( $progress_current/$progress_total)]($style) '
+style = 'bold gold'
+
+[cmd_duration]
+format = '[$duration]($style) '
+style = 'rose'
+min_time = 2_000
+show_milliseconds = false
+
+[time]
+disabled = false
+format = '[$time]($style)'
+style = 'subtle'
+time_format = '%H:%M'
+
+[character]
+success_symbol = '[❯](pine)'
+error_symbol = '[❯](love)'
+vimcmd_symbol = '[❮](foam)'
+
+[python]
+format = '[$symbol$virtualenv]($style) '
+style = 'gold'
+symbol = ' '
+detect_extensions = []
+detect_files = []
+detect_folders = []
+
+[nodejs]
+format = '[$symbol$version]($style) '
+style = 'gold'
+symbol = ' '
+detect_extensions = ['js', 'mjs', 'cjs', 'ts']
+detect_files = ['package.json']
+detect_folders = ['node_modules']
+
+[rust]
+format = '[$symbol$version]($style) '
+style = 'gold'
+symbol = ' '
+
+[docker_context]
+format = '[$symbol$context]($style) '
+style = 'foam'
+symbol = ' '
+only_with_files = true
+
+[jobs]
+symbol = '✦'
+style = 'gold'
+format = '[$symbol$number]($style) '
+
+[username]
+style_user = 'foam'
+style_root = 'bold love'
+format = '[$user]($style) '
+show_always = false
+
+[hostname]
+ssh_only = true
+format = 'on [$hostname]($style) '
+style = 'bold iris'
+
+[aws]
+disabled = true
+format = '[$symbol$profile( $region)]($style) '
+style = 'gold'
+symbol = ' '
+
+[gcloud]
+disabled = true
+format = '[$symbol$project]($style) '
+style = 'foam'
+symbol = '󱇶 '
+
+[kubernetes]
+disabled = true
+format = '[$symbol$context( $namespace)]($style) '
+style = 'foam'
+symbol = '󱃾 '
