@@ -1,0 +1,24 @@
+# Agentic dev
+.ai/
+
+# Work-specific config (sensitive paths and aliases)
+zsh/nubank.zsh
+
+# Machine-specific install metadata
+zsh/.local
+
+# macOS
+.DS_Store
+._*
+
+# Cursor / Claude
+.cursor/
+.cursorignore
+.cursorindexingignore
+.claude/
+CLAUDE.md
+
+# Temp / swap
+*~
+*.swp
+*.swo
