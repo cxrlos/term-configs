@@ -8,18 +8,21 @@ selected=$(
         for dir in "${SCAN_DIRS[@]}"; do
             [[ -d "$dir" ]] && find "$dir" -mindepth 1 -maxdepth 1 -type d 2>/dev/null
         done
-    } | sed "s|$HOME|~|" | sort \
-      | fzf --prompt="  " --print-query \
+    } | sed "s|$HOME|~|" | sort |
+        fzf --prompt="  " --print-query \
             --color="fg:#908caa,hl:#c4a7e7,fg+:#e0def4,hl+:#eb6f92,info:#9ccfd8,pointer:#eb6f92,header:#9ccfd8,bg+:#26233a" \
-            --header="Type path or pick project" \
-      | tail -1
+            --header="Type path or pick project" |
+        tail -1
 ) || exit 0
 
 [[ -n "$selected" ]] || exit 0
 
 selected="${selected/#\~/$HOME}"
 
-[[ -d "$selected" ]] || { echo "Not a directory: $selected"; exit 1; }
+[[ -d "$selected" ]] || {
+    echo "Not a directory: $selected"
+    exit 1
+}
 
 session_name=$(basename "$selected" | tr '.' '_')
 

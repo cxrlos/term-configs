@@ -92,7 +92,7 @@ fi
 # ── Install mode ──────────────────────────────────────────────────────────────
 
 printf "\n%s\n" "${BOLD}Install method:${NC}"
-printf "  [1] Symlink — repo changes are instantly live ${DIM}(recommended)${NC}\n"
+printf '  [1] Symlink — repo changes are instantly live %s(recommended)%s\n' "$DIM" "$NC"
 printf "  [2] Copy    — standalone, no dependency on repo path\n\n"
 read -r -p "Choice [1/2]: " install_mode
 
