@@ -2,6 +2,8 @@
 
 Alacritty + Zsh + tmux + Starship, unified under Rose Pine with BerkeleyMono Nerd Font.
 
+Targets **macOS** and **Arch Linux**.
+
 ## Install
 
 ```bash
@@ -10,7 +12,7 @@ cd term-configs
 bash scripts/install.sh
 ```
 
-The installer handles brew dependencies, symlinks, font detection, git config, and macOS key repeat settings.
+The installer detects the OS, installs dependencies (brew on macOS, pacman + yay on Arch), checks for BerkeleyMono Nerd Font, symlinks or copies all configs, bootstraps zinit and TPM, and sets git globals.
 
 ## Structure
 
@@ -23,14 +25,13 @@ zsh/
   vim.zsh           vi mode, cursor shape, key bindings
   git.zsh           gnb, g hub, git aliases, Rose Pine log
   utils.zsh         a hub, u hub, eza/extract/path/ports/tree
-  nubank.zsh        work-specific (git-ignored)
 starship/           prompt (Rose Pine palette, fill line, time)
 tmux/
   tmux.conf         prefix=`, vim-tmux-nav, popups, Rose Pine status
   cheatsheet.sh     floating keybinding reference (` /)
 fastfetch/          system info config (Rose Pine themed)
 scripts/
-  install.sh        brew deps, symlinks, git config, macOS settings
+  install.sh        deps, symlinks, git config, macOS settings
   tmux-sessionizer  fzf project picker for tmux sessions
 ```
 
@@ -48,29 +49,48 @@ Three single-letter entry points with gum-powered menus:
 
 Prefix: `` ` `` (backtick)
 
-| Key           | Action                              |
-| ------------- | ----------------------------------- |
-| `C-h/j/k/l`   | seamless pane navigation (vim+tmux) |
-| `M-Arrow`     | resize pane (Option+Arrow)          |
-| `` ` v ``     | split vertical                      |
-| `` ` s ``     | split horizontal                    |
-| `` ` c ``     | new window                          |
-| `` ` 1-9 ``   | jump to window                      |
-| `` ` f ``     | sessionizer (project picker)        |
-| `` ` g ``     | lazygit (floating)                  |
-| `` ` t ``     | htop (floating)                     |
-| `` ` / ``     | cheatsheet                          |
-| `` ` Enter `` | copy mode (vi)                      |
+| Key               | Action                                        |
+| ----------------- | --------------------------------------------- |
+| `C-h/j/k/l`       | seamless pane navigation (vim+tmux, no prefix)|
+| `` ` h/j/k/l ``   | select pane (repeatable)                      |
+| `` ` Arrow ``     | resize pane (repeatable)                      |
+| `` ` v ``         | split right                                   |
+| `` ` s ``         | split down                                    |
+| `` ` c ``         | new window (inherits cwd)                     |
+| `` ` 1-9 ``       | jump to window                                |
+| `` ` n/p ``       | next / prev window (repeatable)               |
+| `` ` < / > ``     | move window left / right                      |
+| `` ` ^ ``         | last window (toggle)                          |
+| `` ` z ``         | zoom pane                                     |
+| `` ` x / X ``     | kill pane / window                            |
+| `` ` / ``         | cheatsheet (fzf, VISUAL/INSERT modal)         |
+| `` ` f ``         | sessionizer (project picker)                  |
+| `` ` g ``         | lazygit                                       |
+| `` ` t ``         | htop                                          |
+| `` ` T ``         | scratch terminal (persistent)                 |
+| `` ` w ``         | fzf session/window/pane picker                |
+| `` ` b ``         | popup shell in current directory              |
+| `` ` Enter ``     | copy mode (vi)                                |
+| `` ` Space ``     | thumbs — hint-based yank (URLs, paths, hashes)|
 
 ## Tools
 
-Installed via `brew` by the install script:
+**macOS** — installed via `brew`:
 
 starship, fzf, gum, bat, ripgrep, eza, zoxide, git-delta, tldr, fastfetch, thefuck, tmux, lazygit
+
+**Arch Linux** — via `pacman` + AUR (`yay`):
+
+pacman: starship, fzf, bat, ripgrep, eza, zoxide, tldr, fastfetch, tmux
+AUR: gum, git-delta, thefuck, lazygit
 
 ## Theme
 
 Rose Pine (main) everywhere. Named palette in starship, true-color ANSI helpers in zsh, matching colors in alacritty, tmux, and git log.
+
+## TODO
+
+- [ ] `` ` e `` — open last command output in nvim (read-only, relative numbers). Capture scrollback delta via `preexec` hook + `tmux capture-pane`, display in a popup. Blocked on reliable pane-id passing into `display-popup`.
 
 ## License
 
