@@ -275,7 +275,15 @@ u() {
         e|extract) shift; extract "$@" ;;
         h|help)    shift; _u_tldr "$@" ;;
         p|path)    _u_path ;;
-        P|ports)   lsof -iTCP -sTCP:LISTEN -P -n ;;
+        P|ports)
+            if command -v lsof &>/dev/null; then
+                lsof -iTCP -sTCP:LISTEN -P -n
+            elif command -v ss &>/dev/null; then
+                ss -tlnp
+            else
+                _err "Neither lsof nor ss found"
+            fi
+            ;;
         t|tree)    shift; _u_tree "$@" ;;
         z|dirs)    _u_dirs ;;
         "")
@@ -295,7 +303,15 @@ u() {
                     extract) extract ;;
                     help)    _u_tldr ;;
                     path)    _u_path ;;
-                    ports)   lsof -iTCP -sTCP:LISTEN -P -n ;;
+                    ports)
+                        if command -v lsof &>/dev/null; then
+                            lsof -iTCP -sTCP:LISTEN -P -n
+                        elif command -v ss &>/dev/null; then
+                            ss -tlnp
+                        else
+                            _err "Neither lsof nor ss found"
+                        fi
+                        ;;
                     tree)    _u_tree ;;
                     dirs)    _u_dirs ;;
                 esac
@@ -336,7 +352,12 @@ _u_path() {
 }
 
 _u_tldr() {
-    command -v tldr &>/dev/null || { _err "Install tldr: brew install tldr"; return 1; }
+    if ! command -v tldr &>/dev/null; then
+        [[ "$OSTYPE" == "darwin"* ]] \
+            && _err "Install tldr: brew install tldr" \
+            || _err "Install tldr: sudo pacman -S tldr"
+        return 1
+    fi
     if [[ $# -gt 0 ]]; then
         tldr "$@"
     elif command -v gum &>/dev/null; then
@@ -355,7 +376,12 @@ _u_tldr() {
 }
 
 _u_dirs() {
-    command -v zoxide &>/dev/null || { _err "Install zoxide: brew install zoxide"; return 1; }
+    if ! command -v zoxide &>/dev/null; then
+        [[ "$OSTYPE" == "darwin"* ]] \
+            && _err "Install zoxide: brew install zoxide" \
+            || _err "Install zoxide: sudo pacman -S zoxide"
+        return 1
+    fi
     echo
     zoxide query -l -s 2>/dev/null | head -20 | while read -r score dir; do
         local display="${dir/#$HOME/~}"

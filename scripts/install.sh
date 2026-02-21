@@ -9,68 +9,149 @@ BOLD=$'\033[1m'
 DIM=$'\033[2m'
 NC=$'\033[0m'
 
-info() { printf "%s\n" "${BLUE}→${NC} $*"; }
+info()    { printf "%s\n" "${BLUE}→${NC} $*"; }
 success() { printf "%s\n" "${GREEN}✓${NC} $*"; }
-warn() { printf "%s\n" "${YELLOW}!${NC} $*"; }
-die() {
-    printf "%s\n" "${RED}✗${NC} $*"
-    exit 1
-}
+warn()    { printf "%s\n" "${YELLOW}!${NC} $*"; }
+die()     { printf "%s\n" "${RED}✗${NC} $*"; exit 1; }
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TIMESTAMP="$(date +%Y%m%d%H%M%S)"
 
-[[ "$(uname)" == "Darwin" ]] || die "This script targets macOS."
+# ── OS detection ───────────────────────────────────────────────────────────────
 
-printf "\n%s\n\n" "${BOLD}Terminal config installer${NC}"
+OS="unknown"
+[[ "$(uname)" == "Darwin" ]]  && OS="macos"
+[[ -f /etc/arch-release ]]    && OS="arch"
+[[ "$OS" == "unknown" ]] && die "Unsupported OS — targets macOS and Arch Linux."
 
-# ── Homebrew ──────────────────────────────────────────────────────────────────
+printf "\n%s\n\n" "${BOLD}Terminal config installer  [${OS}]${NC}"
 
-if ! command -v brew &>/dev/null; then
-    info "Installing Homebrew..."
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-    eval "$(/opt/homebrew/bin/brew shellenv)"
-else
-    success "Homebrew $(brew --version | head -1)"
-fi
+# ── Package managers ───────────────────────────────────────────────────────────
 
-# ── Dependencies ──────────────────────────────────────────────────────────────
-
-BREW_DEPS=(starship fzf gum bat ripgrep eza zoxide git-delta tldr fastfetch thefuck tmux lazygit)
-for dep in "${BREW_DEPS[@]}"; do
-    if brew list "$dep" &>/dev/null; then
-        success "$dep"
+_ensure_brew() {
+    if ! command -v brew &>/dev/null; then
+        info "Installing Homebrew..."
+        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+        eval "$(/opt/homebrew/bin/brew shellenv)"
     else
-        info "Installing $dep..."
-        brew install "$dep"
+        success "Homebrew $(brew --version | head -1)"
     fi
-done
+}
 
-# ── Font ──────────────────────────────────────────────────────────────────────
+_ensure_yay() {
+    if command -v yay &>/dev/null; then
+        success "yay $(yay --version | head -1)"
+        return 0
+    fi
+    warn "yay (AUR helper) not found"
+    read -r -p "  Install yay? Required for AUR packages. [y/N] " yn
+    [[ "$yn" =~ ^[yY]$ ]] || { warn "Skipping AUR packages"; return 1; }
+    info "Installing yay..."
+    sudo pacman -S --needed --noconfirm git base-devel
+    local tmp
+    tmp=$(mktemp -d)
+    git clone https://aur.archlinux.org/yay.git "$tmp/yay"
+    (cd "$tmp/yay" && makepkg -si)
+    rm -rf "$tmp"
+    success "yay installed"
+}
 
-FONT_DIR="$HOME/Library/Fonts"
-if ls "$FONT_DIR"/HackNerdFont* &>/dev/null 2>&1; then
-    success "Hack Nerd Font"
+# ── Dependencies ───────────────────────────────────────────────────────────────
+
+_install_deps_macos() {
+    _ensure_brew
+    local deps=(starship fzf gum bat ripgrep eza zoxide git-delta tldr fastfetch thefuck tmux lazygit)
+    for dep in "${deps[@]}"; do
+        if brew list "$dep" &>/dev/null; then
+            success "$dep"
+        else
+            info "Installing $dep..."
+            brew install "$dep"
+        fi
+    done
+}
+
+_install_deps_arch() {
+    info "Syncing package database..."
+    sudo pacman -Sy --noconfirm
+
+    local pacman_deps=(starship fzf bat ripgrep eza zoxide tldr fastfetch tmux)
+    for dep in "${pacman_deps[@]}"; do
+        if pacman -Qi "$dep" &>/dev/null; then
+            success "$dep"
+        else
+            info "Installing $dep..."
+            sudo pacman -S --noconfirm "$dep"
+        fi
+    done
+
+    local aur_deps=(gum git-delta thefuck lazygit)
+    if _ensure_yay; then
+        for dep in "${aur_deps[@]}"; do
+            if yay -Qi "$dep" &>/dev/null; then
+                success "$dep  (AUR)"
+            else
+                info "Installing $dep  (AUR)..."
+                yay -S --noconfirm "$dep"
+            fi
+        done
+    else
+        warn "Skipped AUR packages: ${aur_deps[*]}"
+        warn "  Install manually: yay -S ${aur_deps[*]}"
+    fi
+}
+
+# ── Font ───────────────────────────────────────────────────────────────────────
+
+_check_font() {
+    # Check common install locations then fall back to fc-list
+    case "$OS" in
+        macos) ls "$HOME/Library/Fonts"/BerkeleyMono* &>/dev/null && return 0 ;;
+        arch)  ls "$HOME/.local/share/fonts"/BerkeleyMono* &>/dev/null && return 0 ;;
+    esac
+    fc-list 2>/dev/null | grep -qi "BerkeleyMono\|Berkeley Mono" && return 0
+    return 1
+}
+
+if _check_font; then
+    success "BerkeleyMono Nerd Font"
 else
-    info "Installing Hack Nerd Font..."
-    brew install --cask font-hack-nerd-font
-    success "Hack Nerd Font installed"
+    warn "BerkeleyMono Nerd Font not found"
+    warn "  Berkeley Mono is a commercial font — purchase + download at:"
+    warn "  https://berkeleygraphics.com/typefaces/berkeley-mono/"
+    warn "  Install the Nerd Font patched variant, then re-run this script."
 fi
 
-# ── Backup helper ─────────────────────────────────────────────────────────────
+# ── Install dependencies ───────────────────────────────────────────────────────
+
+case "$OS" in
+    macos) _install_deps_macos ;;
+    arch)  _install_deps_arch  ;;
+esac
+
+# ── Backup helper ──────────────────────────────────────────────────────────────
 
 backup_if_exists() {
     local target="$1"
     [[ -e "$target" || -L "$target" ]] || return 0
-
     local backup="${target}.bak.${TIMESTAMP}"
     mv "$target" "$backup"
     info "Backed up $(basename "$target") → $(basename "$backup")"
 }
 
-# ── Existing configs ──────────────────────────────────────────────────────────
+# ── Existing configs ───────────────────────────────────────────────────────────
 
-TARGETS=("$HOME/.zshrc" "$HOME/.zsh" "$HOME/.config/starship.toml" "$HOME/.config/alacritty" "$HOME/.config/fastfetch" "$HOME/.tmux.conf")
+TARGETS=(
+    "$HOME/.zshrc"
+    "$HOME/.zsh"
+    "$HOME/.config/starship.toml"
+    "$HOME/.config/alacritty"
+    "$HOME/.config/fastfetch"
+    "$HOME/.tmux.conf"
+    "$HOME/.tmux-cheatsheet.sh"
+    "$HOME/.local/bin/tmux-sessionizer"
+)
+
 HAS_EXISTING=false
 for t in "${TARGETS[@]}"; do
     [[ -e "$t" || -L "$t" ]] && HAS_EXISTING=true && break
@@ -79,24 +160,20 @@ done
 if $HAS_EXISTING; then
     warn "Existing config(s) found"
     read -r -p "  Replace them? Originals will be backed up. [y/N] " response
-    [[ "$response" =~ ^[yY]$ ]] || {
-        echo "Aborted."
-        exit 0
-    }
-
+    [[ "$response" =~ ^[yY]$ ]] || { echo "Aborted."; exit 0; }
     for t in "${TARGETS[@]}"; do
         backup_if_exists "$t"
     done
 fi
 
-# ── Install mode ──────────────────────────────────────────────────────────────
+# ── Install mode ───────────────────────────────────────────────────────────────
 
 printf "\n%s\n" "${BOLD}Install method:${NC}"
 printf '  [1] Symlink — repo changes are instantly live %s(recommended)%s\n' "$DIM" "$NC"
 printf "  [2] Copy    — standalone, no dependency on repo path\n\n"
 read -r -p "Choice [1/2]: " install_mode
 
-# ── Apply ─────────────────────────────────────────────────────────────────────
+# ── Apply ──────────────────────────────────────────────────────────────────────
 
 link_or_copy() {
     local src="$1" dst="$2"
@@ -108,34 +185,38 @@ link_or_copy() {
     fi
 }
 
-link_or_copy "$REPO_DIR/zsh" "$HOME/.zsh"
-link_or_copy "$REPO_DIR/zsh/.zshrc" "$HOME/.zshrc"
+# ── Shell ──────────────────────────────────────────────────────────────────────
+link_or_copy "$REPO_DIR/zsh"                    "$HOME/.zsh"
+link_or_copy "$REPO_DIR/zsh/.zshrc"             "$HOME/.zshrc"
+
+# ── Configs ────────────────────────────────────────────────────────────────────
 link_or_copy "$REPO_DIR/starship/starship.toml" "$HOME/.config/starship.toml"
-link_or_copy "$REPO_DIR/alacritty" "$HOME/.config/alacritty"
-link_or_copy "$REPO_DIR/fastfetch" "$HOME/.config/fastfetch"
-link_or_copy "$REPO_DIR/tmux/tmux.conf" "$HOME/.tmux.conf"
-link_or_copy "$REPO_DIR/tmux/cheatsheet.sh" "$HOME/.tmux-cheatsheet.sh"
+link_or_copy "$REPO_DIR/alacritty"              "$HOME/.config/alacritty"
+link_or_copy "$REPO_DIR/fastfetch"              "$HOME/.config/fastfetch"
+
+# ── tmux ───────────────────────────────────────────────────────────────────────
+link_or_copy "$REPO_DIR/tmux/tmux.conf"         "$HOME/.tmux.conf"
+link_or_copy "$REPO_DIR/tmux/cheatsheet.sh"     "$HOME/.tmux-cheatsheet.sh"
+chmod +x "$HOME/.tmux-cheatsheet.sh"
+
+# ── Scripts ────────────────────────────────────────────────────────────────────
 mkdir -p "$HOME/.local/bin"
-link_or_copy "$REPO_DIR/scripts/tmux-sessionizer" "$HOME/.local/bin/tmux-sessionizer"
+link_or_copy "$REPO_DIR/scripts/tmux-sessionizer"  "$HOME/.local/bin/tmux-sessionizer"
+chmod +x "$HOME/.local/bin/tmux-sessionizer"
 
-if [[ "${install_mode:-1}" == "2" ]]; then
-    success "Configs copied"
-else
-    success "Symlinked: ~/.zshrc → zsh/.zshrc"
-    success "Symlinked: ~/.zsh/ → zsh/"
-    success "Symlinked: ~/.config/starship.toml → starship/starship.toml"
-    success "Symlinked: ~/.config/alacritty/ → alacritty/"
-    success "Symlinked: ~/.config/fastfetch/ → fastfetch/"
-    success "Symlinked: ~/.tmux.conf → tmux/tmux.conf"
-fi
+_verb=$([[ "${install_mode:-1}" == "2" ]] && echo "Copied" || echo "Symlinked")
+success "$_verb: ~/.zshrc → zsh/.zshrc"
+success "$_verb: ~/.zsh/ → zsh/"
+success "$_verb: ~/.config/starship.toml → starship/starship.toml"
+success "$_verb: ~/.config/alacritty/ → alacritty/"
+success "$_verb: ~/.config/fastfetch/ → fastfetch/"
+success "$_verb: ~/.tmux.conf → tmux/tmux.conf"
+success "$_verb: ~/.tmux-cheatsheet.sh → tmux/cheatsheet.sh"
+success "$_verb: ~/.local/bin/tmux-sessionizer → scripts/tmux-sessionizer"
 
-# ── Local config ─────────────────────────────────────────────────────────────
+# ── Local config ───────────────────────────────────────────────────────────────
 
-if [[ "${install_mode:-1}" == "2" ]]; then
-    _mode="copy"
-else
-    _mode="symlink"
-fi
+_mode=$([[ "${install_mode:-1}" == "2" ]] && echo "copy" || echo "symlink")
 
 cat >"$HOME/.zsh/.local" <<EOF
 TERM_CONFIGS_DIR="$REPO_DIR"
@@ -143,7 +224,7 @@ TERM_CONFIGS_MODE="$_mode"
 EOF
 success "Wrote ~/.zsh/.local (repo: $REPO_DIR, mode: $_mode)"
 
-# ── zinit bootstrap ──────────────────────────────────────────────────────────
+# ── zinit bootstrap ────────────────────────────────────────────────────────────
 
 ZINIT_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}/zinit/zinit.git"
 if [[ ! -d "$ZINIT_HOME" ]]; then
@@ -155,14 +236,16 @@ else
     success "zinit"
 fi
 
-# ── macOS key repeat ─────────────────────────────────────────────────────────
+# ── macOS: key repeat ─────────────────────────────────────────────────────────
 
-defaults write -g ApplePressAndHoldEnabled -bool false
-defaults write -g InitialKeyRepeat -int 15
-defaults write -g KeyRepeat -int 2
-success "Key repeat configured (logout required to take effect)"
+if [[ "$OS" == "macos" ]]; then
+    defaults write -g ApplePressAndHoldEnabled -bool false
+    defaults write -g InitialKeyRepeat -int 15
+    defaults write -g KeyRepeat -int 2
+    success "Key repeat configured (logout required to take effect)"
+fi
 
-# ── Git config ───────────────────────────────────────────────────────────────
+# ── Git config ─────────────────────────────────────────────────────────────────
 
 git config --global push.autoSetupRemote true
 git config --global push.default current
@@ -187,7 +270,7 @@ if command -v delta &>/dev/null; then
     success "delta configured as git pager"
 fi
 
-# ── TPM (tmux plugin manager) ────────────────────────────────────────────────
+# ── TPM (tmux plugin manager) ──────────────────────────────────────────────────
 
 TPM_DIR="$HOME/.tmux/plugins/tpm"
 if [[ ! -d "$TPM_DIR" ]]; then
@@ -202,7 +285,7 @@ info "Installing tmux plugins..."
 "$TPM_DIR/bin/install_plugins" >/dev/null 2>&1 || true
 success "tmux plugins installed"
 
-# ── Done ──────────────────────────────────────────────────────────────────────
+# ── Done ───────────────────────────────────────────────────────────────────────
 
 printf "\n%s\n" "${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 printf "  %s\n\n" "${GREEN}Installation complete!${NC}"
