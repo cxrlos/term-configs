@@ -15,7 +15,7 @@ ih="  type to filter  ·  ESC back to visual"
 # ── Temp files ─────────────────────────────────────────────────────────────────
 tmpfile=$(mktemp)
 navscript=$(mktemp)
-trap "rm -f $tmpfile $navscript" EXIT
+trap 'rm -f "$tmpfile" "$navscript"' EXIT
 
 # ── Generate content ────────────────────────────────────────────────────────────
 {
@@ -181,7 +181,7 @@ EOF
 chmod +x "$navscript"
 
 # ── Launch ─────────────────────────────────────────────────────────────────────
-cat "$tmpfile" | fzf \
+fzf < "$tmpfile" \
     --ansi \
     --no-sort \
     --layout=reverse \
