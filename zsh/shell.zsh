@@ -53,3 +53,4 @@ zle -N down-line-or-beginning-search
 
 command -v zoxide &>/dev/null && eval "$(zoxide init zsh)"
 command -v thefuck &>/dev/null && eval "$(thefuck --alias f)"
+
