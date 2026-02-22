@@ -17,10 +17,10 @@ source "$ZSH_CONFIG_DIR/utils.zsh"
 [[ -f "$ZSH_CONFIG_DIR/nubank.zsh" ]] && source "$ZSH_CONFIG_DIR/nubank.zsh"
 [[ -f ~/.fzf.zsh ]] && source ~/.fzf.zsh
 
-if [[ "$SHLVL" -le 2 ]]; then
-    local _splash_marker="/tmp/.tmux_splash_$(tmux display-message -p '#{pid}' 2>/dev/null)"
-    if [[ -n "$TMUX" ]] && [[ ! -f "$_splash_marker" ]]; then
-        touch "$_splash_marker"
+local _max_shlvl=2
+[[ "$OSTYPE" == "linux"* ]] && _max_shlvl=3
+if [[ "$SHLVL" -le $_max_shlvl ]]; then
+    if [[ -n "$TMUX" ]] && [[ "$TERM" == tmux-* ]]; then
         printf '\n'
         printf '%s░▒▓████████▓▒░▒▓██████████████▓▒░░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░%s\n' "$_love" "$_nc"
         printf '%s   ░▒▓█▓▒░   ░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░%s\n' "$_gold" "$_nc"

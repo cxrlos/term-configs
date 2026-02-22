@@ -8,6 +8,7 @@ args = ["-l"]
 
 [env]
 TERM = "xterm-256color"
+COLORTERM = "truecolor"
 
 [window]
 dimensions = { columns = 120, lines = 30 }
