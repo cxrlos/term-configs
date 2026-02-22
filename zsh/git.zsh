@@ -232,16 +232,118 @@ _g_status() {
             "full       default verbose output" \
             "branch     branch tracking info") || return 1
         case "${variant%% *}" in
-            short)  git status --short ;;
+            short)  gss ;;
             full)   git status ;;
             branch) git status --short --branch ;;
         esac
     else
-        git status --short "$@"
+        gss
     fi
 }
 
-alias gss='git status --short'
+gss() {
+    git rev-parse --git-dir &>/dev/null || { _err "Not a git repo"; return 1; }
+
+    local porcelain
+    porcelain=$(git status --porcelain 2>/dev/null)
+
+    if [[ -z "$porcelain" ]]; then
+        printf '\n  %s✓%s  clean\n\n' "$_pine" "$_nc"
+        return 0
+    fi
+
+    local branch
+    branch=$(git symbolic-ref --short HEAD 2>/dev/null || git rev-parse --short HEAD 2>/dev/null)
+
+    local n_staged=0 n_unstaged=0 n_untracked=0
+    while IFS= read -r line; do
+        local X="${line[1]}" Y="${line[2]}"
+        [[ "$X" != " " && "$X" != "?" ]] && (( n_staged++ ))
+        [[ "$Y" != " " && "$Y" != "?" ]] && (( n_unstaged++ ))
+        [[ "$X" == "?" ]] && (( n_untracked++ ))
+    done <<< "$porcelain"
+
+    printf '\n  %s⎇  %s%s%s' "$_subtle" "$_foam" "$branch" "$_nc"
+    (( n_staged > 0 ))    && printf '    %s%d staged%s'    "$_pine"   "$n_staged"    "$_nc"
+    (( n_unstaged > 0 ))  && printf '  %s%d modified%s'    "$_gold"   "$n_unstaged"  "$_nc"
+    (( n_untracked > 0 )) && printf '  %s%d untracked%s'   "$_iris"   "$n_untracked" "$_nc"
+    printf '\n\n'
+
+    local -A dir_entries seen_dirs
+    local -a dir_order
+
+    while IFS= read -r line; do
+        [[ -z "$line" ]] && continue
+        local X="${line[1]}" Y="${line[2]}" path="${line:3}"
+
+        local display="$path"
+        [[ "$path" == *" -> "* ]] && display="${path##* -> }"
+        display="${display%/}"
+
+        local sym col
+        if   [[ "$X" == "U" || "$Y" == "U" ]]; then sym="!"; col="$_love"
+        elif [[ "$X" == "D" || "$Y" == "D" ]]; then sym="-"; col="$_love"
+        elif [[ "$X" == "R"                ]]; then sym="→"; col="$_foam"
+        elif [[ "$X" == "A"                ]]; then sym="+"; col="$_pine"
+        elif [[ "$X" == "M" || "$Y" == "M" ]]; then sym="~"; col="$_gold"
+        elif [[ "$X" == "?" && "$Y" == "?" ]]; then sym="?"; col="$_iris"
+        else                                        sym="."; col="$_subtle"
+        fi
+
+        local dir="${display%/*}"
+        [[ "$dir" == "$display" ]] && dir="."
+        local fname="${display##*/}"
+
+        if [[ -z "${seen_dirs[$dir]}" ]]; then
+            seen_dirs[$dir]=1
+            dir_order+=("$dir")
+        fi
+        dir_entries[$dir]+="${dir_entries[$dir]:+$'\n'}${sym}|${col}|${fname}"
+    done <<< "$porcelain"
+
+    local n_dirs=${#dir_order[@]}
+    local i_dir=0
+
+    for dir in "${dir_order[@]}"; do
+        (( i_dir++ ))
+        local -a entries
+        entries=("${(f)dir_entries[$dir]}")
+        local n_files=${#entries[@]}
+        local last_dir=$(( i_dir == n_dirs ? 1 : 0 ))
+
+        local dir_conn dir_cont
+        (( last_dir )) && { dir_conn="└──"; dir_cont="    "; } \
+                       || { dir_conn="├──"; dir_cont="│   "; }
+
+        [[ "$dir" != "." ]] && \
+            printf '  %s%s%s %s%s/%s\n' "$_subtle" "$dir_conn" "$_nc" "$_subtle" "$dir" "$_nc"
+
+        local indent
+        [[ "$dir" == "." ]] && indent="  " || indent="  ${dir_cont}"
+
+        local i_file=0
+        for entry in "${entries[@]}"; do
+            (( i_file++ ))
+            local sym="${entry%%|*}"
+            local rest="${entry#*|}"
+            local col="${rest%%|*}"
+            local fname="${rest##*|}"
+            local file_conn
+            (( i_file == n_files )) && file_conn="└──" || file_conn="├──"
+
+            printf '%s%s%s%s %s%s%s %s\n' \
+                "$indent" \
+                "$_subtle" "$file_conn" "$_nc" \
+                "$col" "$sym" "$_nc" \
+                "$fname"
+        done
+    done
+
+    printf '\n  %s+%s added  %s~%s modified  %s-%s deleted  %s→%s renamed  %s?%s untracked  %s!%s conflict\n\n' \
+        "$_pine" "$_nc" "$_gold" "$_nc" "$_love" "$_nc" \
+        "$_foam" "$_nc" "$_iris" "$_nc" "$_love" "$_nc"
+}
+
 alias ga='git add'
 alias gaa='git add --all'
 alias gc='git commit'
