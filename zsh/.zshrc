@@ -8,8 +8,8 @@ source "${ZINIT_HOME}/zinit.zsh"
 ZSH_CONFIG_DIR="${ZDOTDIR:-$HOME}/.zsh"
 [[ -f "$ZSH_CONFIG_DIR/.local" ]] && source "$ZSH_CONFIG_DIR/.local"
 
-source "$ZSH_CONFIG_DIR/shell.zsh"
 source "$ZSH_CONFIG_DIR/env.zsh"
+source "$ZSH_CONFIG_DIR/shell.zsh"
 source "$ZSH_CONFIG_DIR/vim.zsh"
 source "$ZSH_CONFIG_DIR/git.zsh"
 source "$ZSH_CONFIG_DIR/utils.zsh"
@@ -52,6 +52,3 @@ if [[ "$SHLVL" -le 2 ]]; then
 fi
 
 eval "$(starship init zsh)"
-
-
-eval $(thefuck --alias)
