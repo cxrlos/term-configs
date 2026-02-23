@@ -158,12 +158,29 @@ _a_opencode() {
         *) model="$choice" ;;
     esac
 
+    local started_serve=0 serve_pid
     if command -v ollama &>/dev/null && ! ollama list &>/dev/null 2>&1; then
-        _err "ollama is not running — start it with: ollama serve"
-        return 1
+        _info "Starting ollama serve..."
+        HSA_OVERRIDE_GFX_VERSION=10.3.0 ollama serve &>/dev/null &
+        serve_pid=$!
+        started_serve=1
+        local i=0
+        while ! ollama list &>/dev/null 2>&1; do
+            if (( ++i > 15 )); then
+                _err "ollama did not start"
+                kill "$serve_pid" 2>/dev/null
+                return 1
+            fi
+            sleep 1
+        done
     fi
 
     HSA_OVERRIDE_GFX_VERSION=10.3.0 opencode --model "$model" "$@"
+
+    if (( started_serve )) && ! pgrep -x opencode &>/dev/null; then
+        _info "Stopping ollama serve..."
+        kill "$serve_pid" 2>/dev/null
+    fi
 }
 
 _a_opencode_refresh() {
