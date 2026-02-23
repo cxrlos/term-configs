@@ -28,7 +28,7 @@ zsh/
 starship/           prompt (Rose Pine palette, fill line, time)
 tmux/
   tmux.conf         prefix=`, vim-tmux-nav, popups, Rose Pine status
-  cheatsheet.sh     floating keybinding reference (` /)
+  cheatsheet.sh     floating keybinding reference (` ?)
 fastfetch/          system info config (Rose Pine themed)
 scripts/
   install.sh        deps, symlinks, git config, macOS settings
@@ -53,7 +53,7 @@ Prefix: `` ` `` (backtick)
 | ----------------- | --------------------------------------------- |
 | `C-h/j/k/l`       | seamless pane navigation (vim+tmux, no prefix)|
 | `` ` h/j/k/l ``   | select pane (repeatable)                      |
-| `` ` Arrow ``     | resize pane (repeatable)                      |
+| `` ` H/J/K/L ``   | resize pane (repeatable)                      |
 | `` ` v ``         | split right                                   |
 | `` ` s ``         | split down                                    |
 | `` ` c ``         | new window (inherits cwd)                     |
@@ -63,13 +63,13 @@ Prefix: `` ` `` (backtick)
 | `` ` ^ ``         | last window (toggle)                          |
 | `` ` z ``         | zoom pane                                     |
 | `` ` x / X ``     | kill pane / window                            |
-| `` ` / ``         | cheatsheet (fzf, VISUAL/INSERT modal)         |
+| `` ` ? ``         | cheatsheet (fzf, VISUAL/INSERT modal)         |
 | `` ` f ``         | sessionizer (project picker)                  |
 | `` ` g ``         | lazygit                                       |
-| `` ` t ``         | htop                                          |
+| `` ` t ``         | popup shell in current directory              |
+| `` ` m ``         | htop                                          |
 | `` ` T ``         | scratch terminal (persistent)                 |
 | `` ` w ``         | fzf session/window/pane picker                |
-| `` ` b ``         | popup shell in current directory              |
 | `` ` Enter ``     | copy mode (vi)                                |
 | `` ` Space ``     | thumbs — hint-based yank (URLs, paths, hashes)|
 

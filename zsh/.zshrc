@@ -1,3 +1,6 @@
+autoload -U +X compinit && compinit
+autoload -U +X bashcompinit && bashcompinit
+
 ZINIT_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}/zinit/zinit.git"
 if [[ ! -d "$ZINIT_HOME" ]]; then
     mkdir -p "$(dirname "$ZINIT_HOME")"
@@ -16,6 +19,38 @@ source "$ZSH_CONFIG_DIR/utils.zsh"
 
 [[ -f "$ZSH_CONFIG_DIR/nubank.zsh" ]] && source "$ZSH_CONFIG_DIR/nubank.zsh"
 [[ -f ~/.fzf.zsh ]] && source ~/.fzf.zsh
+
+# ── tmux session prompt (once per boot, skipped in float/popup terminals) ────
+() {
+  local _flag="/tmp/.zsh-tmux-$(id -u)"
+  if [[ -z "$TMUX" && "$TERM_FLOAT" != "1" && ! -f "$_flag" ]]; then
+    touch "$_flag"
+    if command -v gum &>/dev/null && command -v tmux &>/dev/null; then
+      if gum confirm "Start a tmux session?" \
+          --prompt.foreground="#c4a7e7" \
+          --selected.background="#31748f" 2>/dev/null; then
+        local _sessions
+        _sessions=$(tmux ls -F "#{session_name}" 2>/dev/null || true)
+        if [[ -n "$_sessions" ]]; then
+          local _choice
+          _choice=$(printf '%s\n' "[ new session ]" "${(f)_sessions}" | \
+            gum choose --header "Pick a session" \
+              --header.foreground="#9ccfd8" \
+              --cursor.foreground="#c4a7e7" 2>/dev/null)
+          if [[ "$_choice" == "[ new session ]" || -z "$_choice" ]]; then
+            exec tmux
+          else
+            exec tmux attach -t "$_choice"
+          fi
+        else
+          exec tmux
+        fi
+      fi
+    fi
+  fi
+}
+
+[[ -f "$ZSH_CONFIG_DIR/tmp.sh" ]] && source "$ZSH_CONFIG_DIR/tmp.sh"
 
 local _max_shlvl=2
 [[ "$OSTYPE" == "linux"* ]] && _max_shlvl=3
