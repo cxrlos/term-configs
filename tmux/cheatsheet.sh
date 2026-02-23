@@ -48,7 +48,7 @@ trap 'rm -f "$tmpfile" "$navscript"' EXIT
   section "Navigation"
   row "C-h/j/k/l"  "seamless pane nav (vim+tmux, no prefix)"
   row "h/j/k/l"    "select pane (prefix, repeatable)"
-  row "←/→/↑/↓"    "resize pane (prefix + arrow, repeatable)"
+  row "H/J/K/L"    "resize pane (prefix, repeatable)"
 
   section "Prefix  (\`)"
   row "v"      "split right (vertical divider)"
@@ -63,13 +63,13 @@ trap 'rm -f "$tmpfile" "$navscript"' EXIT
   row "X"      "kill window"
 
   section "Popups  (prefix)"
-  row "/"  "this cheatsheet"
+  row "?"  "this cheatsheet"
   row "f"  "sessionizer (project switcher)"
   row "g"  "lazygit"
-  row "t"  "htop"
+  row "t"  "popup shell in current directory"
+  row "m"  "htop"
   row "T"  "scratch terminal (persistent)"
   row "w"  "fzf session/window/pane picker"
-  row "b"  "popup shell in current directory"
 
   section "Plugins"
   row "Space"  "thumbs — hint-based yank (URLs, paths, hashes)"
