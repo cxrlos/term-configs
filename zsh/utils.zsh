@@ -87,29 +87,29 @@ a() {
                 gum style --border rounded --border-foreground "#c4a7e7" --padding "1 2" --margin "1 0" \
                     "${_bold}a${_nc} ${_subtle}[command]${_nc}" \
                     "" \
-                    "  ${_iris}s${_nc}  ${_subtle}search${_nc}    fuzzy search aliases" \
-                    "  ${_iris}a${_nc}  ${_subtle}add${_nc}       create new alias"
+                    "  ${_iris}c${_nc}  ${_subtle}claude${_nc}    Claude Code" \
+                    "  ${_iris}o${_nc}  ${_subtle}opencode${_nc}  OpenCode → pick model"
             else
                 printf '\n  %sa%s %s[command]%s\n\n' "$_bold" "$_nc" "$_subtle" "$_nc"
-                printf '  %ss%s  search    %sfuzzy search aliases%s\n' "$_iris" "$_nc" "$_subtle" "$_nc"
-                printf '  %sa%s  add       %screate new alias%s\n\n'   "$_iris" "$_nc" "$_subtle" "$_nc"
+                printf '  %sc%s  claude    %sClaude Code%s\n'              "$_iris" "$_nc" "$_subtle" "$_nc"
+                printf '  %so%s  opencode  %sOpenCode → pick model%s\n\n' "$_iris" "$_nc" "$_subtle" "$_nc"
             fi
             return 0
             ;;
-        s|search) _a_search ;;
-        a|add)    _a_add ;;
+        c|claude)   shift; claude "$@" ;;
+        o|opencode) shift; _a_opencode "$@" ;;
         "")
             if command -v gum &>/dev/null; then
                 local choice
                 choice=$(gum choose --cursor-prefix "→ " \
                     --cursor.foreground "#eb6f92" \
                     --selected.foreground "#c4a7e7" \
-                    --header "Aliases" --header.foreground "#9ccfd8" \
-                    "search    fuzzy search" \
-                    "add       create new alias") || return 1
+                    --header "AI" --header.foreground "#9ccfd8" \
+                    "claude    Claude Code" \
+                    "opencode  OpenCode") || return 1
                 case "${choice%% *}" in
-                    search) _a_search ;;
-                    add)    _a_add ;;
+                    claude)   claude ;;
+                    opencode) _a_opencode ;;
                 esac
             else
                 a --help; return 1
@@ -119,7 +119,96 @@ a() {
     esac
 }
 
-_a_search() {
+_a_opencode() {
+    command -v gum &>/dev/null || { _err "Requires gum"; return 1; }
+
+    local models_file="${ZSH_CONFIG_DIR}/opencode-models"
+    local -a model_opts=()
+
+    if [[ -f "$models_file" ]]; then
+        while IFS= read -r line; do
+            [[ -n "$line" ]] && model_opts+=("$line")
+        done < "$models_file"
+    else
+        _warn "No model catalog — select 'refresh' to build it"
+    fi
+
+    model_opts+=("refresh  update catalog" "other    enter manually")
+
+    local choice
+    choice=$(printf '%s\n' "${model_opts[@]}" | gum choose --cursor-prefix "→ " \
+        --cursor.foreground "#eb6f92" \
+        --selected.foreground "#c4a7e7" \
+        --header "OpenCode model" --header.foreground "#9ccfd8") || return 1
+
+    local model
+    case "${choice%% *}" in
+        refresh)
+            _a_opencode_refresh && _a_opencode "$@"
+            return
+            ;;
+        other)
+            model=$(gum input \
+                --header "Model name" --header.foreground "#9ccfd8" \
+                --placeholder "e.g. ollama/qwen2.5-coder:32b" \
+                --prompt "→ " --prompt.foreground "#9ccfd8" \
+                --cursor.foreground "#eb6f92") || return 1
+            [[ -n "$model" ]] || return 1
+            ;;
+        *) model="$choice" ;;
+    esac
+
+    if command -v ollama &>/dev/null && ! ollama list &>/dev/null 2>&1; then
+        _err "ollama is not running — start it with: ollama serve"
+        return 1
+    fi
+
+    HSA_OVERRIDE_GFX_VERSION=10.3.0 opencode --model "$model" "$@"
+}
+
+_a_opencode_refresh() {
+    command -v ollama &>/dev/null || { _err "ollama not installed"; return 1; }
+
+    local models_file="${ZSH_CONFIG_DIR}/opencode-models"
+    local started_serve=0 serve_pid
+
+    if ! ollama list &>/dev/null 2>&1; then
+        _info "Starting ollama serve..."
+        HSA_OVERRIDE_GFX_VERSION=10.3.0 ollama serve &>/dev/null &
+        serve_pid=$!
+        started_serve=1
+        local i=0
+        while ! ollama list &>/dev/null 2>&1; do
+            if (( ++i > 15 )); then
+                _err "ollama did not start"
+                kill "$serve_pid" 2>/dev/null
+                return 1
+            fi
+            sleep 1
+        done
+    fi
+
+    local -a models=()
+    while IFS= read -r line; do
+        local name="${line%% *}"
+        [[ -n "$name" && "$name" != "NAME" ]] && models+=("ollama/${name}")
+    done < <(ollama list 2>/dev/null | tail -n +2)
+
+    (( started_serve )) && kill "$serve_pid" 2>/dev/null
+
+    if [[ ${#models[@]} -eq 0 ]]; then
+        _warn "No models found — pull one with: ollama pull <model>"
+        return 1
+    fi
+
+    printf '%s\n' "${models[@]}" > "$models_file"
+    _ok "Catalog updated: ${#models[@]} model(s)"
+    printf '%s\n' "${models[@]}" | while IFS= read -r m; do
+        printf '  %s→%s %s\n' "$_foam" "$_nc" "$m"
+    done
+}
+
+_u_search() {
     command -v gum &>/dev/null || { _err "Requires gum"; return 1; }
     {
         printf '%-20s → %s\n' "g" "git hub: branch, commit, diff, log, status"
@@ -128,8 +217,12 @@ _a_search() {
         printf '%-20s → %s\n' "g d" "git diff (delta)"
         printf '%-20s → %s\n' "g l" "git log (rose pine)"
         printf '%-20s → %s\n' "g s" "git status --short"
-        printf '%-20s → %s\n' "a" "alias hub: search, add"
-        printf '%-20s → %s\n' "u" "utils hub: extract, help, path, ports, tree, dirs"
+        printf '%-20s → %s\n' "a" "AI hub: claude, opencode"
+        printf '%-20s → %s\n' "a c" "Claude Code"
+        printf '%-20s → %s\n' "a o" "OpenCode (pick model)"
+        printf '%-20s → %s\n' "u" "utils hub: search, add, extract, help, path, ports, tree, dirs"
+        printf '%-20s → %s\n' "u s" "fuzzy search aliases+commands"
+        printf '%-20s → %s\n' "u a" "create new alias"
         printf '%-20s → %s\n' "u h <cmd>" "tldr cheatsheet"
         printf '%-20s → %s\n' "u z" "top zoxide directories"
         printf '%-20s → %s\n' "u t" "directory tree (eza)"
@@ -164,7 +257,7 @@ _a_search() {
         --header "Type to filter" --header.foreground "#908caa"
 }
 
-_a_add() {
+_u_add() {
     command -v gum &>/dev/null || { _err "Requires gum"; return 1; }
     [[ -n "$TERM_CONFIGS_DIR" ]] || { _err "Run install.sh first — TERM_CONFIGS_DIR not set"; return 1; }
 
@@ -253,25 +346,34 @@ u() {
                 gum style --border rounded --border-foreground "#c4a7e7" --padding "1 2" --margin "1 0" \
                     "${_bold}u${_nc} ${_subtle}[command]${_nc}" \
                     "" \
+                    "  ${_subtle}── aliases${_nc}" \
+                    "  ${_iris}s${_nc}  ${_subtle}search${_nc}    fuzzy search aliases+commands" \
+                    "  ${_iris}a${_nc}  ${_subtle}add${_nc}       create new alias" \
+                    "" \
+                    "  ${_subtle}── files & docs${_nc}" \
                     "  ${_iris}e${_nc}  ${_subtle}extract${_nc}   unpack archive files" \
                     "  ${_iris}h${_nc}  ${_subtle}help${_nc}      tldr cheatsheet for a command" \
+                    "" \
+                    "  ${_subtle}── system${_nc}" \
                     "  ${_iris}p${_nc}  ${_subtle}path${_nc}      show PATH entries" \
                     "  ${_iris}P${_nc}  ${_subtle}ports${_nc}     show listening ports" \
                     "  ${_iris}t${_nc}  ${_subtle}tree${_nc}      directory tree" \
-                    "  ${_iris}z${_nc}  ${_subtle}dirs${_nc}      top zoxide directories" \
-                    "" \
-                    "  ${_iris}f${_nc}  ${_subtle}fix${_nc}       type after a failed command to auto-fix"
+                    "  ${_iris}z${_nc}  ${_subtle}dirs${_nc}      top zoxide directories"
             else
                 printf '\n  %su%s %s[command]%s\n\n' "$_bold" "$_nc" "$_subtle" "$_nc"
-                printf '  %se%s  extract   %sunpack archive files%s\n'   "$_iris" "$_nc" "$_subtle" "$_nc"
+                printf '  %ss%s  search    %sfuzzy search aliases+commands%s\n' "$_iris" "$_nc" "$_subtle" "$_nc"
+                printf '  %sa%s  add       %screate new alias%s\n'             "$_iris" "$_nc" "$_subtle" "$_nc"
+                printf '  %se%s  extract   %sunpack archive files%s\n'         "$_iris" "$_nc" "$_subtle" "$_nc"
                 printf '  %sh%s  help      %stldr cheatsheet for a command%s\n' "$_iris" "$_nc" "$_subtle" "$_nc"
-                printf '  %sp%s  path      %sshow PATH entries%s\n'      "$_iris" "$_nc" "$_subtle" "$_nc"
-                printf '  %sP%s  ports     %sshow listening ports%s\n'   "$_iris" "$_nc" "$_subtle" "$_nc"
-                printf '  %st%s  tree      %sdirectory tree%s\n'         "$_iris" "$_nc" "$_subtle" "$_nc"
-                printf '  %sz%s  dirs      %stop zoxide directories%s\n\n' "$_iris" "$_nc" "$_subtle" "$_nc"
+                printf '  %sp%s  path      %sshow PATH entries%s\n'            "$_iris" "$_nc" "$_subtle" "$_nc"
+                printf '  %sP%s  ports     %sshow listening ports%s\n'         "$_iris" "$_nc" "$_subtle" "$_nc"
+                printf '  %st%s  tree      %sdirectory tree%s\n'               "$_iris" "$_nc" "$_subtle" "$_nc"
+                printf '  %sz%s  dirs      %stop zoxide directories%s\n\n'     "$_iris" "$_nc" "$_subtle" "$_nc"
             fi
             return 0
             ;;
+        s|search)  _u_search ;;
+        a|add)     _u_add ;;
         e|extract) shift; extract "$@" ;;
         h|help)    shift; _u_tldr "$@" ;;
         p|path)    _u_path ;;
@@ -293,6 +395,8 @@ u() {
                     --cursor.foreground "#eb6f92" \
                     --selected.foreground "#c4a7e7" \
                     --header "Utils" --header.foreground "#9ccfd8" \
+                    "search    fuzzy search aliases+commands" \
+                    "add       create new alias" \
                     "extract   unpack archive files" \
                     "help      tldr cheatsheet" \
                     "path      show PATH entries" \
@@ -300,6 +404,8 @@ u() {
                     "tree      directory tree" \
                     "dirs      top zoxide directories") || return 1
                 case "${choice%% *}" in
+                    search)  _u_search ;;
+                    add)     _u_add ;;
                     extract) extract ;;
                     help)    _u_tldr ;;
                     path)    _u_path ;;
@@ -404,6 +510,15 @@ _u_tree() {
     fi
 }
 
+y() {
+    local tmp cwd
+    tmp="$(mktemp -t yazi-cwd.XXXXX)"
+    yazi "$@" --cwd-file="$tmp"
+    cwd="$(cat -- "$tmp")"
+    [[ -n "$cwd" && "$cwd" != "$PWD" ]] && cd -- "$cwd"
+    rm -f -- "$tmp"
+}
+
 # ── user-added ─────────────────────────────────────────────────────────────
 # General aliases, tools, and shortcuts.
-# Add manually or use `a a` for interactive creation.
+# Add manually or use `u a` for interactive creation.
