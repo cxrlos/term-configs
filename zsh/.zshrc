@@ -52,3 +52,6 @@ if [[ "$SHLVL" -le $_max_shlvl ]]; then
 fi
 
 eval "$(starship init zsh)"
+
+# opencode
+export PATH=/home/cxrlos/.opencode/bin:$PATH

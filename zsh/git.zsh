@@ -244,104 +244,68 @@ _g_status() {
 gss() {
     git rev-parse --git-dir &>/dev/null || { _err "Not a git repo"; return 1; }
 
-    local porcelain
-    porcelain=$(git status --porcelain 2>/dev/null)
-
-    if [[ -z "$porcelain" ]]; then
-        printf '\n  %s✓%s  clean\n\n' "$_pine" "$_nc"
-        return 0
-    fi
-
-    local branch
+    local porcelain branch
+    porcelain=$(git status --porcelain -u 2>/dev/null)
+    [[ -z "$porcelain" ]] && { printf '\n  %s✓%s  clean\n\n' "$_pine" "$_nc"; return 0; }
     branch=$(git symbolic-ref --short HEAD 2>/dev/null || git rev-parse --short HEAD 2>/dev/null)
 
-    local n_staged=0 n_unstaged=0 n_untracked=0
-    while IFS= read -r line; do
-        local X="${line[1]}" Y="${line[2]}"
-        [[ "$X" != " " && "$X" != "?" ]] && (( n_staged++ ))
-        [[ "$Y" != " " && "$Y" != "?" ]] && (( n_unstaged++ ))
-        [[ "$X" == "?" ]] && (( n_untracked++ ))
-    done <<< "$porcelain"
-
-    printf '\n  %s⎇  %s%s%s' "$_subtle" "$_foam" "$branch" "$_nc"
-    (( n_staged > 0 ))    && printf '    %s%d staged%s'    "$_pine"   "$n_staged"    "$_nc"
-    (( n_unstaged > 0 ))  && printf '  %s%d modified%s'    "$_gold"   "$n_unstaged"  "$_nc"
-    (( n_untracked > 0 )) && printf '  %s%d untracked%s'   "$_iris"   "$n_untracked" "$_nc"
-    printf '\n\n'
-
-    local -A dir_entries seen_dirs
-    local -a dir_order
-
-    while IFS= read -r line; do
-        [[ -z "$line" ]] && continue
-        local X="${line[1]}" Y="${line[2]}" path="${line:3}"
-
-        local display="$path"
-        [[ "$path" == *" -> "* ]] && display="${path##* -> }"
-        display="${display%/}"
-
-        local sym col
-        if   [[ "$X" == "U" || "$Y" == "U" ]]; then sym="!"; col="$_love"
-        elif [[ "$X" == "D" || "$Y" == "D" ]]; then sym="-"; col="$_love"
-        elif [[ "$X" == "R"                ]]; then sym="→"; col="$_foam"
-        elif [[ "$X" == "A"                ]]; then sym="+"; col="$_pine"
-        elif [[ "$X" == "M" || "$Y" == "M" ]]; then sym="~"; col="$_gold"
-        elif [[ "$X" == "?" && "$Y" == "?" ]]; then sym="?"; col="$_iris"
-        else                                        sym="."; col="$_subtle"
-        fi
-
-        local dir="${display%/*}"
-        [[ "$dir" == "$display" ]] && dir="."
-        local fname="${display##*/}"
-
-        if [[ -z "${seen_dirs[$dir]}" ]]; then
-            seen_dirs[$dir]=1
-            dir_order+=("$dir")
-        fi
-        dir_entries[$dir]+="${dir_entries[$dir]:+$'\n'}${sym}|${col}|${fname}"
-    done <<< "$porcelain"
-
-    local n_dirs=${#dir_order[@]}
-    local i_dir=0
-
-    for dir in "${dir_order[@]}"; do
-        (( i_dir++ ))
-        local -a entries
-        entries=("${(f)dir_entries[$dir]}")
-        local n_files=${#entries[@]}
-        local last_dir=$(( i_dir == n_dirs ? 1 : 0 ))
-
-        local dir_conn dir_cont
-        (( last_dir )) && { dir_conn="└──"; dir_cont="    "; } \
-                       || { dir_conn="├──"; dir_cont="│   "; }
-
-        [[ "$dir" != "." ]] && \
-            printf '  %s%s%s %s%s/%s\n' "$_subtle" "$dir_conn" "$_nc" "$_subtle" "$dir" "$_nc"
-
-        local indent
-        [[ "$dir" == "." ]] && indent="  " || indent="  ${dir_cont}"
-
-        local i_file=0
-        for entry in "${entries[@]}"; do
-            (( i_file++ ))
-            local sym="${entry%%|*}"
-            local rest="${entry#*|}"
-            local col="${rest%%|*}"
-            local fname="${rest##*|}"
-            local file_conn
-            (( i_file == n_files )) && file_conn="└──" || file_conn="├──"
-
-            printf '%s%s%s%s %s%s%s %s\n' \
-                "$indent" \
-                "$_subtle" "$file_conn" "$_nc" \
-                "$col" "$sym" "$_nc" \
-                "$fname"
-        done
-    done
-
-    printf '\n  %s+%s added  %s~%s modified  %s-%s deleted  %s→%s renamed  %s?%s untracked  %s!%s conflict\n\n' \
-        "$_pine" "$_nc" "$_gold" "$_nc" "$_love" "$_nc" \
-        "$_foam" "$_nc" "$_iris" "$_nc" "$_love" "$_nc"
+    printf '%s\n' "$porcelain" | awk \
+        -v branch="$branch" \
+        -v subtle="$_subtle" -v nc="$_nc" \
+        -v love="$_love" -v gold="$_gold" -v pine="$_pine" \
+        -v foam="$_foam" -v iris="$_iris" \
+    'BEGIN { n=0; nd=0; ns=0; nu=0; nk=0 }
+    {
+        X=substr($0,1,1); Y=substr($0,2,1); raw=substr($0,4)
+        if (raw ~ / -> /) { split(raw,p," -> "); raw=p[2] }
+        sub(/\/$/, "", raw)
+        if (X!=" " && X!="?") ns++
+        if (Y!=" " && Y!="?") nu++
+        if (X=="?" && Y=="?") nk++
+        if      (X=="U"||Y=="U") sym="!"
+        else if (X=="D"||Y=="D") sym="-"
+        else if (X=="R")         sym="r"
+        else if (X=="A")         sym="+"
+        else if (X=="M"||Y=="M") sym="~"
+        else if (X=="?"&&Y=="?") sym="?"
+        else                     sym="."
+        if (raw~/\//) { dir=raw; sub(/\/[^\/]*$/,"",dir); fname=raw; sub(/.*\//,"",fname) }
+        else          { dir="."; fname=raw }
+        syms[++n]=sym; fnames[n]=fname; dirs[n]=dir
+        if (!seen[dir]++) dir_order[++nd]=dir
+    }
+    END {
+        printf "\n  %s\356\234\245  %s%s%s", subtle, foam, branch, nc
+        if (ns>0) printf "    %s%d staged%s",   pine, ns, nc
+        if (nu>0) printf "  %s%d modified%s",   gold, nu, nc
+        if (nk>0) printf "  %s%d untracked%s",  iris, nk, nc
+        printf "\n\n"
+        for (di=1; di<=nd; di++) {
+            dir=dir_order[di]; ld=(di==nd)
+            dc = ld ? "\342\224\224\342\224\200\342\224\200" : "\342\224\234\342\224\200\342\224\200"
+            dt = ld ? "    " : "\342\224\202   "
+            if (dir!=".") printf "  %s%s%s %s%s/%s\n", subtle,dc,nc, subtle,dir,nc
+            ind = (dir==".") ? "  " : "  "dt
+            fc=0; for (fi=1;fi<=n;fi++) if (dirs[fi]==dir) fc++
+            fic=0
+            for (fi=1;fi<=n;fi++) {
+                if (dirs[fi]!=dir) continue
+                fic++
+                fconn = (fic==fc) ? "\342\224\224\342\224\200\342\224\200" : "\342\224\234\342\224\200\342\224\200"
+                s=syms[fi]; f=fnames[fi]
+                if      (s=="?") col=iris
+                else if (s=="+") col=pine
+                else if (s=="~") col=gold
+                else if (s=="-"||s=="!") col=love
+                else if (s=="r") col=foam
+                else             col=subtle
+                ds = (s=="r") ? "\342\206\222" : s
+                printf "%s%s%s%s %s%s%s %s\n", ind,subtle,fconn,nc, col,ds,nc, f
+            }
+        }
+        printf "\n  %s+%s added  %s~%s modified  %s-%s deleted  %s\342\206\222%s renamed  %s?%s untracked  %s!%s conflict\n\n", \
+            pine,nc, gold,nc, love,nc, foam,nc, iris,nc, love,nc
+    }'
 }
 
 alias ga='git add'
@@ -373,4 +337,4 @@ alias gbt='gnb test'
 
 # ── user-added ─────────────────────────────────────────────────────────────
 # Git-related aliases and shortcuts.
-# Add manually or use `a -a` for interactive creation.
+# Add manually or use `u a` for interactive creation.
