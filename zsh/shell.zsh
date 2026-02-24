@@ -17,6 +17,22 @@ _dim()  { printf '%s%s%s'     "$_subtle" "$*"  "$_nc"; }
 
 touch ~/.hushlogin
 
+mkdir -p ~/.cache
+: > ~/.cache/zsh_bg_jobs
+
+_bg_write_count() {
+    local n=${#jobstates}
+    if (( n > 0 )); then
+        printf '#[fg=#eb6f92]%d ● #[fg=#393552]│ ' "$n" > "$HOME/.cache/zsh_bg_jobs"
+    else
+        : > "$HOME/.cache/zsh_bg_jobs"
+    fi
+}
+
+setopt PROMPT_SUBST
+autoload -Uz add-zsh-hook
+add-zsh-hook precmd _bg_write_count
+
 HISTFILE=~/.zsh_history
 HISTSIZE=10000
 SAVEHIST=10000

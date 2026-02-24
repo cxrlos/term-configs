@@ -10,6 +10,7 @@ $nodejs\
 $rust\
 $docker_context\
 $fill\
+$jobs\
 $cmd_duration\
 $time\
 $line_break\
@@ -112,9 +113,11 @@ symbol = ' '
 only_with_files = true
 
 [jobs]
-symbol = '✦'
-style = 'gold'
-format = '[$symbol$number]($style) '
+symbol = '●'
+style = 'love'
+format = '[$number $symbol]($style) '
+threshold = 1
+number_threshold = 1
 
 [username]
 style_user = 'foam'
