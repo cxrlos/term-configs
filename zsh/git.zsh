@@ -192,15 +192,33 @@ _g_log_fmt_cols() {
 # -> in refs is replaced with → (U+2192).
 # "you" matched against user.name; hardcoded aliases cover past machine-specific user.name values.
 _g_log_awk='
-function ansi_trunc(s, maxw,    i, c, seq, vis, out) {
-    seq = 0; vis = 0; out = ""
+function ansi_trunc(s, maxw,    i, c, seq, vis, out, skip) {
+    seq = 0; vis = 0; out = ""; skip = 0
     for (i = 1; i <= length(s); i++) {
         c = substr(s, i, 1)
-        if (seq) { out = out c; if (c == "m") seq = 0 }
-        else if (c == "\033") { seq = 1; out = out c }
-        else { if (vis >= maxw) { out = out ".."; break }; out = out c; vis++ }
+        if (skip > 0) { out = out c; skip--; continue }
+        if (seq) { out = out c; if (c == "m") seq = 0; continue }
+        if (c == "\033") { seq = 1; out = out c; continue }
+        if      (c >= "\360") { if (vis+2 > maxw) { out = out ".."; break }; out = out c; skip=3; vis+=2 }
+        else if (c >= "\340") { if (vis >= maxw)  { out = out ".."; break }; out = out c; skip=2; vis++  }
+        else if (c >= "\300") { if (vis >= maxw)  { out = out ".."; break }; out = out c; skip=1; vis++  }
+        else if (c <  "\200") { if (vis >= maxw)  { out = out ".."; break }; out = out c; vis++          }
     }
     return out
+}
+function ansi_vislen(s,    i, c, seq, vis, skip) {
+    seq = 0; vis = 0; skip = 0
+    for (i = 1; i <= length(s); i++) {
+        c = substr(s, i, 1)
+        if (skip > 0) { skip--; continue }
+        if (seq) { if (c == "m") seq = 0; continue }
+        if (c == "\033") { seq = 1; continue }
+        if      (c >= "\360") { skip=3; vis+=2 }
+        else if (c >= "\340") { skip=2; vis++  }
+        else if (c >= "\300") { skip=1; vis++  }
+        else if (c <  "\200") { vis++          }
+    }
+    return vis
 }
 BEGIN { FS = "\t"; if (cols == 0) cols = 120 }
 NF >= 4 {
@@ -220,21 +238,19 @@ NF >= 4 {
     }
     sub(/\[bot\]$/, "", handle)
     if (length(handle) > 17) handle = substr(handle, 1, 17)
-    if ($3 == "cxrlos" || $3 == "Carlos Garcia" || $3 == "carloss.garciag" || (me != "" && $3 == me)) {
+    if (handle == "cxrlos" || handle == "Carlos Garcia" || handle == "carloss.garciag" || (me != "" && $3 == me)) {
         avis = 3; author = "\033[1;3;38;2;196;167;231myou\033[0m"
     } else {
         h = "@" handle; avis = length(h)
         author = "\033[38;2;196;167;231m" h "\033[0m"
     }
-    v1 = $1; gsub(/\033\[[0-9;]*m/, "", v1)
-    n_arr = split(v1, _a, "->") - 1
-    vlen = length(v1) - n_arr
+    gsub(/->/, "\342\206\222", $1)
+    vlen = ansi_vislen($1)
     min_right = avis + 8; if (min_right < 22) min_right = 22
     if (vlen > cols - min_right) {
         $1 = ansi_trunc($1, cols - min_right - 2)
-        vlen = cols - min_right
+        vlen = ansi_vislen($1)
     }
-    gsub(/->/, "\342\206\222", $1)
     mid = cols - vlen - avis - 6; if (mid < 2) mid = 2
     printf "%s%*s\033[38;2;49;116;143m%4s\033[0m %s\n", $1, mid, "", t, author; next
 }
@@ -246,7 +262,7 @@ _g_log_awk_pipe() {
     (( raw > 0 )) || raw=$(tput cols 2>/dev/null)
     (( ${raw:-0} > 0 )) || raw=120
     local cols=$(( raw - offset ))
-    awk -v me="$(git config user.name 2>/dev/null)" -v now="$(date +%s)" -v cols="$cols" "$_g_log_awk"
+    LC_ALL=C awk -v me="$(git config user.name 2>/dev/null)" -v now="$(date +%s)" -v cols="$cols" "$_g_log_awk"
 }
 
 _g_log_footer() {
@@ -286,7 +302,7 @@ _glol_fzf() {
         printf 'fmt="%%C(#9ccfd8)%%h%%Creset -%%C(#eb6f92)%%d%%Creset %%<(${sw},trunc)%%s%%x09%%ct%%x09%%aN%%x09%%aE"\n'
         printf 'git log --graph --color=always --pretty=format:"$fmt" --abbrev-commit'
         for a in "$@"; do printf ' %q' "$a"; done
-        printf ' --max-count=$n | awk -v me="$me" -v now="$now" -v cols="$acols" %q\n' "$_g_log_awk"
+        printf ' --max-count=$n | LC_ALL=C awk -v me="$me" -v now="$now" -v cols="$acols" %q\n' "$_g_log_awk"
     } > "$tmpscript"
     chmod +x "$tmpscript"
 
