@@ -356,6 +356,44 @@ _path_color() {
     esac
 }
 
+bj() {
+    local n=${#jobstates}
+    (( n )) || { _info "No background jobs"; return 0; }
+
+    local modefile actionfile
+    modefile=$(mktemp);  echo normal > "$modefile"
+    actionfile=$(mktemp); echo fg    > "$actionfile"
+
+    local line
+    line=$(jobs -l | fzf --ansi --reverse --no-sort \
+        --header '  enter  fg    d  disown    x  kill    j/k  nav    i  search    esc  quit' \
+        --prompt '  jobs → ' \
+        --pointer '→' \
+        --bind 'start:disable-search' \
+        --bind 'j:down' \
+        --bind 'k:up' \
+        --bind "i:enable-search+change-prompt(/ )+unbind(j,k)+execute-silent(echo insert > '$modefile')" \
+        --bind "esc:transform(m=\$(cat '$modefile'); if [[ \$m == insert ]]; then printf '%s' 'disable-search+change-prompt(  jobs → )+rebind(j,k)+execute-silent(echo normal > $modefile)'; else printf '%s' abort; fi)" \
+        --bind "enter:execute-silent(echo fg     > '$actionfile')+accept" \
+        --bind "d:execute-silent(echo disown > '$actionfile')+accept" \
+        --bind "x:execute-silent(echo kill   > '$actionfile')+accept" \
+        --color 'fg:#908caa,fg+:#e0def4,hl:#c4a7e7,hl+:#eb6f92,pointer:#eb6f92,header:#908caa,border:#c4a7e7,info:#9ccfd8')
+
+    local action; action=$(cat "$actionfile")
+    rm -f "$modefile" "$actionfile"
+    [[ -z "$line" ]] && return 0
+
+    local jobnum
+    jobnum=$(echo "$line" | /usr/bin/grep -oE '\[([0-9]+)\]' | head -1 | tr -d '[]')
+    [[ -z "$jobnum" ]] && return 0
+
+    case "$action" in
+        fg)     fg %"$jobnum" ;;
+        disown) disown %"$jobnum" && _ok "Disowned job ${_iris}%${jobnum}${_nc}" ;;
+        kill)   kill %"$jobnum"   && _ok "Killed job ${_iris}%${jobnum}${_nc}" ;;
+    esac
+}
+
 u() {
     case "$1" in
         -h|--help)
@@ -375,7 +413,8 @@ u() {
                     "  ${_iris}p${_nc}  ${_subtle}path${_nc}      show PATH entries" \
                     "  ${_iris}P${_nc}  ${_subtle}ports${_nc}     show listening ports" \
                     "  ${_iris}t${_nc}  ${_subtle}tree${_nc}      directory tree" \
-                    "  ${_iris}z${_nc}  ${_subtle}dirs${_nc}      top zoxide directories"
+                    "  ${_iris}z${_nc}  ${_subtle}dirs${_nc}      top zoxide directories" \
+                    "  ${_iris}j${_nc}  ${_subtle}jobs${_nc}      manage background jobs"
             else
                 printf '\n  %su%s %s[command]%s\n\n' "$_bold" "$_nc" "$_subtle" "$_nc"
                 printf '  %ss%s  search    %sfuzzy search aliases+commands%s\n' "$_iris" "$_nc" "$_subtle" "$_nc"
@@ -385,7 +424,8 @@ u() {
                 printf '  %sp%s  path      %sshow PATH entries%s\n'            "$_iris" "$_nc" "$_subtle" "$_nc"
                 printf '  %sP%s  ports     %sshow listening ports%s\n'         "$_iris" "$_nc" "$_subtle" "$_nc"
                 printf '  %st%s  tree      %sdirectory tree%s\n'               "$_iris" "$_nc" "$_subtle" "$_nc"
-                printf '  %sz%s  dirs      %stop zoxide directories%s\n\n'     "$_iris" "$_nc" "$_subtle" "$_nc"
+                printf '  %sz%s  dirs      %stop zoxide directories%s\n'       "$_iris" "$_nc" "$_subtle" "$_nc"
+                printf '  %sj%s  jobs      %smanage background jobs%s\n\n'     "$_iris" "$_nc" "$_subtle" "$_nc"
             fi
             return 0
             ;;
@@ -405,6 +445,7 @@ u() {
             ;;
         t|tree)    shift; _u_tree "$@" ;;
         z|dirs)    _u_dirs ;;
+        j|jobs)    bj ;;
         "")
             if command -v gum &>/dev/null; then
                 local choice
@@ -419,7 +460,8 @@ u() {
                     "path      show PATH entries" \
                     "ports     show listening ports" \
                     "tree      directory tree" \
-                    "dirs      top zoxide directories") || return 1
+                    "dirs      top zoxide directories" \
+                    "jobs      manage background jobs") || return 1
                 case "${choice%% *}" in
                     search)  _u_search ;;
                     add)     _u_add ;;
@@ -437,6 +479,7 @@ u() {
                         ;;
                     tree)    _u_tree ;;
                     dirs)    _u_dirs ;;
+                    jobs)    bj ;;
                 esac
             else
                 u --help; return 1
@@ -537,5 +580,4 @@ y() {
 }
 
 # ── user-added ─────────────────────────────────────────────────────────────
-# General aliases, tools, and shortcuts.
 # Add manually or use `u a` for interactive creation.
