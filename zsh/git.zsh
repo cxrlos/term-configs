@@ -238,7 +238,7 @@ NF >= 4 {
     }
     sub(/\[bot\]$/, "", handle)
     if (length(handle) > 17) handle = substr(handle, 1, 17)
-    if (handle == "cxrlos" || handle == "Carlos Garcia" || handle == "carloss.garciag" || (me != "" && $3 == me)) {
+    if (handle == "cxrlos" || handle == "Carlos Garcia" || handle == "carloss.garciag" || "carlos.garcia" || (me != "" && $3 == me)) {
         avis = 3; author = "\033[1;3;38;2;196;167;231myou\033[0m"
     } else {
         h = "@" handle; avis = length(h)
