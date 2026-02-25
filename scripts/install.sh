@@ -9,10 +9,13 @@ BOLD=$'\033[1m'
 DIM=$'\033[2m'
 NC=$'\033[0m'
 
-info()    { printf "%s\n" "${BLUE}→${NC} $*"; }
+info() { printf "%s\n" "${BLUE}→${NC} $*"; }
 success() { printf "%s\n" "${GREEN}✓${NC} $*"; }
-warn()    { printf "%s\n" "${YELLOW}!${NC} $*"; }
-die()     { printf "%s\n" "${RED}✗${NC} $*"; exit 1; }
+warn() { printf "%s\n" "${YELLOW}!${NC} $*"; }
+die() {
+    printf "%s\n" "${RED}✗${NC} $*"
+    exit 1
+}
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TIMESTAMP="$(date +%Y%m%d%H%M%S)"
@@ -20,8 +23,8 @@ TIMESTAMP="$(date +%Y%m%d%H%M%S)"
 # ── OS detection ───────────────────────────────────────────────────────────────
 
 OS="unknown"
-[[ "$(uname)" == "Darwin" ]]  && OS="macos"
-[[ -f /etc/arch-release ]]    && OS="arch"
+[[ "$(uname)" == "Darwin" ]] && OS="macos"
+[[ -f /etc/arch-release ]] && OS="arch"
 [[ "$OS" == "unknown" ]] && die "Unsupported OS — targets macOS and Arch Linux."
 
 printf "\n%s\n\n" "${BOLD}Terminal config installer  [${OS}]${NC}"
@@ -45,7 +48,10 @@ _ensure_yay() {
     fi
     warn "yay (AUR helper) not found"
     read -r -p "  Install yay? Required for AUR packages. [y/N] " yn
-    [[ "$yn" =~ ^[yY]$ ]] || { warn "Skipping AUR packages"; return 1; }
+    [[ "$yn" =~ ^[yY]$ ]] || {
+        warn "Skipping AUR packages"
+        return 1
+    }
     info "Installing yay..."
     sudo pacman -S --needed --noconfirm git base-devel
     local tmp
@@ -107,7 +113,7 @@ _check_font() {
     # Check common install locations then fall back to fc-list
     case "$OS" in
         macos) ls "$HOME/Library/Fonts"/BerkeleyMono* &>/dev/null && return 0 ;;
-        arch)  ls "$HOME/.local/share/fonts"/BerkeleyMono* &>/dev/null && return 0 ;;
+        arch) ls "$HOME/.local/share/fonts"/BerkeleyMono* &>/dev/null && return 0 ;;
     esac
     fc-list 2>/dev/null | grep -qi "BerkeleyMono\|Berkeley Mono" && return 0
     return 1
@@ -126,7 +132,7 @@ fi
 
 case "$OS" in
     macos) _install_deps_macos ;;
-    arch)  _install_deps_arch  ;;
+    arch) _install_deps_arch ;;
 esac
 
 # ── Backup helper ──────────────────────────────────────────────────────────────
@@ -160,7 +166,10 @@ done
 if $HAS_EXISTING; then
     warn "Existing config(s) found"
     read -r -p "  Replace them? Originals will be backed up. [y/N] " response
-    [[ "$response" =~ ^[yY]$ ]] || { echo "Aborted."; exit 0; }
+    [[ "$response" =~ ^[yY]$ ]] || {
+        echo "Aborted."
+        exit 0
+    }
     for t in "${TARGETS[@]}"; do
         backup_if_exists "$t"
     done
@@ -186,22 +195,22 @@ link_or_copy() {
 }
 
 # ── Shell ──────────────────────────────────────────────────────────────────────
-link_or_copy "$REPO_DIR/zsh"                    "$HOME/.zsh"
-link_or_copy "$REPO_DIR/zsh/.zshrc"             "$HOME/.zshrc"
+link_or_copy "$REPO_DIR/zsh" "$HOME/.zsh"
+link_or_copy "$REPO_DIR/zsh/.zshrc" "$HOME/.zshrc"
 
 # ── Configs ────────────────────────────────────────────────────────────────────
 link_or_copy "$REPO_DIR/starship/starship.toml" "$HOME/.config/starship.toml"
-link_or_copy "$REPO_DIR/alacritty"              "$HOME/.config/alacritty"
-link_or_copy "$REPO_DIR/fastfetch"              "$HOME/.config/fastfetch"
+link_or_copy "$REPO_DIR/alacritty" "$HOME/.config/alacritty"
+link_or_copy "$REPO_DIR/fastfetch" "$HOME/.config/fastfetch"
 
 # ── tmux ───────────────────────────────────────────────────────────────────────
-link_or_copy "$REPO_DIR/tmux/tmux.conf"         "$HOME/.tmux.conf"
-link_or_copy "$REPO_DIR/tmux/cheatsheet.sh"     "$HOME/.tmux-cheatsheet.sh"
+link_or_copy "$REPO_DIR/tmux/tmux.conf" "$HOME/.tmux.conf"
+link_or_copy "$REPO_DIR/tmux/cheatsheet.sh" "$HOME/.tmux-cheatsheet.sh"
 chmod +x "$HOME/.tmux-cheatsheet.sh"
 
 # ── Scripts ────────────────────────────────────────────────────────────────────
 mkdir -p "$HOME/.local/bin"
-link_or_copy "$REPO_DIR/scripts/tmux-sessionizer"  "$HOME/.local/bin/tmux-sessionizer"
+link_or_copy "$REPO_DIR/scripts/tmux-sessionizer" "$HOME/.local/bin/tmux-sessionizer"
 chmod +x "$HOME/.local/bin/tmux-sessionizer"
 
 _verb=$([[ "${install_mode:-1}" == "2" ]] && echo "Copied" || echo "Symlinked")
