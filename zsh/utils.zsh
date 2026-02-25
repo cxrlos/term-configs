@@ -161,7 +161,7 @@ _a_opencode() {
     local started_serve=0 serve_pid
     if command -v ollama &>/dev/null && ! ollama list &>/dev/null 2>&1; then
         _info "Starting ollama serve..."
-        HSA_OVERRIDE_GFX_VERSION=10.3.0 ollama serve &>/dev/null &
+        OLLAMA_CONTEXT_LENGTH=128000 HSA_OVERRIDE_GFX_VERSION=10.3.0 ollama serve &>/dev/null &
         serve_pid=$!
         started_serve=1
         local i=0
