@@ -68,7 +68,7 @@ Prefix: `` ` `` (backtick)
 | `` ` g ``         | lazygit                                       |
 | `` ` t ``         | popup shell in current directory              |
 | `` ` m ``         | htop                                          |
-| `` ` T ``         | scratch terminal (persistent)                 |
+| `` ` T ``         | ratatoist (Todoist TUI)                      |
 | `` ` w ``         | fzf session/window/pane picker                |
 | `` ` Enter ``     | copy mode (vi)                                |
 | `` ` Space ``     | thumbs — hint-based yank (URLs, paths, hashes)|
