@@ -96,3 +96,6 @@ export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 
 alias rat='ratatoist'
+export NU_HOME=${HOME}/dev/nu
+export NUCLI_HOME=${NU_HOME}/nucli
+export PATH=${NUCLI_HOME}:${PATH}
