@@ -212,6 +212,8 @@ chmod +x "$HOME/.tmux-cheatsheet.sh"
 mkdir -p "$HOME/.local/bin"
 link_or_copy "$REPO_DIR/scripts/tmux-sessionizer" "$HOME/.local/bin/tmux-sessionizer"
 chmod +x "$HOME/.local/bin/tmux-sessionizer"
+link_or_copy "$REPO_DIR/scripts/lidrun.sh" "$HOME/.local/bin/lidrun"
+chmod +x "$HOME/.local/bin/lidrun"
 
 _verb=$([[ "${install_mode:-1}" == "2" ]] && echo "Copied" || echo "Symlinked")
 success "$_verb: ~/.zshrc → zsh/.zshrc"
@@ -222,6 +224,7 @@ success "$_verb: ~/.config/fastfetch/ → fastfetch/"
 success "$_verb: ~/.tmux.conf → tmux/tmux.conf"
 success "$_verb: ~/.tmux-cheatsheet.sh → tmux/cheatsheet.sh"
 success "$_verb: ~/.local/bin/tmux-sessionizer → scripts/tmux-sessionizer"
+success "$_verb: ~/.local/bin/lidrun → scripts/lidrun.sh"
 
 # ── Local config ───────────────────────────────────────────────────────────────
 
