@@ -394,13 +394,9 @@ bj() {
     esac
 }
 
-# Send the current foreground command to bg — suspend it first, then pick action.
-# Usage: bgs          → fzf picker of running child procs of this shell
-#        Ctrl-Z then bj  → standard shell flow (suspend current fg job, manage via bj)
 bgs() {
     local shell_pid=$$
 
-    # Collect direct children of this shell that are not fzf/bgs themselves
     local -a procs=()
     while IFS= read -r line; do
         procs+=("$line")

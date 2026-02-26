@@ -50,8 +50,8 @@ is_lid_closed() {
         awk '/AppleClamshellState/ {print $3}' |
         tr '[:upper:]' '[:lower:]')
     case "$state" in
-        yes | 1 | true) return 0 ;;
-        no | 0 | false) return 1 ;;
+    yes | 1 | true) return 0 ;;
+    no | 0 | false) return 1 ;;
     esac
     [[ $(ioreg -n AppleClamshell 2>/dev/null | grep -ic closed) -gt 0 ]]
 }
@@ -116,37 +116,37 @@ stop_instance() {
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --t)
-            IDLE_TIMEOUT="$2"
-            shift 2
-            ;;
-        --bat)
-            BATTERY_THRESHOLD="$2"
-            shift 2
-            ;;
-        --warmup)
-            WARMUP_SECS="$2"
-            shift 2
-            ;;
-        --debug)
-            DEBUG=1
-            shift
-            ;;
-        --_bg)
-            _BG=1
-            shift
-            ;;
-        --stop) stop_instance ;;
-        --status) show_status ;;
-        --log) show_log ;;
-        --help | -h)
-            usage
-            exit 0
-            ;;
-        *)
-            _err "unknown option: $1"
-            exit 1
-            ;;
+    --t)
+        IDLE_TIMEOUT="$2"
+        shift 2
+        ;;
+    --bat)
+        BATTERY_THRESHOLD="$2"
+        shift 2
+        ;;
+    --warmup)
+        WARMUP_SECS="$2"
+        shift 2
+        ;;
+    --debug)
+        DEBUG=1
+        shift
+        ;;
+    --_bg)
+        _BG=1
+        shift
+        ;;
+    --stop) stop_instance ;;
+    --status) show_status ;;
+    --log) show_log ;;
+    --help | -h)
+        usage
+        exit 0
+        ;;
+    *)
+        _err "unknown option: $1"
+        exit 1
+        ;;
     esac
 done
 
@@ -239,8 +239,6 @@ while true; do
         [[ "$remaining" -lt 0 ]] && remaining=0
         _stamp "${_subtle}bat:${battery}% ac:${ac} lid:${lid} idle:${idle_secs}s timeout_in:${remaining}s${_nc}"
     fi
-
-    # ── Decide whether sleep prevention should be on ──────────────────────────
 
     should_prevent=0
 
