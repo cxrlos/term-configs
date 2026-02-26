@@ -361,8 +361,8 @@ bj() {
     (( n )) || { _info "No background jobs"; return 0; }
 
     local modefile actionfile
-    modefile=$(mktemp);  echo normal > "$modefile"
-    actionfile=$(mktemp); echo fg    > "$actionfile"
+    modefile=$(mktemp);   printf 'normal' > "$modefile"
+    actionfile=$(mktemp); printf 'fg'     > "$actionfile"
 
     local line
     line=$(jobs -l | fzf --ansi --reverse --no-sort \
@@ -372,11 +372,11 @@ bj() {
         --bind 'start:disable-search' \
         --bind 'j:down' \
         --bind 'k:up' \
-        --bind "i:enable-search+change-prompt(/ )+unbind(j,k)+execute-silent(echo insert > '$modefile')" \
-        --bind "esc:transform(m=\$(cat '$modefile'); if [[ \$m == insert ]]; then printf '%s' 'disable-search+change-prompt(  jobs → )+rebind(j,k)+execute-silent(echo normal > $modefile)'; else printf '%s' abort; fi)" \
-        --bind "enter:execute-silent(echo fg     > '$actionfile')+accept" \
-        --bind "d:execute-silent(echo disown > '$actionfile')+accept" \
-        --bind "x:execute-silent(echo kill   > '$actionfile')+accept" \
+        --bind "i:enable-search+change-prompt(/ )+unbind(j,k)+execute-silent(printf insert > '$modefile')" \
+        --bind "esc:transform(m=\$(cat '$modefile'); if [[ \$m == insert ]]; then printf '%s' 'disable-search+change-prompt(  jobs → )+rebind(j,k)+execute-silent(printf normal > $modefile)'; else printf '%s' abort; fi)" \
+        --bind "enter:execute-silent(printf fg     > '$actionfile')+accept" \
+        --bind "d:execute-silent(printf disown > '$actionfile')+accept" \
+        --bind "x:execute-silent(printf kill   > '$actionfile')+accept" \
         --color 'fg:#908caa,fg+:#e0def4,hl:#c4a7e7,hl+:#eb6f92,pointer:#eb6f92,header:#908caa,border:#c4a7e7,info:#9ccfd8')
 
     local action; action=$(cat "$actionfile")
@@ -384,13 +384,71 @@ bj() {
     [[ -z "$line" ]] && return 0
 
     local jobnum
-    jobnum=$(echo "$line" | /usr/bin/grep -oE '\[([0-9]+)\]' | head -1 | tr -d '[]')
+    jobnum=$(printf '%s' "$line" | /usr/bin/grep -oE '\[([0-9]+)\]' | head -1 | tr -d '[]')
     [[ -z "$jobnum" ]] && return 0
 
     case "$action" in
         fg)     fg %"$jobnum" ;;
         disown) disown %"$jobnum" && _ok "Disowned job ${_iris}%${jobnum}${_nc}" ;;
         kill)   kill %"$jobnum"   && _ok "Killed job ${_iris}%${jobnum}${_nc}" ;;
+    esac
+}
+
+# Send the current foreground command to bg — suspend it first, then pick action.
+# Usage: bgs          → fzf picker of running child procs of this shell
+#        Ctrl-Z then bj  → standard shell flow (suspend current fg job, manage via bj)
+bgs() {
+    local shell_pid=$$
+
+    # Collect direct children of this shell that are not fzf/bgs themselves
+    local -a procs=()
+    while IFS= read -r line; do
+        procs+=("$line")
+    done < <(ps -o pid=,comm=,args= -g "$shell_pid" 2>/dev/null \
+        | awk -v me="$shell_pid" '
+            $1 != me && $2 !~ /fzf|awk|ps/ { printf "%6s  %-20s  %s\n", $1, $2, $0 }
+        ' 2>/dev/null)
+
+    if [[ ${#procs[@]} -eq 0 ]]; then
+        _info "No suspendable child processes found"
+        _info "Use ${_iris}Ctrl-Z${_nc} to suspend the current foreground job, then ${_iris}u j${_nc} to manage it"
+        return 0
+    fi
+
+    local modefile actionfile
+    modefile=$(mktemp);   printf 'normal' > "$modefile"
+    actionfile=$(mktemp); printf 'bg'     > "$actionfile"
+
+    local line
+    line=$(printf '%s\n' "${procs[@]}" | fzf --ansi --reverse --no-sort \
+        --header '  enter  suspend+bg    x  kill    j/k  nav    i  search    esc  quit' \
+        --prompt '  send to bg → ' \
+        --pointer '→' \
+        --bind 'start:disable-search' \
+        --bind 'j:down' \
+        --bind 'k:up' \
+        --bind "i:enable-search+change-prompt(/ )+unbind(j,k)+execute-silent(printf insert > '$modefile')" \
+        --bind "esc:transform(m=\$(cat '$modefile'); if [[ \$m == insert ]]; then printf '%s' 'disable-search+change-prompt(  send to bg → )+rebind(j,k)+execute-silent(printf normal > $modefile)'; else printf '%s' abort; fi)" \
+        --bind "enter:execute-silent(printf bg   > '$actionfile')+accept" \
+        --bind "x:execute-silent(printf kill > '$actionfile')+accept" \
+        --color 'fg:#908caa,fg+:#e0def4,hl:#c4a7e7,hl+:#eb6f92,pointer:#eb6f92,header:#908caa,border:#c4a7e7,info:#9ccfd8')
+
+    local action; action=$(cat "$actionfile")
+    rm -f "$modefile" "$actionfile"
+    [[ -z "$line" ]] && return 0
+
+    local pid
+    pid=$(printf '%s' "$line" | awk '{print $1}')
+    [[ -z "$pid" || ! "$pid" =~ ^[0-9]+$ ]] && return 0
+
+    case "$action" in
+        bg)
+            kill -STOP "$pid" 2>/dev/null && \
+                _ok "Suspended ${_iris}${pid}${_nc} — use ${_subtle}u j${_nc} to manage it"
+            ;;
+        kill)
+            kill "$pid" 2>/dev/null && _ok "Killed ${_iris}${pid}${_nc}"
+            ;;
     esac
 }
 
@@ -414,7 +472,8 @@ u() {
                     "  ${_iris}P${_nc}  ${_subtle}ports${_nc}     show listening ports" \
                     "  ${_iris}t${_nc}  ${_subtle}tree${_nc}      directory tree" \
                     "  ${_iris}z${_nc}  ${_subtle}dirs${_nc}      top zoxide directories" \
-                    "  ${_iris}j${_nc}  ${_subtle}jobs${_nc}      manage background jobs"
+                    "  ${_iris}j${_nc}  ${_subtle}jobs${_nc}      manage background jobs (fg/disown/kill)" \
+                    "  ${_iris}J${_nc}  ${_subtle}bgpick${_nc}    suspend a running process → send to bg"
             else
                 printf '\n  %su%s %s[command]%s\n\n' "$_bold" "$_nc" "$_subtle" "$_nc"
                 printf '  %ss%s  search    %sfuzzy search aliases+commands%s\n' "$_iris" "$_nc" "$_subtle" "$_nc"
@@ -425,7 +484,8 @@ u() {
                 printf '  %sP%s  ports     %sshow listening ports%s\n'         "$_iris" "$_nc" "$_subtle" "$_nc"
                 printf '  %st%s  tree      %sdirectory tree%s\n'               "$_iris" "$_nc" "$_subtle" "$_nc"
                 printf '  %sz%s  dirs      %stop zoxide directories%s\n'       "$_iris" "$_nc" "$_subtle" "$_nc"
-                printf '  %sj%s  jobs      %smanage background jobs%s\n\n'     "$_iris" "$_nc" "$_subtle" "$_nc"
+                printf '  %sj%s  jobs      %smanage background jobs%s\n'       "$_iris" "$_nc" "$_subtle" "$_nc"
+                printf '  %sJ%s  bgpick    %ssuspend a process → send to bg%s\n\n' "$_iris" "$_nc" "$_subtle" "$_nc"
             fi
             return 0
             ;;
@@ -446,6 +506,7 @@ u() {
         t|tree)    shift; _u_tree "$@" ;;
         z|dirs)    _u_dirs ;;
         j|jobs)    bj ;;
+        J|bgpick)  bgs ;;
         "")
             if command -v gum &>/dev/null; then
                 local choice
@@ -461,7 +522,8 @@ u() {
                     "ports     show listening ports" \
                     "tree      directory tree" \
                     "dirs      top zoxide directories" \
-                    "jobs      manage background jobs") || return 1
+                    "jobs      manage background jobs" \
+                    "bgpick    suspend a process → send to bg") || return 1
                 case "${choice%% *}" in
                     search)  _u_search ;;
                     add)     _u_add ;;
@@ -480,12 +542,13 @@ u() {
                     tree)    _u_tree ;;
                     dirs)    _u_dirs ;;
                     jobs)    bj ;;
+                    bgpick)  bgs ;;
                 esac
             else
                 u --help; return 1
             fi
             ;;
-        *) _err "Unknown: u $1"; return 1 ;;
+        *) _err "Unknown: u $1  (try u --help)"; return 1 ;;
     esac
 }
 
