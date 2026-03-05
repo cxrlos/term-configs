@@ -34,6 +34,42 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
     alias hidefiles="defaults write com.apple.finder AppleShowAllFiles NO; killall Finder"
 fi
 
+# Linux: caffeinate-compatible wrapper using systemd-inhibit (no-op on macOS)
+if [[ "$OSTYPE" != "darwin"* ]]; then
+    caffeinate() {
+        local what=""
+        local timeout="infinity"
+        local OPTIND opt
+
+        while getopts "disut:" opt; do
+            case ${opt} in
+                d|u)
+                    [[ "$what" != *"idle"* ]] && what="${what:+$what:}idle"
+                    ;;
+                i|s)
+                    [[ "$what" != *"sleep"* ]] && what="${what:+$what:}sleep"
+                    ;;
+                t)
+                    timeout="$OPTARG"
+                    ;;
+                \?)
+                    echo "Usage: caffeinate [-disu] [-t timeout] [command...]"
+                    return 1
+                    ;;
+            esac
+        done
+        shift $((OPTIND -1))
+
+        [[ -z "$what" ]] && what="idle:sleep"
+
+        if [[ $# -gt 0 ]]; then
+            systemd-inhibit --what="$what" --why="caffeinate CLI" "$@"
+        else
+            systemd-inhibit --what="$what" --why="caffeinate CLI" sleep "$timeout"
+        fi
+    }
+fi
+
 command -v bat &>/dev/null && alias cat='bat --style=plain'
 command -v rg  &>/dev/null && alias grep='rg'
 

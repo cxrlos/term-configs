@@ -1,37 +1,119 @@
 #!/usr/bin/env bash
-set -euo pipefail
 
-SCAN_DIRS=("$HOME/Documents/ps" "$HOME/dev")
+# ORG_DIRS: depth-1 scan, only git repos shown (non-git dirs silently excluded)
+ORG_DIRS=(
+    "$HOME/Documents/sustainlabs-ai"
+    "$HOME/Documents/configs"
+    "$HOME/Documents/clients"
+    "$HOME/dev"
+)
+PROJECT_DIRS=(
+    "$HOME/Documents/personal-projects/ratatoist"
+)
 
-selected=$(
-    {
-        for dir in "${SCAN_DIRS[@]}"; do
-            [[ -d "$dir" ]] && find "$dir" -mindepth 1 -maxdepth 1 -type d 2>/dev/null
-        done
-    } | sed "s|$HOME|~|" | sort |
-        fzf --prompt="  " --print-query \
-            --color="fg:#908caa,hl:#c4a7e7,fg+:#e0def4,hl+:#eb6f92,info:#9ccfd8,pointer:#eb6f92,header:#9ccfd8,bg+:#26233a" \
-            --header="Type path or pick project" |
-        tail -1
-) || exit 0
+RESURRECT_DIR="${TMUX_RESURRECT_DIR:-}"
+if [[ -z "$RESURRECT_DIR" ]]; then
+    if [[ -d "$HOME/.tmux/resurrect" ]]; then
+        RESURRECT_DIR="$HOME/.tmux/resurrect"
+    else
+        RESURRECT_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/tmux/resurrect"
+    fi
+fi
+RESTORE_SCRIPT="${TMUX_RESURRECT_RESTORE:-$HOME/.tmux/plugins/tmux-resurrect/scripts/restore.sh}"
 
-[[ -n "$selected" ]] || exit 0
-
-selected="${selected/#\~/$HOME}"
-
-[[ -d "$selected" ]] || {
-    echo "Not a directory: $selected"
-    exit 1
+do_restore() {
+    tmux start-server 2>/dev/null
+    tmux new-session -ds _restore 2>/dev/null
+    if [[ -x "$RESTORE_SCRIPT" ]]; then
+        "$RESTORE_SCRIPT" 2>/dev/null
+        first=$(tmux list-sessions -F "#{session_name}" 2>/dev/null | grep -v '^_restore$' | head -1)
+        if [[ -n "$first" ]]; then
+            tmux kill-session -t _restore 2>/dev/null
+            if [[ -n "${TMUX:-}" ]]; then
+                tmux switch-client -t "$first"
+            else
+                tmux attach-session -t "$first"
+            fi
+            exit 0
+        fi
+    fi
+    if [[ -n "${TMUX:-}" ]]; then
+        tmux switch-client -t _restore
+    else
+        tmux attach-session -t _restore
+    fi
+    exit 0
 }
 
-session_name=$(basename "$selected" | tr '.' '_')
+if [[ $# -eq 1 ]]; then
+    selected=$1
+else
+    restore=""
+    [[ -f "$RESURRECT_DIR/last" ]] && restore="[restore] last saved"
 
-if ! tmux has-session -t="$session_name" 2>/dev/null; then
-    tmux new-session -ds "$session_name" -c "$selected"
+    sessions=$(tmux list-sessions -F "[session] #{session_name}" 2>/dev/null)
+    dirs=$(
+        {
+            for dir in "${ORG_DIRS[@]}"; do
+                [[ -d "$dir" ]] || continue
+                find "$dir" -mindepth 2 -maxdepth 2 -name '.git' -type d 2>/dev/null |
+                    sed 's|/\.git$||'
+            done
+            for dir in "${PROJECT_DIRS[@]}"; do
+                [[ -d "$dir" ]] && echo "$dir"
+            done
+        } | sed "s|$HOME|~|" | sort
+    )
+    selected=$(
+        {
+            echo "$restore"
+            echo "$sessions"
+            echo "$dirs"
+        } | grep -v '^$' |
+            fzf --prompt="  " \
+                --header="  switch or open project" \
+                --color="fg:#908caa,hl:#c4a7e7,fg+:#e0def4,hl+:#eb6f92,info:#9ccfd8,pointer:#eb6f92,header:#9ccfd8,bg+:#26233a"
+    ) || exit 0
 fi
 
+[[ -z "$selected" ]] && exit 0
+
+if [[ "$selected" == "[restore] last saved" ]]; then
+    do_restore
+fi
+
+if [[ "$selected" == "[session] "* ]]; then
+    name="${selected#"[session] "}"
+    if [[ -n "${TMUX:-}" ]]; then
+        tmux switch-client -t "$name"
+    else
+        tmux attach-session -t "$name"
+    fi
+    exit 0
+fi
+
+selected="${selected/#\~/$HOME}"
+[[ -d "$selected" ]] || exit 1
+name=$(basename "$selected" | tr '.' '_')
+
+# Runs .tmux-sessionizer in the project root only on first session creation
+hydrate() {
+    local script="$selected/.tmux-sessionizer"
+    [[ -x "$script" ]] && TMUX_SESSION="$name" bash "$script"
+}
+
 if [[ -n "${TMUX:-}" ]]; then
-    tmux switch-client -t "$session_name"
+    if ! tmux has-session -t="$name" 2>/dev/null; then
+        tmux new-session -ds "$name" -c "$selected"
+        hydrate
+    fi
+    tmux switch-client -t "$name"
 else
-    tmux attach-session -t "$session_name"
+    if tmux has-session -t="$name" 2>/dev/null; then
+        tmux attach-session -t "$name"
+    else
+        tmux new-session -ds "$name" -c "$selected"
+        hydrate
+        tmux attach-session -t "$name"
+    fi
 fi

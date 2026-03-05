@@ -1,4 +1,3 @@
-ollama/llama3.1:8b
-ollama/llama3.1-tools:latest
-ollama/OpenCodeQwen:latest
-ollama/qwen2.5-coder:14b-instruct-q4_K_M
+ollama/orca2:7b
+ollama/qwen2.5-coder:7b
+ollama/deepseek-coder-v2:16b
