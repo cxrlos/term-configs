@@ -87,6 +87,38 @@ trap 'rm -f "$tmpfile"' EXIT
     gap
     tip  "Rule: if reconstructing the session would take > 30 seconds, save it."
 
+    head "Per-project layout (hydration)"
+    body "Drop a .tmux-sessionizer file in any project root to define a default"
+    body "window layout. The sessionizer runs it once when the session is first"
+    body "created — re-attaching an existing session skips it."
+    gap
+    body "Structure:"
+    code "#!/usr/bin/env bash"
+    code ""
+    code "# Rename the first window (always exists after session creation)"
+    code "tmux rename-window -t \"\${TMUX_SESSION}:1\" editor"
+    code "tmux send-keys    -t \"\${TMUX_SESSION}:editor\" 'nvim .' Enter"
+    code ""
+    code "# Add more windows as needed"
+    code "tmux new-window -t \"\${TMUX_SESSION}\" -n server"
+    code "tmux send-keys  -t \"\${TMUX_SESSION}:server\" 'npm run dev' Enter"
+    code ""
+    code "tmux new-window -t \"\${TMUX_SESSION}\" -n shell"
+    code ""
+    code "# Return focus to the first window"
+    code "tmux select-window -t \"\${TMUX_SESSION}:editor\""
+    gap
+    body "Rules:"
+    body "  • Always use \$TMUX_SESSION to target the right session"
+    body "  • Rename window 1 first — it already exists, don't create a duplicate"
+    body "  • End by selecting the window you want focus on"
+    body "  • Keep it short: editor, server/watcher, shell — that's usually enough"
+    body "  • Make it executable: chmod +x .tmux-sessionizer"
+    gap
+    tip  "Don't auto-start things that need manual confirmation (e.g. migrations)."
+    tip  "Auto-start dev servers and watchers only — safe to run unconditionally."
+    gap
+
     head "Session hygiene"
     body "Kill sessions you're fully done with:"
     code "\`x on the last pane   (or tmux kill-session -t name)"
