@@ -155,6 +155,7 @@ TARGETS=(
     "$HOME/.config/fastfetch"
     "$HOME/.tmux.conf"
     "$HOME/.tmux-cheatsheet.sh"
+    "$HOME/.tmux-guides"
     "$HOME/.local/bin/tmux-sessionizer"
 )
 
@@ -206,7 +207,9 @@ link_or_copy "$REPO_DIR/fastfetch" "$HOME/.config/fastfetch"
 # ── tmux ───────────────────────────────────────────────────────────────────────
 link_or_copy "$REPO_DIR/tmux/tmux.conf" "$HOME/.tmux.conf"
 link_or_copy "$REPO_DIR/tmux/cheatsheet.sh" "$HOME/.tmux-cheatsheet.sh"
+link_or_copy "$REPO_DIR/tmux/guides" "$HOME/.tmux-guides"
 chmod +x "$HOME/.tmux-cheatsheet.sh"
+chmod +x "$HOME/.tmux-guides/"*.sh 2>/dev/null || true
 
 # ── Scripts ────────────────────────────────────────────────────────────────────
 mkdir -p "$HOME/.local/bin"
@@ -223,6 +226,7 @@ success "$_verb: ~/.config/alacritty/ → alacritty/"
 success "$_verb: ~/.config/fastfetch/ → fastfetch/"
 success "$_verb: ~/.tmux.conf → tmux/tmux.conf"
 success "$_verb: ~/.tmux-cheatsheet.sh → tmux/cheatsheet.sh"
+success "$_verb: ~/.tmux-guides/ → tmux/guides/"
 success "$_verb: ~/.local/bin/tmux-sessionizer → scripts/tmux-sessionizer"
 success "$_verb: ~/.local/bin/lidrun → scripts/lidrun.sh"
 

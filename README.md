@@ -25,14 +25,19 @@ zsh/
   vim.zsh           vi mode, cursor shape, key bindings
   git.zsh           gnb, g hub, git aliases, Rose Pine log
   utils.zsh         a hub, u hub, eza/extract/path/ports/tree
+  tmux.zsh          tm — enter tmux from the shell
 starship/           prompt (Rose Pine palette, fill line, time)
 tmux/
   tmux.conf         prefix=`, vim-tmux-nav, popups, Rose Pine status
   cheatsheet.sh     floating keybinding reference (` ?)
+  guides/
+    picker.sh       guide selector (` /)
+    generic.sh      workflow concepts — sessions, windows, panes, resurrect
+    sustainlabs.sh  project-specific guide with concrete examples
 fastfetch/          system info config (Rose Pine themed)
 scripts/
   install.sh        deps, symlinks, git config, macOS settings
-  tmux-sessionizer  fzf project picker for tmux sessions
+  tmux-sessionizer  fzf picker: existing sessions + project dirs; switch or create
 ```
 
 ## Hub commands
@@ -44,6 +49,21 @@ Three single-letter entry points with gum-powered menus:
 | `g`     | git: branch, commit, diff, log, status (with format variants)  |
 | `a`     | aliases: fuzzy search all commands, interactive alias creation |
 | `u`     | utils: extract, tldr, path, ports, tree, zoxide dirs           |
+
+## tmux workflow
+
+**Sessions = projects.** One session per project/context. Windows are views inside that session (editor, server, logs). Panes split a window.
+
+| Step | What to do |
+| ---- | ---------- |
+| Enter tmux | `tm` — fzf lists running sessions + project dirs; pick one |
+| Switch project | `` `f `` — same fzf list from inside tmux |
+| Detach | `` `d `` — session keeps running; returns to shell |
+| Save & restore | `` `C-s `` / `` `C-r `` — manual save / restore (tmux-resurrect) |
+| Kill session | `` `x `` on last pane, or `tmux kill-session -t name` from shell |
+| Per-project layout | add `.tmux-sessionizer` to project root — runs once on session creation |
+
+Run `` `/ `` inside tmux for the full workflow guide. Run `` `? `` for the quick reference.
 
 ## tmux keybindings
 
@@ -63,13 +83,15 @@ Prefix: `` ` `` (backtick)
 | `` ` ^ ``         | last window (toggle)                          |
 | `` ` z ``         | zoom pane                                     |
 | `` ` x / X ``     | kill pane / window                            |
-| `` ` ? ``         | cheatsheet (fzf, VISUAL/INSERT modal)         |
-| `` ` f ``         | sessionizer (project picker)                  |
+| `` ` ? ``         | cheatsheet (quick reference)                  |
+| `` ` / ``         | session workflow guide (noob mode)            |
+| `` ` f ``         | sessionizer (switch session or open project)  |
 | `` ` g ``         | lazygit                                       |
 | `` ` t ``         | popup shell in current directory              |
 | `` ` m ``         | htop                                          |
 | `` ` T ``         | ratatoist (Todoist TUI)                      |
 | `` ` w ``         | fzf session/window/pane picker                |
+| `` ` C-s / C-r `` | save / restore (tmux-resurrect)               |
 | `` ` Enter ``     | copy mode (vi)                                |
 | `` ` Space ``     | thumbs — hint-based yank (URLs, paths, hashes)|
 
@@ -91,7 +113,3 @@ Rose Pine (main) everywhere. Named palette in starship, true-color ANSI helpers 
 ## TODO
 
 - [ ] `` ` e `` — open last command output in nvim (read-only, relative numbers). Capture scrollback delta via `preexec` hook + `tmux capture-pane`, display in a popup. Blocked on reliable pane-id passing into `display-popup`.
-
-## License
-
-MIT
