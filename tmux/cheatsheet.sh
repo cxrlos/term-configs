@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-h='\033[38;2;196;167;231m' # #c4a7e7 purple  — section headers
-k='\033[38;2;156;207;216m' # #9ccfd8 cyan    — keys
+h='\033[38;2;196;167;231m' # #c4a7e7 iris    — section headers
+k='\033[38;2;156;207;216m' # #9ccfd8 foam    — keys
 d='\033[38;2;144;140;170m' # #908caa muted   — descriptions
 s='\033[38;2;62;53;82m'    # #3e3552 dim     — separator
 r='\033[0m'
@@ -20,25 +20,34 @@ trap 'rm -f "$tmpfile" "$navscript"' EXIT
 # ── Generate content ────────────────────────────────────────────────────────────
 {
     section "Sessions  (shell)"
-    row "tmux" "new session"
-    row "tmux new -s name" "new named session"
-    row "tmux ls" "list sessions"
-    row "tmux a" "attach last session"
-    row "tmux a -t name" "attach named session"
-    row "tmux kill-ses -t name" "kill session"
+    row "tm" "sessionizer — pick or create a session"
+    row "tmux ls" "list all sessions"
+    row "tmux a" "attach to last session"
+    row "tmux a -t name" "attach to named session"
+    row "tmux kill-ses -t name" "kill a session"
 
-    section "Sessions  (prefix)"
-    row '$' "rename session"
-    row "d" "detach"
+    section "Sessions  (prefix \`)"
+    row "f" "sessionizer — switch or open project"
+    row "\$" "rename session"
+    row "d" "detach  (session keeps running)"
     row "( / )" "previous / next session"
-    row "L" "last session"
+    row "L" "last session  (toggle)"
 
-    section "Windows  (prefix)"
+    section "Windows  (prefix \`)"
+    row "c" "new window  (inherits current dir)"
+    row "1..9" "jump to window N"
+    row "n / p" "next / prev window  (repeatable)"
+    row "^" "last window  (toggle)"
+    row "< / >" "move window left / right"
     row "," "rename window"
-    row "X" "kill window (custom)"
-    row "&" "kill window with confirm (built-in)"
+    row "X" "kill window"
+    row "&" "kill window with confirm  (built-in)"
 
-    section "Panes  (prefix)"
+    section "Panes  (prefix \`)"
+    row "v" "split right  (vertical divider)"
+    row "s" "split down  (horizontal divider)"
+    row "z" "zoom pane  (fullscreen toggle)"
+    row "x" "kill pane"
     row ";" "last active pane"
     row "o" "cycle panes"
     row "q" "show pane numbers"
@@ -46,47 +55,36 @@ trap 'rm -f "$tmpfile" "$navscript"' EXIT
     row "!" "break pane → new window"
 
     section "Navigation"
-    row "C-h/j/k/l" "seamless pane nav (vim+tmux, no prefix)"
-    row "h/j/k/l" "select pane (prefix, repeatable)"
-    row "H/J/K/L" "resize pane (prefix, repeatable)"
+    row "C-h/j/k/l" "seamless pane nav  (vim+tmux, no prefix)"
+    row "h/j/k/l" "select pane  (prefix, repeatable)"
+    row "H/J/K/L" "resize pane  (prefix, repeatable)"
 
-    section "Prefix  (\`)"
-    row "v" "split right (vertical divider)"
-    row "s" "split down (horizontal divider)"
-    row "c" "new window (inherits current dir)"
-    row "1..9" "jump to window N"
-    row "n / p" "next / prev window (repeatable)"
-    row "< / >" "move window left / right"
-    row "^" "last window (toggle)"
-    row "z" "zoom pane (fullscreen toggle)"
-    row "x" "kill pane"
-    row "X" "kill window"
-
-    section "Popups  (prefix)"
+    section "Popups  (prefix \`)"
     row "?" "this cheatsheet"
-    row "f" "sessionizer (project switcher)"
+    row "/" "workflow guide  (pick generic or project)"
+    row "f" "sessionizer"
     row "g" "lazygit"
     row "t" "popup shell in current directory"
     row "m" "htop"
-    row "T" "ratatoist (Todoist TUI)"
-    row "w" "fzf session/window/pane picker"
+    row "T" "ratatoist  (Todoist TUI)"
+    row "w" "fzf session/window/pane picker  (tmux-fzf)"
 
     section "Plugins"
-    row "Space" "thumbs — hint-based yank (URLs, paths, hashes)"
+    row "Space" "thumbs — hint-based yank  (URLs, paths, hashes)"
     row "Enter" "enter copy mode"
     row "C-s" "save session  (tmux-resurrect)"
-    row "C-r" "restore session (tmux-resurrect)"
+    row "C-r" "restore session  (tmux-resurrect)"
 
     section "Copy mode  (vi)"
     row "Enter / [" "enter copy mode"
     row "q / Escape" "exit copy mode"
     row "v" "begin selection"
-    row "C-v" "rectangle (block) selection"
+    row "C-v" "rectangle  (block) selection"
     row "y" "yank selection → clipboard"
     row "Y" "yank entire line → clipboard"
-    row "P" "paste tmux buffer (prefix + P)"
-    row "]" "paste tmux buffer (built-in)"
-    row "o" "open file / URL under cursor (tmux-open)"
+    row "P" "paste tmux buffer  (prefix + P)"
+    row "]" "paste tmux buffer  (built-in)"
+    row "o" "open file / URL under cursor  (tmux-open)"
 
     section "Copy mode — navigation"
     row "h/j/k/l" "move cursor"
@@ -100,8 +98,8 @@ trap 'rm -f "$tmpfile" "$navscript"' EXIT
 
     section "Other"
     row "r" "reload config"
-    row "I" "install plugins (TPM)"
-    row "U" "update plugins (TPM)"
+    row "I" "install plugins  (TPM)"
+    row "U" "update plugins  (TPM)"
     row "\`\`" "send literal backtick"
 
     printf "\n"
@@ -145,13 +143,11 @@ acts_up() {
 }
 
 if [[ "$dir" == "l" ]]; then
-  # Next section
   target=""
   for s in $SECTION_POS; do
     if (( s > pos )); then target=$s; break; fi
   done
   if [[ -z "$target" ]]; then
-    # Wrap: jump to first section via first+down*N
     first=${SECTION_POS%% *}
     act="first"
     for ((i=1; i<first; i++)); do act="$act+down"; done
@@ -161,7 +157,6 @@ if [[ "$dir" == "l" ]]; then
   fi
 
 elif [[ "$dir" == "h" ]]; then
-  # Prev section
   prev=""
   for s in $SECTION_POS; do
     if (( s >= pos )); then break; fi
@@ -170,7 +165,6 @@ elif [[ "$dir" == "h" ]]; then
   if [[ -n "$prev" ]]; then
     acts_up $(( pos - prev ))
   else
-    # Wrap: jump to last section via last+up*N
     last=${SECTION_POS##* }
     act="last"
     for ((i=0; i < TOTAL_LINES - last; i++)); do act="$act+up"; done
