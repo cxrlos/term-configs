@@ -676,3 +676,5 @@ y() {
 
 # ── user-added ─────────────────────────────────────────────────────────────
 # Add manually or use `u a` for interactive creation.
+source $HOME/.nurc
+export NUCLI_BB_ENABLED=t
