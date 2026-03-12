@@ -75,13 +75,20 @@ _install_deps_macos() {
             brew install "$dep"
         fi
     done
+    if brew list --cask font-profont-nerd-font &>/dev/null; then
+        success "ProFont IIx Nerd Font Mono"
+    else
+        info "Installing ProFont IIx Nerd Font Mono..."
+        brew tap homebrew/cask-fonts 2>/dev/null || true
+        brew install --cask font-profont-nerd-font
+    fi
 }
 
 _install_deps_arch() {
     info "Syncing package database..."
     sudo pacman -Sy --noconfirm
 
-    local pacman_deps=(starship fzf bat ripgrep eza zoxide tldr fastfetch tmux)
+    local pacman_deps=(starship fzf bat ripgrep eza zoxide tldr fastfetch tmux ttf-profont-nerd)
     for dep in "${pacman_deps[@]}"; do
         if pacman -Qi "$dep" &>/dev/null; then
             success "$dep"
@@ -110,22 +117,15 @@ _install_deps_arch() {
 # ── Font ───────────────────────────────────────────────────────────────────────
 
 _check_font() {
-    # Check common install locations then fall back to fc-list
-    case "$OS" in
-        macos) ls "$HOME/Library/Fonts"/BerkeleyMono* &>/dev/null && return 0 ;;
-        arch) ls "$HOME/.local/share/fonts"/BerkeleyMono* &>/dev/null && return 0 ;;
-    esac
-    fc-list 2>/dev/null | grep -qi "BerkeleyMono\|Berkeley Mono" && return 0
+    fc-list 2>/dev/null | grep -qi "ProFont IIx Nerd Font" && return 0
+    [[ "$OS" == "macos" ]] && ls ~/Library/Fonts/ProFont* &>/dev/null && return 0
     return 1
 }
 
 if _check_font; then
-    success "BerkeleyMono Nerd Font"
+    success "ProFont IIx Nerd Font Mono"
 else
-    warn "BerkeleyMono Nerd Font not found"
-    warn "  Berkeley Mono is a commercial font — purchase + download at:"
-    warn "  https://berkeleygraphics.com/typefaces/berkeley-mono/"
-    warn "  Install the Nerd Font patched variant, then re-run this script."
+    warn "ProFont IIx Nerd Font Mono not found — will be installed with dependencies"
 fi
 
 # ── Install dependencies ───────────────────────────────────────────────────────
@@ -153,6 +153,7 @@ TARGETS=(
     "$HOME/.config/starship.toml"
     "$HOME/.config/alacritty"
     "$HOME/.config/fastfetch"
+
     "$HOME/.tmux.conf"
     "$HOME/.tmux-cheatsheet.sh"
     "$HOME/.tmux-guides"
@@ -224,6 +225,7 @@ success "$_verb: ~/.zsh/ → zsh/"
 success "$_verb: ~/.config/starship.toml → starship/starship.toml"
 success "$_verb: ~/.config/alacritty/ → alacritty/"
 success "$_verb: ~/.config/fastfetch/ → fastfetch/"
+
 success "$_verb: ~/.tmux.conf → tmux/tmux.conf"
 success "$_verb: ~/.tmux-cheatsheet.sh → tmux/cheatsheet.sh"
 success "$_verb: ~/.tmux-guides/ → tmux/guides/"
