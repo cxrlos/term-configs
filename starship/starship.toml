@@ -34,7 +34,7 @@ iris    = '#c4a7e7'
 
 [directory]
 truncation_length = 3
-truncation_symbol = '…/'
+truncation_symbol = '../'
 style = 'bold foam'
 read_only = ' 󰌾'
 read_only_style = 'love'

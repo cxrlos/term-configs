@@ -28,11 +28,11 @@ history = 65535
 multiplier = 3
 
 [font]
-normal = { family = "BerkeleyMono Nerd Font Mono", style = "Regular" }
-bold = { family = "BerkeleyMono Nerd Font Mono", style = "Bold" }
-italic = { family = "BerkeleyMono Nerd Font Mono", style = "Oblique" }
-bold_italic = { family = "BerkeleyMono Nerd Font Mono", style = "Bold Oblique" }
-size = 12.0
+normal = { family = "ProFont IIx Nerd Font Mono" }
+bold = { family = "ProFont IIx Nerd Font Mono" }
+italic = { family = "ProFont IIx Nerd Font Mono" }
+bold_italic = { family = "ProFont IIx Nerd Font Mono" }
+size = 10.0
 offset = { x = 0, y = 1 }
 builtin_box_drawing = true
 

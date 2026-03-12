@@ -1,6 +1,6 @@
 # Terminal Configuration
 
-Alacritty + Zsh + tmux + Starship, unified under Rose Pine with BerkeleyMono Nerd Font.
+Alacritty + Zsh + tmux + Starship, unified under Rose Pine with IoskeleyMono Nerd Font.
 
 Targets **macOS** and **Arch Linux**.
 
@@ -12,7 +12,7 @@ cd term-configs
 bash scripts/install.sh
 ```
 
-The installer detects the OS, installs dependencies (brew on macOS, pacman + yay on Arch), checks for BerkeleyMono Nerd Font, symlinks or copies all configs, bootstraps zinit and TPM, and sets git globals.
+The installer detects the OS, installs dependencies (brew on macOS, pacman + yay on Arch), checks for IoskeleyMono Nerd Font, symlinks or copies all configs, bootstraps zinit and TPM, and sets git globals.
 
 ## Structure
 
