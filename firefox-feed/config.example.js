@@ -1,5 +1,5 @@
-// Copy this file to config.js and fill in your values.
-// See scripts/install.sh comments for re-authorization steps.
+// Preferred: run gen-config.sh to pull secrets from Bitwarden automatically.
+// Manual fallback: copy this file to config.js and fill in values.
 
 window.STRAVA_CREDS = {
   clientId:     '',

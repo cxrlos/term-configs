@@ -223,12 +223,10 @@ chmod +x "$HOME/.local/bin/lidrun"
 # ── Firefox feed ───────────────────────────────────────────────────────────────
 link_or_copy "$REPO_DIR/firefox-feed" "$HOME/.zsh/firefox-feed"
 # Set Firefox homepage to: file://$HOME/.zsh/firefox-feed/index.html
-# Strava credentials live in firefox-feed/config.js (gitignored).
-# To set up on a new machine:
-#   1. cp firefox-feed/config.example.js firefox-feed/config.js  (then fill in secrets)
-#   2. Visit: https://www.strava.com/oauth/authorize?client_id=210812&response_type=code&redirect_uri=http://localhost&scope=activity:read_all&approval_prompt=force
-#   3. curl -X POST https://www.strava.com/oauth/token -d client_id=210812 -d client_secret=SECRET -d code=CODE -d grant_type=authorization_code
-#   4. Paste the refresh_token into config.js
+# Secrets live in firefox-feed/config.js (gitignored — never committed).
+# On a new machine, generate it from Bitwarden:
+#   bash firefox-feed/gen-config.sh
+# Manual fallback: cp firefox-feed/config.example.js firefox-feed/config.js
 
 _verb=$([[ "${install_mode:-1}" == "2" ]] && echo "Copied" || echo "Symlinked")
 success "$_verb: ~/.zshrc → zsh/.zshrc"
