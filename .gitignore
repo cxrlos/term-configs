@@ -4,6 +4,11 @@
 # Work-specific config (sensitive paths and aliases)
 zsh/nubank.zsh
 
+# Firefox feed secrets and generated output
+firefox-feed/config.js
+firefox-feed/gh-data.js
+firefox-feed/status.json
+
 # Machine-specific install metadata
 zsh/.local
 
