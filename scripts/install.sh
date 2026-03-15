@@ -131,8 +131,8 @@ fi
 # ── Install dependencies ───────────────────────────────────────────────────────
 
 case "$OS" in
-    macos) _install_deps_macos ;;
-    arch) _install_deps_arch ;;
+macos) _install_deps_macos ;;
+arch) _install_deps_arch ;;
 esac
 
 # ── Backup helper ──────────────────────────────────────────────────────────────
@@ -158,7 +158,6 @@ TARGETS=(
     "$HOME/.tmux-cheatsheet.sh"
     "$HOME/.tmux-guides"
     "$HOME/.local/bin/tmux-sessionizer"
-    "$HOME/.zsh/firefox-feed"
 )
 
 HAS_EXISTING=false
@@ -220,14 +219,6 @@ chmod +x "$HOME/.local/bin/tmux-sessionizer"
 link_or_copy "$REPO_DIR/scripts/lidrun.sh" "$HOME/.local/bin/lidrun"
 chmod +x "$HOME/.local/bin/lidrun"
 
-# ── Firefox feed ───────────────────────────────────────────────────────────────
-link_or_copy "$REPO_DIR/firefox-feed" "$HOME/.zsh/firefox-feed"
-# Set Firefox homepage to: file://$HOME/.zsh/firefox-feed/index.html
-# Secrets live in firefox-feed/config.js (gitignored — never committed).
-# On a new machine, generate it from Bitwarden:
-#   bash firefox-feed/gen-config.sh
-# Manual fallback: cp firefox-feed/config.example.js firefox-feed/config.js
-
 _verb=$([[ "${install_mode:-1}" == "2" ]] && echo "Copied" || echo "Symlinked")
 success "$_verb: ~/.zshrc → zsh/.zshrc"
 success "$_verb: ~/.zsh/ → zsh/"
@@ -240,7 +231,6 @@ success "$_verb: ~/.tmux-cheatsheet.sh → tmux/cheatsheet.sh"
 success "$_verb: ~/.tmux-guides/ → tmux/guides/"
 success "$_verb: ~/.local/bin/tmux-sessionizer → scripts/tmux-sessionizer"
 success "$_verb: ~/.local/bin/lidrun → scripts/lidrun.sh"
-success "$_verb: ~/.zsh/firefox-feed/ → firefox-feed/"
 
 # ── Local config ───────────────────────────────────────────────────────────────
 

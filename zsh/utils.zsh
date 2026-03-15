@@ -116,6 +116,9 @@ _write_to_config() {
     fi
 }
 
+# Claude Code (cloud): no BASE_URL so your API key is used.
+alias claude-cloud='unset ANTHROPIC_BASE_URL; unset ANTHROPIC_AUTH_TOKEN; unset ANTHROPIC_DEFAULT_HAIKU_MODEL; unset ANTHROPIC_DEFAULT_SONNET_MODEL; unset ANTHROPIC_DEFAULT_OPUS_MODEL; unset ANTHROPIC_MODEL; claude'
+
 a() {
     case "$1" in
         -h|--help)
@@ -123,17 +126,17 @@ a() {
                 gum style --border rounded --border-foreground "#c4a7e7" --padding "1 2" --margin "1 0" \
                     "${_bold}a${_nc} ${_subtle}[command]${_nc}" \
                     "" \
-                    "  ${_iris}c${_nc}  ${_subtle}claude${_nc}    Claude Code" \
-                    "  ${_iris}o${_nc}  ${_subtle}opencode${_nc}  OpenCode → pick model"
+                    "  ${_iris}i${_nc}  ${_subtle}aider${_nc}    Aider (Ollama, git-backed edits)" \
+                    "  ${_iris}c${_nc}  ${_subtle}claude${_nc}   Claude Code (cloud)"
             else
                 printf '\n  %sa%s %s[command]%s\n\n' "$_bold" "$_nc" "$_subtle" "$_nc"
-                printf '  %sc%s  claude    %sClaude Code%s\n'              "$_iris" "$_nc" "$_subtle" "$_nc"
-                printf '  %so%s  opencode  %sOpenCode → pick model%s\n\n' "$_iris" "$_nc" "$_subtle" "$_nc"
+                printf '  %si%s  aider    %sAider (Ollama, git-backed edits)%s\n' "$_iris" "$_nc" "$_subtle" "$_nc"
+                printf '  %sc%s  claude   %sClaude Code (cloud)%s\n\n' "$_iris" "$_nc" "$_subtle" "$_nc"
             fi
             return 0
             ;;
-        c|claude)   shift; claude "$@" ;;
-        o|opencode) shift; _a_opencode "$@" ;;
+        i|aider)  shift; _a_aider "$@" ;;
+        c|claude) shift; claude "$@" ;;
         "")
             if command -v gum &>/dev/null; then
                 local choice
@@ -141,11 +144,11 @@ a() {
                     --cursor.foreground "#eb6f92" \
                     --selected.foreground "#c4a7e7" \
                     --header "AI" --header.foreground "#9ccfd8" \
-                    "claude    Claude Code" \
-                    "opencode  OpenCode") || return 1
+                    "aider   Aider (Ollama)" \
+                    "claude  Claude Code (cloud)") || return 1
                 case "${choice%% *}" in
-                    claude)   claude ;;
-                    opencode) _a_opencode ;;
+                    aider)  _a_aider ;;
+                    claude) claude ;;
                 esac
             else
                 a --help; return 1
@@ -155,49 +158,12 @@ a() {
     esac
 }
 
-_a_opencode() {
-    command -v gum &>/dev/null || { _err "Requires gum"; return 1; }
-
-    local models_file="${ZSH_CONFIG_DIR}/opencode-models"
-    local -a model_opts=()
-
-    if [[ -f "$models_file" ]]; then
-        while IFS= read -r line; do
-            [[ -n "$line" ]] && model_opts+=("$line")
-        done < "$models_file"
-    else
-        _warn "No model catalog — select 'refresh' to build it"
-    fi
-
-    model_opts+=("refresh  update catalog" "other    enter manually")
-
-    local choice
-    choice=$(printf '%s\n' "${model_opts[@]}" | gum choose --cursor-prefix "→ " \
-        --cursor.foreground "#eb6f92" \
-        --selected.foreground "#c4a7e7" \
-        --header "OpenCode model" --header.foreground "#9ccfd8") || return 1
-
-    local model
-    case "${choice%% *}" in
-        refresh)
-            _a_opencode_refresh && _a_opencode "$@"
-            return
-            ;;
-        other)
-            model=$(gum input \
-                --header "Model name" --header.foreground "#9ccfd8" \
-                --placeholder "e.g. ollama/qwen2.5-coder:32b" \
-                --prompt "→ " --prompt.foreground "#9ccfd8" \
-                --cursor.foreground "#eb6f92") || return 1
-            [[ -n "$model" ]] || return 1
-            ;;
-        *) model="$choice" ;;
-    esac
-
+_a_aider() {
+    command -v aider &>/dev/null || { _err "aider not found"; return 1; }
     local started_serve=0 serve_pid
     if command -v ollama &>/dev/null && ! ollama list &>/dev/null 2>&1; then
         _info "Starting ollama serve..."
-        OLLAMA_CONTEXT_LENGTH=128000 HSA_OVERRIDE_GFX_VERSION=10.3.0 ollama serve &>/dev/null &
+        OLLAMA_CONTEXT_LENGTH=128000 ollama serve &>/dev/null &
         serve_pid=$!
         started_serve=1
         local i=0
@@ -211,54 +177,36 @@ _a_opencode() {
         done
     fi
 
-    HSA_OVERRIDE_GFX_VERSION=10.3.0 opencode --model "$model" "$@"
+    # With no args, offer model picker (any Ollama model); otherwise use config default and pass args through.
+    if [[ $# -eq 0 ]] && command -v gum &>/dev/null && command -v ollama &>/dev/null && ollama list &>/dev/null 2>&1; then
+        local -a model_opts=()
+        while IFS= read -r line; do
+            local name="${line%% *}"
+            [[ -n "$name" && "$name" != "NAME" ]] && model_opts+=("$name")
+        done < <(ollama list 2>/dev/null | tail -n +2)
+        if [[ ${#model_opts[@]} -gt 0 ]]; then
+            model_opts+=("default  use ~/.aider.conf.yml")
+            local choice
+            choice=$(printf '%s\n' "${model_opts[@]}" | gum choose --cursor-prefix "→ " \
+                --cursor.foreground "#eb6f92" \
+                --selected.foreground "#c4a7e7" \
+                --header "Aider — pick model (any Ollama model)" --header.foreground "#9ccfd8") || return 1
+            if [[ "${choice%% *}" != "default" ]]; then
+                aider --model "ollama_chat/$choice" "$@"
+            else
+                aider "$@"
+            fi
+        else
+            aider "$@"
+        fi
+    else
+        aider "$@"
+    fi
 
-    if (( started_serve )) && ! pgrep -x opencode &>/dev/null; then
+    if (( started_serve )) && ! pgrep -x aider &>/dev/null; then
         _info "Stopping ollama serve..."
         kill "$serve_pid" 2>/dev/null
     fi
-}
-
-_a_opencode_refresh() {
-    command -v ollama &>/dev/null || { _err "ollama not installed"; return 1; }
-
-    local models_file="${ZSH_CONFIG_DIR}/opencode-models"
-    local started_serve=0 serve_pid
-
-    if ! ollama list &>/dev/null 2>&1; then
-        _info "Starting ollama serve..."
-        HSA_OVERRIDE_GFX_VERSION=10.3.0 ollama serve &>/dev/null &
-        serve_pid=$!
-        started_serve=1
-        local i=0
-        while ! ollama list &>/dev/null 2>&1; do
-            if (( ++i > 15 )); then
-                _err "ollama did not start"
-                kill "$serve_pid" 2>/dev/null
-                return 1
-            fi
-            sleep 1
-        done
-    fi
-
-    local -a models=()
-    while IFS= read -r line; do
-        local name="${line%% *}"
-        [[ -n "$name" && "$name" != "NAME" ]] && models+=("ollama/${name}")
-    done < <(ollama list 2>/dev/null | tail -n +2)
-
-    (( started_serve )) && kill "$serve_pid" 2>/dev/null
-
-    if [[ ${#models[@]} -eq 0 ]]; then
-        _warn "No models found — pull one with: ollama pull <model>"
-        return 1
-    fi
-
-    printf '%s\n' "${models[@]}" > "$models_file"
-    _ok "Catalog updated: ${#models[@]} model(s)"
-    printf '%s\n' "${models[@]}" | while IFS= read -r m; do
-        printf '  %s→%s %s\n' "$_foam" "$_nc" "$m"
-    done
 }
 
 _u_search() {
@@ -270,9 +218,9 @@ _u_search() {
         printf '%-20s → %s\n' "g d" "git diff (delta)"
         printf '%-20s → %s\n' "g l" "git log (rose pine)"
         printf '%-20s → %s\n' "g s" "git status --short"
-        printf '%-20s → %s\n' "a" "AI hub: claude, opencode"
-        printf '%-20s → %s\n' "a c" "Claude Code"
-        printf '%-20s → %s\n' "a o" "OpenCode (pick model)"
+        printf '%-20s → %s\n' "a" "AI hub: aider, claude (cloud)"
+        printf '%-20s → %s\n' "a i" "Aider (Ollama, git-backed edits)"
+        printf '%-20s → %s\n' "a c" "Claude Code (cloud)"
         printf '%-20s → %s\n' "u" "utils hub: search, add, extract, help, path, ports, tree, dirs"
         printf '%-20s → %s\n' "u s" "fuzzy search aliases+commands"
         printf '%-20s → %s\n' "u a" "create new alias"
