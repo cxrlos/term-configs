@@ -131,8 +131,8 @@ fi
 # ── Install dependencies ───────────────────────────────────────────────────────
 
 case "$OS" in
-macos) _install_deps_macos ;;
-arch) _install_deps_arch ;;
+    macos) _install_deps_macos ;;
+    arch) _install_deps_arch ;;
 esac
 
 # ── Backup helper ──────────────────────────────────────────────────────────────
