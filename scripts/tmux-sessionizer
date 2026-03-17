@@ -5,7 +5,7 @@ ORG_DIRS=(
     "$HOME/Documents/sustainlabs-ai"
     "$HOME/Documents/configs"
     "$HOME/Documents/clients"
-    "$HOME/dev"
+    "$HOME/dev/nu"
 )
 PROJECT_DIRS=(
     "$HOME/Documents/personal-projects/ratatoist"
