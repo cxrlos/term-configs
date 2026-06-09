@@ -9,15 +9,9 @@ r='\033[0m'
 section() { printf "\n${h}  %s${r}\n  ${s}─────────────────────────────────────${r}\n" "$1"; }
 row() { printf "  ${k}%-18s${r} ${d}%s${r}\n" "$1" "$2"; }
 
-vh="  jk navigate  ·  h/l sections  ·  i search  ·  ESC exit"
-ih="  type to filter  ·  ESC back to visual"
-
-# ── Temp files ─────────────────────────────────────────────────────────────────
 tmpfile=$(mktemp)
-navscript=$(mktemp)
-trap 'rm -f "$tmpfile" "$navscript"' EXIT
+trap 'rm -f "$tmpfile"' EXIT
 
-# ── Generate content ────────────────────────────────────────────────────────────
 {
     section "Sessions (shell)"
     row "tm" "sessionizer — pick or create"
@@ -99,95 +93,16 @@ trap 'rm -f "$tmpfile" "$navscript"' EXIT
     printf "\n"
 } >"$tmpfile"
 
-# ── Detect section positions (1-based to match $FZF_POS) ───────────────────────
-section_pos=()
-i=0
-while IFS= read -r line; do
-    ((i++))
-    if [[ "$line" == $'\033[38;2;196;167;231m'* ]]; then
-        section_pos+=("$i")
-    fi
-done <"$tmpfile"
-
-export SECTION_POS="${section_pos[*]}"
-export TOTAL_LINES=$i
-
-# ── Navigation script (always runs under bash for consistent array behaviour) ──
-cat >"$navscript" <<'EOF'
-#!/usr/bin/env bash
-# $1 = h|l   Env: FZF_PROMPT, FZF_POS, SECTION_POS, TOTAL_LINES
-
-dir=$1
-if [[ "$FZF_PROMPT" != *VISUAL* ]]; then
-  echo "put($dir)"
-  exit 0
-fi
-
-pos=$FZF_POS  # 1-based
-
-acts_down() {
-  local n=$1 a=""
-  for ((i=0; i<n; i++)); do a="${a}down+"; done
-  echo "${a%+}"
-}
-acts_up() {
-  local n=$1 a=""
-  for ((i=0; i<n; i++)); do a="${a}up+"; done
-  echo "${a%+}"
-}
-
-if [[ "$dir" == "l" ]]; then
-  target=""
-  for s in $SECTION_POS; do
-    if (( s > pos )); then target=$s; break; fi
-  done
-  if [[ -z "$target" ]]; then
-    first=${SECTION_POS%% *}
-    act="first"
-    for ((i=1; i<first; i++)); do act="$act+down"; done
-    echo "$act"
-  else
-    acts_down $(( target - pos ))
-  fi
-
-elif [[ "$dir" == "h" ]]; then
-  prev=""
-  for s in $SECTION_POS; do
-    if (( s >= pos )); then break; fi
-    prev=$s
-  done
-  if [[ -n "$prev" ]]; then
-    acts_up $(( pos - prev ))
-  else
-    last=${SECTION_POS##* }
-    act="last"
-    for ((i=0; i < TOTAL_LINES - last; i++)); do act="$act+up"; done
-    echo "$act"
-  fi
-fi
-EOF
-chmod +x "$navscript"
-
-# ── Launch ─────────────────────────────────────────────────────────────────────
 fzf <"$tmpfile" \
     --ansi \
     --no-sort \
     --layout=reverse \
     --no-info \
-    --header="$vh" \
-    --prompt="  VISUAL  " \
+    --header="  type to filter  ·  ESC close" \
+    --prompt="  " \
     --pointer="▶" \
-    --bind="start:disable-search" \
-    --bind="change:transform:if [[ \"\$FZF_PROMPT\" == *VISUAL* ]]; then echo 'clear-query'; fi" \
-    --bind="i:enable-search+clear-query+change-prompt(  INSERT  )+change-header($ih)" \
-    --bind="j:transform:if [[ \"\$FZF_PROMPT\" == *VISUAL* ]]; then echo 'down'; else echo 'put(j)'; fi" \
-    --bind="k:transform:if [[ \"\$FZF_PROMPT\" == *VISUAL* ]]; then echo 'up'; else echo 'put(k)'; fi" \
-    --bind="h:transform:$navscript h" \
-    --bind="l:transform:$navscript l" \
-    --bind="g:transform:if [[ \"\$FZF_PROMPT\" == *VISUAL* ]]; then echo 'first'; else echo 'put(g)'; fi" \
-    --bind="G:transform:if [[ \"\$FZF_PROMPT\" == *VISUAL* ]]; then echo 'last'; else echo 'put(G)'; fi" \
     --bind="enter:abort" \
-    --bind="esc:transform:if [[ \"\$FZF_PROMPT\" == *VISUAL* ]]; then echo 'abort'; else echo 'disable-search+clear-query+change-prompt(  VISUAL  )+change-header($vh)'; fi" \
+    --bind="esc:abort" \
     --color="bg:#191724,bg+:#26233a,fg:#e0def4,fg+:#e0def4,\
 hl:#c4a7e7,hl+:#c4a7e7,prompt:#9ccfd8,pointer:#eb6f92,\
 gutter:#191724,separator:#393552,header:#6e6a86,border:#9ccfd8"
