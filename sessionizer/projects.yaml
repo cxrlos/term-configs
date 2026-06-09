@@ -1,1 +1,4 @@
-projects: []
+projects:
+  - id: term-configs
+    locations:
+      carlos: /Users/carlos.garcia/Documents/configs/term-configs

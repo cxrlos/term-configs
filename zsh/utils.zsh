@@ -153,11 +153,12 @@ help() {
     _hr "git"
     _r "ga"   "add"         ; _r "gaa"  "add --all"     ; _rn "gc"   "commit"
     _r "gcm"  "commit -m"   ; _r "gcam" "add+commit -m" ; _rn "gp"   "push"
-    _r "gpf"  "push --force"; _r "gl"   "pull"          ; _rn "gd"   "diff"
-    _r "gds"  "diff --staged"; _r "gst" "status"        ; _rn "glog" "log --graph"
-    _r "gco"  "checkout"    ; _r "gsw"  "switch"        ; _rn "gab"  "absorb+rebase"
+    _r "gpf"  "push --force"; _r "gl"   "pull"          ; _rn "gcb"  "checkout -b"
+    _r "gd"   "diff"        ; _r "gds"  "diff --staged" ; _rn "gst"  "status"
+    _r "gco"  "checkout"    ; _r "gsw"  "switch"        ; _rn "glog" "log --graph"
     _r "gsta" "stash"       ; _r "gstp" "stash pop"     ; _rn "grb"  "rebase"
-    _r "grbi" "rebase -i"   ; _r "gsb"  "switch branch" ; _rn "gnb"  "new branch"
+    _r "grbi" "rebase -i"   ; _r "gab"  "absorb+rebase" ; _rn "gsb"  "switch branch"
+    _rn "gnb" "new branch"
     printf '\n'
 
     _hr "utils"
