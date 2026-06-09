@@ -5,7 +5,6 @@ $directory\
 $git_branch\
 $git_status\
 $git_state\
-$python\
 $nodejs\
 $rust\
 $docker_context\
@@ -68,31 +67,6 @@ ignore_submodules = true
 format = '[$state( $progress_current/$progress_total)]($style) '
 style = 'bold gold'
 
-[cmd_duration]
-format = '[$duration]($style) '
-style = 'rose'
-min_time = 2_000
-show_milliseconds = false
-
-[time]
-disabled = false
-format = '[$time]($style)'
-style = 'subtle'
-time_format = '%H:%M'
-
-[character]
-success_symbol = '[❯](pine)'
-error_symbol = '[❯](love)'
-vimcmd_symbol = '[❮](foam)'
-
-[python]
-format = '[$symbol$virtualenv]($style) '
-style = 'gold'
-symbol = ' '
-detect_extensions = []
-detect_files = []
-detect_folders = []
-
 [nodejs]
 format = '[$symbol$version]($style) '
 style = 'gold'
@@ -119,31 +93,19 @@ format = '[$number $symbol]($style) '
 threshold = 1
 number_threshold = 1
 
-[username]
-style_user = 'foam'
-style_root = 'bold love'
-format = '[$user]($style) '
-show_always = false
+[cmd_duration]
+format = '[$duration]($style) '
+style = 'rose'
+min_time = 2_000
+show_milliseconds = false
 
-[hostname]
-ssh_only = true
-format = 'on [$hostname]($style) '
-style = 'bold iris'
+[time]
+disabled = false
+format = '[$time]($style)'
+style = 'subtle'
+time_format = '%H:%M'
 
-[aws]
-disabled = true
-format = '[$symbol$profile( $region)]($style) '
-style = 'gold'
-symbol = ' '
-
-[gcloud]
-disabled = true
-format = '[$symbol$project]($style) '
-style = 'foam'
-symbol = '󱇶 '
-
-[kubernetes]
-disabled = true
-format = '[$symbol$context( $namespace)]($style) '
-style = 'foam'
-symbol = '󱃾 '
+[character]
+success_symbol = '[❯](pine)'
+error_symbol = '[❯](love)'
+vimcmd_symbol = '[❮](foam)'

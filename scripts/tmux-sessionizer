@@ -1,15 +1,9 @@
 #!/usr/bin/env bash
 
-# ORG_DIRS: depth-1 scan, only git repos shown (non-git dirs silently excluded)
-ORG_DIRS=(
-    "$HOME/Documents/sustainlabs-ai"
-    "$HOME/Documents/configs"
-    "$HOME/Documents/clients"
-    "$HOME/dev/nu"
-)
-PROJECT_DIRS=(
-    "$HOME/Documents/personal-projects/ratatoist"
-)
+SCRIPT_PATH="${BASH_SOURCE[0]}"
+[[ -L "$SCRIPT_PATH" ]] && SCRIPT_PATH="$(readlink "$SCRIPT_PATH")"
+REPO_DIR="$(cd "$(dirname "$SCRIPT_PATH")/.." && pwd)"
+YAML="$REPO_DIR/sessionizer/projects.yaml"
 
 RESURRECT_DIR="${TMUX_RESURRECT_DIR:-}"
 if [[ -z "$RESURRECT_DIR" ]]; then
@@ -21,29 +15,114 @@ if [[ -z "$RESURRECT_DIR" ]]; then
 fi
 RESTORE_SCRIPT="${TMUX_RESURRECT_RESTORE:-$HOME/.tmux/plugins/tmux-resurrect/scripts/restore.sh}"
 
-do_restore() {
+# ── Machine ID ───────────────────────────────────────────────────────────────
+
+_get_machine_id() {
+    local id_file="${XDG_CONFIG_HOME:-$HOME/.config}/sessionizer/machine-id"
+    if [[ -f "$id_file" ]]; then
+        cat "$id_file"
+        return
+    fi
+    local mid=""
+    if [[ "$(uname)" == "Darwin" ]]; then
+        mid=$(ioreg -rd1 -c IOPlatformExpertDevice | awk -F'"' '/IOPlatformUUID/{print $4}')
+    elif [[ -f /etc/machine-id ]]; then
+        mid=$(cat /etc/machine-id)
+    fi
+    [[ -n "$mid" ]] || { echo "unknown"; return 1; }
+    mkdir -p "$(dirname "$id_file")"
+    printf '%s' "$mid" > "$id_file"
+    echo "$mid"
+}
+
+MACHINE_ID=$(_get_machine_id)
+
+# ── YAML readers ─────────────────────────────────────────────────────────────
+
+_read_projects() {
+    [[ -f "$YAML" ]] || return
+
+    local proj_count dir i
+    proj_count=$(yq '.projects | length' "$YAML")
+    for ((i=0; i<proj_count; i++)); do
+        dir=$(yq -r ".projects[$i].locations[\"$MACHINE_ID\"] // \"\"" "$YAML")
+        dir="${dir/#\~/$HOME}"
+        [[ -n "$dir" && -d "$dir" ]] && echo "$dir"
+    done
+}
+
+# ── Hydration ────────────────────────────────────────────────────────────────
+
+_default_layout() {
+    local name="$1" dir="$2"
+    tmux rename-window -t "$name:1" editor
+    tmux send-keys -t "$name:editor" 'nvim .' Enter
+    tmux new-window -t "$name" -n shell -c "$dir"
+    tmux select-window -t "$name:editor"
+}
+
+_hydrate() {
+    local name="$1" dir="$2"
+    local script="$dir/.tmux-sessionizer"
+    if [[ -x "$script" ]]; then
+        TMUX_SESSION="$name" bash "$script"
+    else
+        _default_layout "$name" "$dir"
+    fi
+}
+
+# ── Session helpers ──────────────────────────────────────────────────────────
+
+_attach_or_switch() {
+    local name="$1"
+    if [[ -n "${TMUX:-}" ]]; then
+        tmux switch-client -t "$name"
+    else
+        tmux attach-session -t "$name"
+    fi
+}
+
+_do_restore() {
     tmux start-server 2>/dev/null
     tmux new-session -ds _restore 2>/dev/null
     if [[ -x "$RESTORE_SCRIPT" ]]; then
         "$RESTORE_SCRIPT" 2>/dev/null
+        local first
         first=$(tmux list-sessions -F "#{session_name}" 2>/dev/null | grep -v '^_restore$' | head -1)
         if [[ -n "$first" ]]; then
             tmux kill-session -t _restore 2>/dev/null
-            if [[ -n "${TMUX:-}" ]]; then
-                tmux switch-client -t "$first"
-            else
-                tmux attach-session -t "$first"
-            fi
+            _attach_or_switch "$first"
             exit 0
         fi
     fi
-    if [[ -n "${TMUX:-}" ]]; then
-        tmux switch-client -t _restore
-    else
-        tmux attach-session -t _restore
-    fi
+    _attach_or_switch _restore
     exit 0
 }
+
+_open_session() {
+    local selected="$1"
+    [[ -d "$selected" ]] || exit 1
+    local name
+    name=$(basename "$selected" | tr '.' '_')
+
+    if [[ -n "${TMUX:-}" ]]; then
+        if ! tmux has-session -t="$name" 2>/dev/null; then
+            tmux new-session -ds "$name" -c "$selected"
+            _hydrate "$name" "$selected"
+        fi
+        tmux switch-client -t "$name"
+    else
+        if tmux has-session -t="$name" 2>/dev/null; then
+            tmux attach-session -t "$name"
+        else
+            tmux new-session -ds "$name" -c "$selected"
+            _hydrate "$name" "$selected"
+            tmux attach-session -t "$name"
+        fi
+    fi
+}
+
+# ── Main ─────────────────────────────────────────────────────────────────────
 
 if [[ $# -eq 1 ]]; then
     selected=$1
@@ -52,20 +131,11 @@ else
     [[ -f "$RESURRECT_DIR/last" ]] && restore="[restore] last saved"
 
     sessions=$(tmux list-sessions -F "[session] #{session_name}" 2>/dev/null)
-    dirs=$(
-        {
-            for dir in "${ORG_DIRS[@]}"; do
-                [[ -d "$dir" ]] || continue
-                find "$dir" -mindepth 2 -maxdepth 2 -name '.git' -type d 2>/dev/null |
-                    sed 's|/\.git$||'
-            done
-            for dir in "${PROJECT_DIRS[@]}"; do
-                [[ -d "$dir" ]] && echo "$dir"
-            done
-        } | sed "s|$HOME|~|" | sort
-    )
+    dirs=$(_read_projects | sed "s|$HOME|~|" | sort)
+
     selected=$(
         {
+            echo "[new] add project"
             echo "$restore"
             echo "$sessions"
             echo "$dirs"
@@ -78,42 +148,20 @@ fi
 
 [[ -z "$selected" ]] && exit 0
 
+if [[ "$selected" == "[new] add project" ]]; then
+    printf '\n  cd into your project directory, then run:\n\n'
+    printf '    %ssessionizer-add%s\n\n' $'\033[1m' $'\033[0m'
+    exit 0
+fi
+
 if [[ "$selected" == "[restore] last saved" ]]; then
-    do_restore
+    _do_restore
 fi
 
 if [[ "$selected" == "[session] "* ]]; then
-    name="${selected#"[session] "}"
-    if [[ -n "${TMUX:-}" ]]; then
-        tmux switch-client -t "$name"
-    else
-        tmux attach-session -t "$name"
-    fi
+    _attach_or_switch "${selected#"[session] "}"
     exit 0
 fi
 
 selected="${selected/#\~/$HOME}"
-[[ -d "$selected" ]] || exit 1
-name=$(basename "$selected" | tr '.' '_')
-
-# Runs .tmux-sessionizer in the project root only on first session creation
-hydrate() {
-    local script="$selected/.tmux-sessionizer"
-    [[ -x "$script" ]] && TMUX_SESSION="$name" bash "$script"
-}
-
-if [[ -n "${TMUX:-}" ]]; then
-    if ! tmux has-session -t="$name" 2>/dev/null; then
-        tmux new-session -ds "$name" -c "$selected"
-        hydrate
-    fi
-    tmux switch-client -t "$name"
-else
-    if tmux has-session -t="$name" 2>/dev/null; then
-        tmux attach-session -t "$name"
-    else
-        tmux new-session -ds "$name" -c "$selected"
-        hydrate
-        tmux attach-session -t "$name"
-    fi
-fi
+_open_session "$selected"

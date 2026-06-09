@@ -1,0 +1,7 @@
+machines:
+  59EB9D54-D492-57AA-B21B-F8B6E6F1628B:
+    name: macbook
+projects:
+  - id: neovim-configs
+    locations:
+      59EB9D54-D492-57AA-B21B-F8B6E6F1628B: /Users/carlos.garcia/Documents/configs/neovim-configs

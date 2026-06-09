@@ -1,58 +1,31 @@
 [general]
 live_config_reload = true
-ipc_socket = true
+import = ["~/.config/alacritty/rose-pine.toml"]
 
-[terminal.shell]
-program = "/bin/zsh"
-args = ["-l"]
+[terminal]
+shell = { program = "/bin/zsh", args = ["-l"] }
+osc52 = "CopyPaste"
 
 [env]
 TERM = "xterm-256color"
-COLORTERM = "truecolor"
 
 [window]
-dimensions = { columns = 120, lines = 30 }
-padding = { x = 14, y = 14 }
+padding = { x = 6, y = 6 }
 dynamic_padding = true
 opacity = 0.93
 blur = true
-decorations = "Transparent"
+decorations = "Full"
 decorations_theme_variant = "Dark"
-startup_mode = "Windowed"
-title = "Terminal"
 dynamic_title = true
 option_as_alt = "Both"
 
-[scrolling]
-history = 65535
-multiplier = 3
-
 [font]
 normal = { family = "ProFont IIx Nerd Font Mono" }
-bold = { family = "ProFont IIx Nerd Font Mono" }
-italic = { family = "ProFont IIx Nerd Font Mono" }
-bold_italic = { family = "ProFont IIx Nerd Font Mono" }
 size = 10.0
-offset = { x = 0, y = 1 }
-builtin_box_drawing = true
-
-[colors]
-transparent_background_colors = true
-primary = { background = "#191724", foreground = "#e0def4", dim_foreground = "#908caa" }
-cursor = { text = "#191724", cursor = "#e0def4" }
-vi_mode_cursor = { text = "#191724", cursor = "#e0def4" }
-selection = { text = "CellForeground", background = "#26233a" }
-search = { matches = { foreground = "#191724", background = "#9ccfd8" }, focused_match = { foreground = "#191724", background = "#c4a7e7" } }
-normal = { black = "#26233a", red = "#eb6f92", green = "#31748f", yellow = "#f6c177", blue = "#9ccfd8", magenta = "#c4a7e7", cyan = "#ebbcba", white = "#e0def4" }
-bright = { black = "#6e6a86", red = "#eb6f92", green = "#31748f", yellow = "#f6c177", blue = "#9ccfd8", magenta = "#c4a7e7", cyan = "#ebbcba", white = "#e0def4" }
-dim = { black = "#1f1d2e", red = "#b4637a", green = "#286983", yellow = "#ea9d34", blue = "#56949f", magenta = "#907aa9", cyan = "#d7827e", white = "#908caa" }
 
 [cursor]
 style = { shape = "Block", blinking = "On" }
-vi_mode_style = { shape = "Beam", blinking = "On" }
-blink_interval = 750
 unfocused_hollow = true
-thickness = 0.15
 
 [mouse]
 hide_when_typing = true
@@ -60,28 +33,37 @@ hide_when_typing = true
 [selection]
 save_to_clipboard = true
 
+[[hints.enabled]]
+command = "open"
+post_processing = true
+regex = "(https?://)[\\w.-]+\\.[a-z]{2,}[/\\w._~:/?#@!$&'()*+,;=%\\-]*"
+
+[hints.enabled.mouse]
+enabled = true
+mods = "Command"
+
 [keyboard]
 bindings = [
-    { key = "N",      mods = "Command",               action = "CreateNewWindow" },
-    { key = "T",      mods = "Command",               action = "CreateNewTab" },
+    { key = "N", mods = "Command", action = "CreateNewWindow" },
+    { key = "T", mods = "Command", action = "CreateNewTab" },
 
-    { key = "]",      mods = "Command|Shift",          action = "SelectNextTab" },
-    { key = "[",      mods = "Command|Shift",          action = "SelectPreviousTab" },
-    { key = "1",      mods = "Command",               action = "SelectTab1" },
-    { key = "2",      mods = "Command",               action = "SelectTab2" },
-    { key = "3",      mods = "Command",               action = "SelectTab3" },
-    { key = "4",      mods = "Command",               action = "SelectTab4" },
-    { key = "5",      mods = "Command",               action = "SelectTab5" },
-    { key = "6",      mods = "Command",               action = "SelectTab6" },
-    { key = "7",      mods = "Command",               action = "SelectTab7" },
-    { key = "8",      mods = "Command",               action = "SelectTab8" },
-    { key = "9",      mods = "Command",               action = "SelectLastTab" },
+    { key = "]", mods = "Command|Shift", action = "SelectNextTab" },
+    { key = "[", mods = "Command|Shift", action = "SelectPreviousTab" },
+    { key = "1", mods = "Command", action = "SelectTab1" },
+    { key = "2", mods = "Command", action = "SelectTab2" },
+    { key = "3", mods = "Command", action = "SelectTab3" },
+    { key = "4", mods = "Command", action = "SelectTab4" },
+    { key = "5", mods = "Command", action = "SelectTab5" },
+    { key = "6", mods = "Command", action = "SelectTab6" },
+    { key = "7", mods = "Command", action = "SelectTab7" },
+    { key = "8", mods = "Command", action = "SelectTab8" },
+    { key = "9", mods = "Command", action = "SelectLastTab" },
 
-    { key = "Equals", mods = "Command",               action = "IncreaseFontSize" },
-    { key = "Minus",  mods = "Command",               action = "DecreaseFontSize" },
-    { key = "0",      mods = "Command",               action = "ResetFontSize" },
+    { key = "Equals", mods = "Command", action = "IncreaseFontSize" },
+    { key = "Minus", mods = "Command", action = "DecreaseFontSize" },
+    { key = "0", mods = "Command", action = "ResetFontSize" },
 
-    { key = "F",      mods = "Command|Control",        action = "ToggleSimpleFullscreen" },
-    { key = "F",      mods = "Command",               action = "SearchForward" },
-    { key = "K",      mods = "Command",               action = "ClearHistory" },
+    { key = "F", mods = "Command|Control", action = "ToggleSimpleFullscreen" },
+    { key = "F", mods = "Command", action = "SearchForward" },
+    { key = "K", mods = "Command", action = "ClearHistory" },
 ]
