@@ -1,0 +1,167 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_PATH="${BASH_SOURCE[0]}"
+[[ -L "$SCRIPT_PATH" ]] && SCRIPT_PATH="$(readlink "$SCRIPT_PATH")"
+REPO_DIR="$(cd "$(dirname "$SCRIPT_PATH")/.." && pwd)"
+source "$REPO_DIR/zsh/palette.sh"
+
+YAML="$REPO_DIR/sessionizer/projects.yaml"
+
+_get_machine_id() {
+    local id_file="${XDG_CONFIG_HOME:-$HOME/.config}/sessionizer/machine-id"
+    if [[ -f "$id_file" ]]; then
+        cat "$id_file"
+        return
+    fi
+    local mid=""
+    if [[ "$(uname)" == "Darwin" ]]; then
+        mid=$(ioreg -rd1 -c IOPlatformExpertDevice | awk -F'"' '/IOPlatformUUID/{print $4}')
+    elif [[ -f /etc/machine-id ]]; then
+        mid=$(cat /etc/machine-id)
+    fi
+    [[ -n "$mid" ]] || { echo "unknown"; return 1; }
+    mkdir -p "$(dirname "$id_file")"
+    printf '%s' "$mid" > "$id_file"
+    echo "$mid"
+}
+
+_usage() {
+    printf '%s\n' "Usage: sessionizer-add"
+    printf '%s\n' ""
+    printf '%s\n' "  cd into a directory, then run this command."
+    printf '%s\n' "  Prompts to import existing project or scaffold a new one."
+}
+
+_ensure_yaml() {
+    [[ -f "$YAML" ]] && return
+    mkdir -p "$(dirname "$YAML")"
+    cat > "$YAML" <<EOF
+machines: {}
+projects: []
+EOF
+}
+
+_register_project() {
+    local id="$1" path="$2"
+
+    if yq -e ".projects[] | select(.id == \"$id\") | .locations[\"$MACHINE_ID\"]" "$YAML" &>/dev/null; then
+        _warn "Project '$id' already registered for this machine"
+        return 1
+    fi
+
+    if yq -e ".projects[] | select(.id == \"$id\")" "$YAML" &>/dev/null; then
+        local idx
+        idx=$(yq ".projects | to_entries | .[] | select(.value.id == \"$id\") | .key" "$YAML")
+        yq -i ".projects[$idx].locations[\"$MACHINE_ID\"] = \"$path\"" "$YAML"
+        _ok "Added this machine's path to existing project '$id'"
+    else
+        yq -i ".projects += [{\"id\": \"$id\", \"locations\": {\"$MACHINE_ID\": \"$path\"}}]" "$YAML"
+        _ok "Registered project '$id' → $path"
+    fi
+}
+
+_do_import() {
+    local target="$1" yaml_path="$2" entry_id="$3"
+
+    if [[ ! -d "$target" ]]; then
+        _err "Directory does not exist: $target"
+        exit 1
+    fi
+
+    _register_project "$entry_id" "$yaml_path"
+}
+
+_do_import_all() {
+    local target="$1"
+    local added=0 skipped=0
+
+    while IFS= read -r repo; do
+        local repo_id repo_yaml
+        repo_id=$(basename "$repo")
+        repo_yaml="${repo/#$HOME/~}"
+        if _register_project "$repo_id" "$repo_yaml" 2>/dev/null; then
+            ((added++))
+        else
+            ((skipped++))
+        fi
+    done < <(find "$target" -mindepth 2 -maxdepth 2 -name '.git' -type d 2>/dev/null | sed 's|/\.git$||' | sort)
+
+    printf '\n'
+    _info "$added registered, $skipped skipped"
+}
+
+_do_scaffold() {
+    local target="$1" yaml_path="$2" entry_id="$3"
+
+    read -r -p "  What kind of project? (e.g. rust cli, next.js app, python api): " description
+    [[ -z "$description" ]] && exit 1
+
+    printf '\n'
+    _info "Scaffolding with Claude Code..."
+    printf '\n'
+
+    mkdir -p "$target"
+
+    claude --print --dangerously-skip-permissions -p \
+        "Create a new project at $target. Type: $description.
+
+Project files:
+- Create the directory structure and initial files following $description conventions
+- Create a README.md with project name and a one-line description
+- Keep everything minimal — only what's needed to start working
+- Do NOT install dependencies, just set up the files
+
+Tmux layout — create a .tmux-sessionizer file (chmod +x) using \$TMUX_SESSION:
+- Window 1 'editor':  nvim .
+- Window 2 'claude':  claude
+- Window 3 'shell':   (empty, just a terminal)
+- Window 4+: add project-specific windows based on the type. Examples:
+  - Web app → 'dev' running the dev server (npm run dev, cargo watch, etc.)
+  - API → 'server' running the server, 'logs' tailing logs
+  - Library → 'test' running the test watcher
+  - Data/ML → 'notebook' launching jupyter or repl
+  - If nothing extra makes sense, stop at 3 windows
+- Always select the 'editor' window at the end
+- Use tmux rename-window for window 1, tmux new-window -t \$TMUX_SESSION -n <name> -c $target for the rest
+- Use tmux send-keys -t \$TMUX_SESSION:<name> '<cmd>' Enter to run commands" 2>/dev/null
+
+    _register_project "$entry_id" "$yaml_path"
+
+    printf '\n'
+    _ok "Project ready at $target"
+}
+
+# ── Main ─────────────────────────────────────────────────────────────────────
+
+MACHINE_ID=$(_get_machine_id)
+target="$(pwd)"
+yaml_path="${target/#$HOME/~}"
+entry_id=$(basename "$target")
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -h|--help) _usage; exit 0 ;;
+        *) _err "Unknown option: $1"; _usage; exit 1 ;;
+    esac
+done
+
+_ensure_yaml
+
+repo_count=$(find "$target" -mindepth 2 -maxdepth 2 -name '.git' -type d 2>/dev/null | wc -l | tr -d ' ')
+
+options="Import this project\nScaffold new project"
+[[ "$repo_count" -gt 0 ]] && options="Import this project\nImport all $repo_count projects inside\nScaffold new project"
+
+printf '\n'
+choice=$(printf "$options" |
+    fzf --prompt="  " \
+        --header="  $entry_id" \
+        --color="fg:#908caa,hl:#c4a7e7,fg+:#e0def4,hl+:#eb6f92,info:#9ccfd8,pointer:#eb6f92,header:#9ccfd8,bg+:#26233a"
+) || exit 0
+
+case "$choice" in
+    "Import this"*)  _do_import "$target" "$yaml_path" "$entry_id" ;;
+    "Import all"*)   _do_import_all "$target" ;;
+    "Scaffold"*)     _do_scaffold "$target" "$yaml_path" "$entry_id" ;;
+esac

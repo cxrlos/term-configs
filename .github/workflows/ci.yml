@@ -20,6 +20,7 @@ jobs:
         run: |
           shellcheck -x scripts/install.sh
           shellcheck -x scripts/tmux-sessionizer
+          shellcheck -x scripts/sessionizer-add
           shellcheck -x tmux/cheatsheet.sh
 
   validate:
@@ -33,9 +34,6 @@ jobs:
           pip install toml
           python -c "import toml; toml.load('starship/starship.toml')"
           python -c "import toml; toml.load('alacritty/alacritty.toml')"
-
-      - name: Validate JSON configs
-        run: python -c "import json; json.load(open('fastfetch/config.jsonc'.replace('.jsonc','.jsonc')))" || true
 
       - name: Check zsh syntax
         run: |

@@ -1,98 +1,12 @@
-alias vi='nvim'
-alias vim='nvim'
-alias edit='nvim'
-
-alias python='python3'
-alias pip='pip3'
-alias py='python3'
-alias venv='python3 -m venv .venv && source .venv/bin/activate'
-
-alias ..='cd ..'
-alias ...='cd ../..'
-alias ....='cd ../../..'
-
-if command -v eza &>/dev/null; then
-    alias ls='eza --icons'
-    alias ll='eza -la --icons --git --header'
-    alias la='eza -a --icons'
-    alias l='eza --icons'
-    alias lt='eza --tree --icons --level=2 --git-ignore'
-elif [[ "$OSTYPE" == "darwin"* ]]; then
-    alias ls='ls -G'
-    alias ll='ls -laG'
-    alias la='ls -AG'
-    alias l='ls -CFG'
-elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
-    alias ls='ls --color=auto'
-    alias ll='ls -la --color=auto'
-    alias la='ls -A --color=auto'
-    alias l='ls -CF --color=auto'
-fi
-
-if [[ "$OSTYPE" == "darwin"* ]]; then
-    alias showfiles="defaults write com.apple.finder AppleShowAllFiles YES; killall Finder"
-    alias hidefiles="defaults write com.apple.finder AppleShowAllFiles NO; killall Finder"
-fi
-
-# Linux: caffeinate-compatible wrapper using systemd-inhibit (no-op on macOS)
-if [[ "$OSTYPE" != "darwin"* ]]; then
-    caffeinate() {
-        local what=""
-        local timeout="infinity"
-        local OPTIND opt
-
-        while getopts "disut:" opt; do
-            case ${opt} in
-                d|u)
-                    [[ "$what" != *"idle"* ]] && what="${what:+$what:}idle"
-                    ;;
-                i|s)
-                    [[ "$what" != *"sleep"* ]] && what="${what:+$what:}sleep"
-                    ;;
-                t)
-                    timeout="$OPTARG"
-                    ;;
-                \?)
-                    echo "Usage: caffeinate [-disu] [-t timeout] [command...]"
-                    return 1
-                    ;;
-            esac
-        done
-        shift $((OPTIND -1))
-
-        [[ -z "$what" ]] && what="idle:sleep"
-
-        if [[ $# -gt 0 ]]; then
-            systemd-inhibit --what="$what" --why="caffeinate CLI" "$@"
-        else
-            systemd-inhibit --what="$what" --why="caffeinate CLI" sleep "$timeout"
-        fi
-    }
-fi
-
-command -v bat &>/dev/null && alias cat='bat --style=plain'
-command -v rg  &>/dev/null && alias grep='rg'
-
 mkcd() { mkdir -p "$1" && cd "$1"; }
 
 extract() {
-    if [[ "$1" == "-h" || "$1" == "--help" || $# -eq 0 ]]; then
-        if command -v gum &>/dev/null; then
-            gum style --border rounded --border-foreground "#c4a7e7" --padding "1 2" --margin "1 0" \
-                "${_bold}extract${_nc} ${_subtle}<file>${_nc}" \
-                "" \
-                "${_subtle}Supported formats:${_nc}" \
-                "  ${_iris}tar.gz${_nc}  ${_iris}tar.bz2${_nc}  ${_iris}tgz${_nc}  ${_iris}tbz2${_nc}" \
-                "  ${_iris}gz${_nc}  ${_iris}bz2${_nc}  ${_iris}zip${_nc}  ${_iris}rar${_nc}  ${_iris}7z${_nc}  ${_iris}Z${_nc}  ${_iris}tar${_nc}"
-        else
-            printf '\n  %sextract%s %s<file>%s\n' "$_bold" "$_nc" "$_iris" "$_nc"
-            printf '  Supported: %star.gz tar.bz2 tgz tbz2 gz bz2 zip rar 7z Z tar%s\n\n' "$_subtle" "$_nc"
-        fi
-        [[ "$1" == "-h" || "$1" == "--help" ]] && return 0 || return 1
+    if [[ $# -eq 0 ]]; then
+        printf '\n  %sextract%s %s<file>%s\n' "$_bold" "$_nc" "$_subtle" "$_nc"
+        printf '  Supported: %star.gz tar.bz2 tgz tbz2 gz bz2 zip rar 7z Z tar%s\n\n' "$_subtle" "$_nc"
+        return 1
     fi
-
-    [[ -f "$1" ]] || { _err "Not a file: ${_bold}$1${_nc}"; return 1; }
-
+    [[ -f "$1" ]] || { _err "Not a file: $1"; return 1; }
     case "$1" in
         *.tar.bz2|*.tbz2) tar xjf "$1"    ;;
         *.tar.gz|*.tgz)   tar xzf "$1"    ;;
@@ -103,241 +17,17 @@ extract() {
         *.Z)              uncompress "$1" ;;
         *.rar)            unrar e "$1"    ;;
         *.7z)             7z x "$1"       ;;
-        *) _err "Unknown format: ${_bold}$1${_nc}"; return 1 ;;
+        *) _err "Unknown format: $1"; return 1 ;;
     esac
 }
 
-_write_to_config() {
-    local file="$1" line="$2"
-    echo "$line" >> "$ZSH_CONFIG_DIR/$file"
-    if [[ "$TERM_CONFIGS_MODE" == "copy" && -d "$TERM_CONFIGS_DIR" ]]; then
-        echo "$line" >> "$TERM_CONFIGS_DIR/zsh/$file"
-        _info "Written to both active config and repo"
-    fi
-}
-
-# Claude Code (cloud): no BASE_URL so your API key is used.
-alias claude-cloud='unset ANTHROPIC_BASE_URL; unset ANTHROPIC_AUTH_TOKEN; unset ANTHROPIC_DEFAULT_HAIKU_MODEL; unset ANTHROPIC_DEFAULT_SONNET_MODEL; unset ANTHROPIC_DEFAULT_OPUS_MODEL; unset ANTHROPIC_MODEL; claude'
-
-a() {
-    case "$1" in
-        -h|--help)
-            if command -v gum &>/dev/null; then
-                gum style --border rounded --border-foreground "#c4a7e7" --padding "1 2" --margin "1 0" \
-                    "${_bold}a${_nc} ${_subtle}[command]${_nc}" \
-                    "" \
-                    "  ${_iris}i${_nc}  ${_subtle}aider${_nc}    Aider (Ollama, git-backed edits)" \
-                    "  ${_iris}c${_nc}  ${_subtle}claude${_nc}   Claude Code (cloud)"
-            else
-                printf '\n  %sa%s %s[command]%s\n\n' "$_bold" "$_nc" "$_subtle" "$_nc"
-                printf '  %si%s  aider    %sAider (Ollama, git-backed edits)%s\n' "$_iris" "$_nc" "$_subtle" "$_nc"
-                printf '  %sc%s  claude   %sClaude Code (cloud)%s\n\n' "$_iris" "$_nc" "$_subtle" "$_nc"
-            fi
-            return 0
-            ;;
-        i|aider)  shift; _a_aider "$@" ;;
-        c|claude) shift; claude "$@" ;;
-        "")
-            if command -v gum &>/dev/null; then
-                local choice
-                choice=$(gum choose --cursor-prefix "→ " \
-                    --cursor.foreground "#eb6f92" \
-                    --selected.foreground "#c4a7e7" \
-                    --header "AI" --header.foreground "#9ccfd8" \
-                    "aider   Aider (Ollama)" \
-                    "claude  Claude Code (cloud)") || return 1
-                case "${choice%% *}" in
-                    aider)  _a_aider ;;
-                    claude) claude ;;
-                esac
-            else
-                a --help; return 1
-            fi
-            ;;
-        *) _err "Unknown: a $1"; return 1 ;;
-    esac
-}
-
-_a_aider() {
-    command -v aider &>/dev/null || { _err "aider not found"; return 1; }
-    local started_serve=0 serve_pid
-    if command -v ollama &>/dev/null && ! ollama list &>/dev/null 2>&1; then
-        _info "Starting ollama serve..."
-        OLLAMA_CONTEXT_LENGTH=128000 ollama serve &>/dev/null &
-        serve_pid=$!
-        started_serve=1
-        local i=0
-        while ! ollama list &>/dev/null 2>&1; do
-            if (( ++i > 15 )); then
-                _err "ollama did not start"
-                kill "$serve_pid" 2>/dev/null
-                return 1
-            fi
-            sleep 1
-        done
-    fi
-
-    # With no args, offer model picker (any Ollama model); otherwise use config default and pass args through.
-    if [[ $# -eq 0 ]] && command -v gum &>/dev/null && command -v ollama &>/dev/null && ollama list &>/dev/null 2>&1; then
-        local -a model_opts=()
-        while IFS= read -r line; do
-            local name="${line%% *}"
-            [[ -n "$name" && "$name" != "NAME" ]] && model_opts+=("$name")
-        done < <(ollama list 2>/dev/null | tail -n +2)
-        if [[ ${#model_opts[@]} -gt 0 ]]; then
-            model_opts+=("default  use ~/.aider.conf.yml")
-            local choice
-            choice=$(printf '%s\n' "${model_opts[@]}" | gum choose --cursor-prefix "→ " \
-                --cursor.foreground "#eb6f92" \
-                --selected.foreground "#c4a7e7" \
-                --header "Aider — pick model (any Ollama model)" --header.foreground "#9ccfd8") || return 1
-            if [[ "${choice%% *}" != "default" ]]; then
-                aider --model "ollama_chat/$choice" "$@"
-            else
-                aider "$@"
-            fi
-        else
-            aider "$@"
-        fi
-    else
-        aider "$@"
-    fi
-
-    if (( started_serve )) && ! pgrep -x aider &>/dev/null; then
-        _info "Stopping ollama serve..."
-        kill "$serve_pid" 2>/dev/null
-    fi
-}
-
-_u_search() {
-    command -v gum &>/dev/null || { _err "Requires gum"; return 1; }
-    {
-        printf '%-20s → %s\n' "g" "git hub: branch, commit, diff, log, status"
-        printf '%-20s → %s\n' "g b" "git new branch (interactive)"
-        printf '%-20s → %s\n' "g c" "git commit (interactive)"
-        printf '%-20s → %s\n' "g d" "git diff (delta)"
-        printf '%-20s → %s\n' "g l" "git log (rose pine)"
-        printf '%-20s → %s\n' "g s" "git status --short"
-        printf '%-20s → %s\n' "a" "AI hub: aider, claude (cloud)"
-        printf '%-20s → %s\n' "a i" "Aider (Ollama, git-backed edits)"
-        printf '%-20s → %s\n' "a c" "Claude Code (cloud)"
-        printf '%-20s → %s\n' "u" "utils hub: search, add, extract, help, path, ports, tree, dirs"
-        printf '%-20s → %s\n' "u s" "fuzzy search aliases+commands"
-        printf '%-20s → %s\n' "u a" "create new alias"
-        printf '%-20s → %s\n' "u h <cmd>" "tldr cheatsheet"
-        printf '%-20s → %s\n' "u z" "top zoxide directories"
-        printf '%-20s → %s\n' "u t" "directory tree (eza)"
-        printf '%-20s → %s\n' "u p" "show PATH entries"
-        printf '%-20s → %s\n' "f" "fix last failed command (thefuck)"
-        printf '%-20s → %s\n' "z <dir>" "smart cd (zoxide)"
-        echo "──────────────────── ─ tmux (prefix = \`)"
-        printf '%-20s → %s\n' "C-h/j/k/l" "tmux+vim: seamless pane navigation"
-        printf '%-20s → %s\n' "M-←/→/↑/↓" "tmux: resize panes (Option+Arrow)"
-        printf '%-20s → %s\n' "\` v / s" "tmux: split vertical / horizontal"
-        printf '%-20s → %s\n' "\` c" "tmux: new window (current dir)"
-        printf '%-20s → %s\n' "\` 1..9" "tmux: jump to window"
-        printf '%-20s → %s\n' "\` z" "tmux: zoom pane (fullscreen toggle)"
-        printf '%-20s → %s\n' "\` /" "tmux: cheatsheet"
-        printf '%-20s → %s\n' "\` f" "tmux: sessionizer (project picker)"
-        printf '%-20s → %s\n' "\` g" "tmux: lazygit (floating)"
-        printf '%-20s → %s\n' "\` t" "tmux: htop (floating)"
-        printf '%-20s → %s\n' "\` w" "tmux: fzf session/window picker"
-        printf '%-20s → %s\n' "\` Space" "tmux: thumbs (vimium hints copy)"
-        printf '%-20s → %s\n' "\` Tab" "tmux: fingers (highlight paths/IPs)"
-        printf '%-20s → %s\n' "\` C-s / C-r" "tmux: save/restore session"
-        printf '%-20s → %s\n' "\` Enter" "tmux: copy mode (vi)"
-        echo "──────────────────── ─ ──────────────────"
-        alias | sort | while read -r line; do
-            printf '%-20s → %s\n' "${line%%=*}" "${${line#*=}//\'/}"
-        done
-    } | gum filter \
-        --placeholder "Search commands & aliases..." \
-        --indicator.foreground "#eb6f92" \
-        --match.foreground "#c4a7e7" \
-        --prompt.foreground "#9ccfd8" \
-        --header "Type to filter" --header.foreground "#908caa"
-}
-
-_u_add() {
-    command -v gum &>/dev/null || { _err "Requires gum"; return 1; }
-    [[ -n "$TERM_CONFIGS_DIR" ]] || { _err "Run install.sh first — TERM_CONFIGS_DIR not set"; return 1; }
-
-    local file name cmd
-
-    file=$(gum choose --cursor-prefix "→ " \
-        --cursor.foreground "#eb6f92" \
-        --selected.foreground "#c4a7e7" \
-        --header "Add alias to:" --header.foreground "#9ccfd8" \
-        "git.zsh" \
-        "utils.zsh") || return 1
-
-    local file_hint
-    case "$file" in
-        git.zsh)   file_hint="git-related aliases and shortcuts" ;;
-        utils.zsh) file_hint="general aliases, tools, and shortcuts" ;;
-    esac
-    gum style --foreground "#908caa" --margin "0 2" "  ${file}: ${file_hint}"
-
-    name=$(gum input \
-        --header "Alias name" --header.foreground "#9ccfd8" \
-        --placeholder "e.g. gd, serve, mycommand" \
-        --prompt "→ " --prompt.foreground "#9ccfd8" \
-        --cursor.foreground "#eb6f92") || return 1
-    [[ -n "$name" ]] || { _err "Name required"; return 1; }
-
-    cmd=$(gum input \
-        --header "Command for '${name}'" --header.foreground "#9ccfd8" \
-        --placeholder "e.g. git diff, python -m http.server" \
-        --prompt "→ " --prompt.foreground "#9ccfd8" \
-        --cursor.foreground "#eb6f92" --width 80) || return 1
-    [[ -n "$cmd" ]] || { _err "Command required"; return 1; }
-
-    local escaped_cmd="${cmd//\'/\'\\\'\'}"
-    local alias_line="alias ${name}='${escaped_cmd}'"
-
-    gum style --border rounded --border-foreground "#c4a7e7" --padding "1 2" --margin "1 0" \
-        "${_bold}Preview${_nc}" \
-        "" \
-        "  ${_iris}${alias_line}${_nc}" \
-        "" \
-        "  ${_subtle}→ ${file} (${TERM_CONFIGS_MODE:-symlink})${_nc}"
-
-    gum confirm "Add this alias?" \
-        --affirmative "Yes" --negative "Cancel" \
-        --selected.foreground "#c4a7e7" || { _info "Cancelled"; return 0; }
-
-    _write_to_config "$file" "$alias_line"
-    eval "$alias_line"
-    _ok "Added ${_iris}${name}${_nc} → ${_subtle}${cmd}${_nc}"
-}
-
-_path_label() {
-    case "$1" in
-        */homebrew/*)                echo "HOMEBREW" ;;
-        */.jenv/*)                   echo "JENV"     ;;
-        */miniforge3/*|*/conda/*)    echo "CONDA"    ;;
-        */nucli*|*/dev/nu/*)         echo "NU"       ;;
-        */zinit/*)                   echo "ZINIT"    ;;
-        */fzf/*)                     echo "FZF"      ;;
-        */go/*)                      echo "GO"       ;;
-        *TeX*|*texbin*)              echo "TEX"      ;;
-        *MacGPG*)                    echo "GPG"      ;;
-        *JetBrains*)                 echo "JETBRAINS";;
-        *Cryptexes*|*cryptex*)       echo "SYSTEM"   ;;
-        /usr/*|/bin|/sbin)           echo "SYSTEM"   ;;
-        "$HOME"/*|~*)                echo "USER"     ;;
-        *)                           echo ""         ;;
-    esac
-}
-
-_path_color() {
-    case "$1" in
-        USER)      printf '%s' "$_iris"   ;;
-        HOMEBREW)  printf '%s' "$_foam"   ;;
-        SYSTEM)    printf '%s' "$_subtle" ;;
-        "")        printf '%s' "$_subtle" ;;
-        *)         printf '%s' "$_gold"   ;;
-    esac
+y() {
+    local tmp cwd
+    tmp="$(mktemp -t yazi-cwd.XXXXX)"
+    yazi "$@" --cwd-file="$tmp"
+    cwd="$(cat -- "$tmp")"
+    [[ -n "$cwd" && "$cwd" != "$PWD" ]] && cd -- "$cwd"
+    rm -f -- "$tmp"
 }
 
 bj() {
@@ -350,7 +40,7 @@ bj() {
 
     local line
     line=$(jobs -l | fzf --ansi --reverse --no-sort \
-        --header '  enter  fg    d  disown    x  kill    j/k  nav    i  search    esc  quit' \
+        --header '  enter fg  ·  d disown  ·  x kill  ·  j/k nav  ·  i search  ·  esc quit' \
         --prompt '  jobs → ' \
         --pointer '→' \
         --bind 'start:disable-search' \
@@ -373,163 +63,34 @@ bj() {
 
     case "$action" in
         fg)     fg %"$jobnum" ;;
-        disown) disown %"$jobnum" && _ok "Disowned job ${_iris}%${jobnum}${_nc}" ;;
-        kill)   kill %"$jobnum"   && _ok "Killed job ${_iris}%${jobnum}${_nc}" ;;
+        disown) disown %"$jobnum" && _ok "Disowned job %${jobnum}" ;;
+        kill)   kill %"$jobnum"   && _ok "Killed job %${jobnum}" ;;
     esac
 }
 
-bgs() {
-    local shell_pid=$$
-
-    local -a procs=()
-    while IFS= read -r line; do
-        procs+=("$line")
-    done < <(ps -o pid=,comm=,args= -g "$shell_pid" 2>/dev/null \
-        | awk -v me="$shell_pid" '
-            $1 != me && $2 !~ /fzf|awk|ps/ { printf "%6s  %-20s  %s\n", $1, $2, $0 }
-        ' 2>/dev/null)
-
-    if [[ ${#procs[@]} -eq 0 ]]; then
-        _info "No suspendable child processes found"
-        _info "Use ${_iris}Ctrl-Z${_nc} to suspend the current foreground job, then ${_iris}u j${_nc} to manage it"
-        return 0
-    fi
-
-    local modefile actionfile
-    modefile=$(mktemp);   printf 'normal' > "$modefile"
-    actionfile=$(mktemp); printf 'bg'     > "$actionfile"
-
-    local line
-    line=$(printf '%s\n' "${procs[@]}" | fzf --ansi --reverse --no-sort \
-        --header '  enter  suspend+bg    x  kill    j/k  nav    i  search    esc  quit' \
-        --prompt '  send to bg → ' \
-        --pointer '→' \
-        --bind 'start:disable-search' \
-        --bind 'j:down' \
-        --bind 'k:up' \
-        --bind "i:enable-search+change-prompt(/ )+unbind(j,k)+execute-silent(printf insert > '$modefile')" \
-        --bind "esc:transform(m=\$(cat '$modefile'); if [[ \$m == insert ]]; then printf '%s' 'disable-search+change-prompt(  send to bg → )+rebind(j,k)+execute-silent(printf normal > $modefile)'; else printf '%s' abort; fi)" \
-        --bind "enter:execute-silent(printf bg   > '$actionfile')+accept" \
-        --bind "x:execute-silent(printf kill > '$actionfile')+accept" \
-        --color 'fg:#908caa,fg+:#e0def4,hl:#c4a7e7,hl+:#eb6f92,pointer:#eb6f92,header:#908caa,border:#c4a7e7,info:#9ccfd8')
-
-    local action; action=$(cat "$actionfile")
-    rm -f "$modefile" "$actionfile"
-    [[ -z "$line" ]] && return 0
-
-    local pid
-    pid=$(printf '%s' "$line" | awk '{print $1}')
-    [[ -z "$pid" || ! "$pid" =~ ^[0-9]+$ ]] && return 0
-
-    case "$action" in
-        bg)
-            kill -STOP "$pid" 2>/dev/null && \
-                _ok "Suspended ${_iris}${pid}${_nc} — use ${_subtle}u j${_nc} to manage it"
-            ;;
-        kill)
-            kill "$pid" 2>/dev/null && _ok "Killed ${_iris}${pid}${_nc}"
-            ;;
-    esac
-}
-
-u() {
-    case "$1" in
-        -h|--help)
-            if command -v gum &>/dev/null; then
-                gum style --border rounded --border-foreground "#c4a7e7" --padding "1 2" --margin "1 0" \
-                    "${_bold}u${_nc} ${_subtle}[command]${_nc}" \
-                    "" \
-                    "  ${_subtle}── aliases${_nc}" \
-                    "  ${_iris}s${_nc}  ${_subtle}search${_nc}    fuzzy search aliases+commands" \
-                    "  ${_iris}a${_nc}  ${_subtle}add${_nc}       create new alias" \
-                    "" \
-                    "  ${_subtle}── files & docs${_nc}" \
-                    "  ${_iris}e${_nc}  ${_subtle}extract${_nc}   unpack archive files" \
-                    "  ${_iris}h${_nc}  ${_subtle}help${_nc}      tldr cheatsheet for a command" \
-                    "" \
-                    "  ${_subtle}── system${_nc}" \
-                    "  ${_iris}p${_nc}  ${_subtle}path${_nc}      show PATH entries" \
-                    "  ${_iris}P${_nc}  ${_subtle}ports${_nc}     show listening ports" \
-                    "  ${_iris}t${_nc}  ${_subtle}tree${_nc}      directory tree" \
-                    "  ${_iris}z${_nc}  ${_subtle}dirs${_nc}      top zoxide directories" \
-                    "  ${_iris}j${_nc}  ${_subtle}jobs${_nc}      manage background jobs (fg/disown/kill)" \
-                    "  ${_iris}J${_nc}  ${_subtle}bgpick${_nc}    suspend a running process → send to bg"
-            else
-                printf '\n  %su%s %s[command]%s\n\n' "$_bold" "$_nc" "$_subtle" "$_nc"
-                printf '  %ss%s  search    %sfuzzy search aliases+commands%s\n' "$_iris" "$_nc" "$_subtle" "$_nc"
-                printf '  %sa%s  add       %screate new alias%s\n'             "$_iris" "$_nc" "$_subtle" "$_nc"
-                printf '  %se%s  extract   %sunpack archive files%s\n'         "$_iris" "$_nc" "$_subtle" "$_nc"
-                printf '  %sh%s  help      %stldr cheatsheet for a command%s\n' "$_iris" "$_nc" "$_subtle" "$_nc"
-                printf '  %sp%s  path      %sshow PATH entries%s\n'            "$_iris" "$_nc" "$_subtle" "$_nc"
-                printf '  %sP%s  ports     %sshow listening ports%s\n'         "$_iris" "$_nc" "$_subtle" "$_nc"
-                printf '  %st%s  tree      %sdirectory tree%s\n'               "$_iris" "$_nc" "$_subtle" "$_nc"
-                printf '  %sz%s  dirs      %stop zoxide directories%s\n'       "$_iris" "$_nc" "$_subtle" "$_nc"
-                printf '  %sj%s  jobs      %smanage background jobs%s\n'       "$_iris" "$_nc" "$_subtle" "$_nc"
-                printf '  %sJ%s  bgpick    %ssuspend a process → send to bg%s\n\n' "$_iris" "$_nc" "$_subtle" "$_nc"
-            fi
-            return 0
-            ;;
-        s|search)  _u_search ;;
-        a|add)     _u_add ;;
-        e|extract) shift; extract "$@" ;;
-        h|help)    shift; _u_tldr "$@" ;;
-        p|path)    _u_path ;;
-        P|ports)
-            if command -v lsof &>/dev/null; then
-                lsof -iTCP -sTCP:LISTEN -P -n
-            elif command -v ss &>/dev/null; then
-                ss -tlnp
-            else
-                _err "Neither lsof nor ss found"
-            fi
-            ;;
-        t|tree)    shift; _u_tree "$@" ;;
-        z|dirs)    _u_dirs ;;
-        j|jobs)    bj ;;
-        J|bgpick)  bgs ;;
-        "")
-            if command -v gum &>/dev/null; then
-                local choice
-                choice=$(gum choose --cursor-prefix "→ " \
-                    --cursor.foreground "#eb6f92" \
-                    --selected.foreground "#c4a7e7" \
-                    --header "Utils" --header.foreground "#9ccfd8" \
-                    "search    fuzzy search aliases+commands" \
-                    "add       create new alias" \
-                    "extract   unpack archive files" \
-                    "help      tldr cheatsheet" \
-                    "path      show PATH entries" \
-                    "ports     show listening ports" \
-                    "tree      directory tree" \
-                    "dirs      top zoxide directories" \
-                    "jobs      manage background jobs" \
-                    "bgpick    suspend a process → send to bg") || return 1
-                case "${choice%% *}" in
-                    search)  _u_search ;;
-                    add)     _u_add ;;
-                    extract) extract ;;
-                    help)    _u_tldr ;;
-                    path)    _u_path ;;
-                    ports)
-                        if command -v lsof &>/dev/null; then
-                            lsof -iTCP -sTCP:LISTEN -P -n
-                        elif command -v ss &>/dev/null; then
-                            ss -tlnp
-                        else
-                            _err "Neither lsof nor ss found"
-                        fi
-                        ;;
-                    tree)    _u_tree ;;
-                    dirs)    _u_dirs ;;
-                    jobs)    bj ;;
-                    bgpick)  bgs ;;
-                esac
-            else
-                u --help; return 1
-            fi
-            ;;
-        *) _err "Unknown: u $1  (try u --help)"; return 1 ;;
-    esac
+_u_search() {
+    {
+        cat <<'COMMANDS'
+help                 → command reference (git, utils, tmux)
+u s                  → fuzzy search aliases+commands
+u e <file>           → extract archive
+u h <cmd>            → tldr cheatsheet
+u z                  → top zoxide directories
+u t                  → directory tree (eza)
+u p                  → show PATH entries
+u P                  → show listening ports
+u j                  → manage background jobs (fg/disown/kill)
+f                    → fix last failed command (thefuck)
+z <dir>              → smart cd (zoxide)
+y                    → yazi file manager
+COMMANDS
+        alias | sort | while read -r line; do
+            printf '%-20s → %s\n' "${line%%=*}" "${${line#*=}//\'/}"
+        done
+    } | fzf --ansi --reverse --no-sort \
+        --prompt '  ' \
+        --header '  type to filter' \
+        --color 'fg:#908caa,fg+:#e0def4,hl:#c4a7e7,hl+:#eb6f92,pointer:#eb6f92,header:#908caa,info:#9ccfd8'
 }
 
 _u_path() {
@@ -538,63 +99,25 @@ _u_path() {
     echo "$PATH" | tr ':' '\n' | while read -r dir; do
         i=$((i + 1))
         local display="${dir/#$HOME/~}"
-        local label=$(_path_label "$dir")
-        local color=$(_path_color "$label")
         local mark=""
-
         [[ -d "$dir" ]] || mark=" ${_love}✗${_nc}"
-
-        if [[ -n "$label" ]]; then
-            printf '  %s%2d%s  %s%-45s%s  %s%-10s%s%s\n' \
-                "$_subtle" "$i" "$_nc" \
-                "$color" "$display" "$_nc" \
-                "$_subtle" "$label" "$_nc" \
-                "$mark"
-        else
-            printf '  %s%2d%s  %s%-45s%s%s\n' \
-                "$_subtle" "$i" "$_nc" \
-                "$color" "$display" "$_nc" \
-                "$mark"
-        fi
+        printf '  %s%2d%s  %s%-50s%s%s\n' "$_subtle" "$i" "$_nc" "$_iris" "$display" "$_nc" "$mark"
     done
     echo
 }
 
 _u_tldr() {
-    if ! command -v tldr &>/dev/null; then
-        [[ "$OSTYPE" == "darwin"* ]] \
-            && _err "Install tldr: brew install tldr" \
-            || _err "Install tldr: sudo pacman -S tldr"
-        return 1
-    fi
-    if [[ $# -gt 0 ]]; then
-        tldr "$@"
-    elif command -v gum &>/dev/null; then
-        local cmd
-        cmd=$(gum input \
-            --header "Look up command" --header.foreground "#9ccfd8" \
-            --placeholder "e.g. tar, git-rebase, curl" \
-            --prompt "→ " --prompt.foreground "#9ccfd8" \
-            --cursor.foreground "#eb6f92") || return 1
-        [[ -n "$cmd" ]] || return 1
-        tldr "$cmd"
-    else
-        _err "Usage: u h <command>"
-        return 1
-    fi
+    command -v tldr &>/dev/null || { _err "tldr not installed"; return 1; }
+    [[ $# -gt 0 ]] && { tldr "$@"; return; }
+    _err "Usage: u h <command>"
+    return 1
 }
 
 _u_dirs() {
-    if ! command -v zoxide &>/dev/null; then
-        [[ "$OSTYPE" == "darwin"* ]] \
-            && _err "Install zoxide: brew install zoxide" \
-            || _err "Install zoxide: sudo pacman -S zoxide"
-        return 1
-    fi
+    command -v zoxide &>/dev/null || { _err "zoxide not installed"; return 1; }
     echo
     zoxide query -l -s 2>/dev/null | head -20 | while read -r score dir; do
-        local display="${dir/#$HOME/~}"
-        printf '  %s%6.1f%s  %s%s%s\n' "$_subtle" "$score" "$_nc" "$_iris" "$display" "$_nc"
+        printf '  %s%6.1f%s  %s%s%s\n' "$_subtle" "$score" "$_nc" "$_iris" "${dir/#$HOME/\~}" "$_nc"
     done
     echo
 }
@@ -606,23 +129,80 @@ _u_tree() {
     elif command -v tree &>/dev/null; then
         tree -C -L "$depth" --dirsfirst -I 'node_modules|.git|__pycache__|.venv|.DS_Store' "$dir"
     else
-        find "$dir" -maxdepth "$depth" -print | head -100 | while read -r f; do
-            local indent=$(( ($(echo "$f" | tr -cd '/' | wc -c) - $(echo "$dir" | tr -cd '/' | wc -c)) ))
-            printf '%*s%s\n' $((indent * 2)) '' "$(basename "$f")"
-        done
+        find "$dir" -maxdepth "$depth" -print | head -100
     fi
 }
 
-y() {
-    local tmp cwd
-    tmp="$(mktemp -t yazi-cwd.XXXXX)"
-    yazi "$@" --cwd-file="$tmp"
-    cwd="$(cat -- "$tmp")"
-    [[ -n "$cwd" && "$cwd" != "$PWD" ]] && cd -- "$cwd"
-    rm -f -- "$tmp"
+_u_ports() {
+    if command -v lsof &>/dev/null; then
+        lsof -iTCP -sTCP:LISTEN -P -n
+    elif command -v ss &>/dev/null; then
+        ss -tlnp
+    else
+        _err "Neither lsof nor ss found"
+    fi
 }
 
-# ── user-added ─────────────────────────────────────────────────────────────
-# Add manually or use `u a` for interactive creation.
-[[ -f $HOME/.nurc ]] && source $HOME/.nurc
-export NUCLI_BB_ENABLED=t
+help() {
+    local i="$_iris" n="$_nc" s="$_subtle"
+    _hr() { printf '  %s── %s %s\n' "$s" "$1" "$n"; }
+    _r()  { printf '  %s%-5s%s %-14s' "$i" "$1" "$n" "$2"; }
+    _rn() { printf '  %s%-5s%s %s\n' "$i" "$1" "$n" "$2"; }
+
+    printf '\n'
+    _hr "git"
+    _r "ga"   "add"         ; _r "gaa"  "add --all"     ; _rn "gc"   "commit"
+    _r "gcm"  "commit -m"   ; _r "gcam" "add+commit -m" ; _rn "gp"   "push"
+    _r "gpf"  "push --force"; _r "gl"   "pull"          ; _rn "gd"   "diff"
+    _r "gds"  "diff --staged"; _r "gst" "status"        ; _rn "glog" "log --graph"
+    _r "gco"  "checkout"    ; _r "gsw"  "switch"        ; _rn "gab"  "absorb+rebase"
+    _r "gsta" "stash"       ; _r "gstp" "stash pop"     ; _rn "grb"  "rebase"
+    _r "grbi" "rebase -i"   ; _r "gsb"  "switch branch" ; _rn "gnb"  "new branch"
+    printf '\n'
+
+    _hr "utils"
+    _r "u s"  "search"      ; _r "u e"  "extract"       ; _rn "u h"  "tldr"
+    _r "u p"  "PATH"        ; _r "u P"  "ports"         ; _rn "u t"  "tree"
+    _r "u z"  "zoxide dirs" ; _r "u j"  "bg jobs"       ; _rn "y"    "yazi"
+    _r "f"    "thefuck"     ; _rn "z"   "zoxide cd"
+    printf '\n'
+
+    _hr "tmux (\`)"
+    _r "v"    "split right" ; _r "s"    "split down"    ; _rn "c"    "new window"
+    _r "z"    "zoom"        ; _r "x"    "kill pane"     ; _rn "X"    "kill window"
+    _r "f"    "sessionizer" ; _r "g"    "lazygit"       ; _rn "t"    "popup shell"
+    _r "w"    "fzf picker"  ; _r "?"    "cheatsheet"    ; _rn "/"    "guide"
+    _r "Space" "thumbs"     ; _r "e"    "extrakto"      ; _rn "Enter" "copy mode"
+    _r "C-s"  "save"        ; _rn "C-r" "restore"
+    printf '  %sC-h/j/k/l%s  vim+tmux nav (no prefix)\n' "$i" "$n"
+    printf '\n'
+
+    _hr "projects"
+    _rn "tm"  "sessionizer"
+    _rn "sessionizer-add" "register or scaffold"
+    printf '\n'
+}
+
+u() {
+    case "${1:-}" in
+        s|search)  _u_search ;;
+        e|extract) shift; extract "$@" ;;
+        h|help)    shift; _u_tldr "$@" ;;
+        p|path)    _u_path ;;
+        P|ports)   _u_ports ;;
+        t|tree)    shift; _u_tree "$@" ;;
+        z|dirs)    _u_dirs ;;
+        j|jobs)    bj ;;
+        *)
+            printf '\n  %su%s %s<command>%s\n\n' "$_bold" "$_nc" "$_subtle" "$_nc"
+            printf '  %ss%s  search    %sfuzzy search aliases+commands%s\n' "$_iris" "$_nc" "$_subtle" "$_nc"
+            printf '  %se%s  extract   %sunpack archive files%s\n'         "$_iris" "$_nc" "$_subtle" "$_nc"
+            printf '  %sh%s  help      %stldr cheatsheet for a command%s\n' "$_iris" "$_nc" "$_subtle" "$_nc"
+            printf '  %sp%s  path      %sshow PATH entries%s\n'            "$_iris" "$_nc" "$_subtle" "$_nc"
+            printf '  %sP%s  ports     %sshow listening ports%s\n'         "$_iris" "$_nc" "$_subtle" "$_nc"
+            printf '  %st%s  tree      %sdirectory tree%s\n'               "$_iris" "$_nc" "$_subtle" "$_nc"
+            printf '  %sz%s  dirs      %stop zoxide directories%s\n'       "$_iris" "$_nc" "$_subtle" "$_nc"
+            printf '  %sj%s  jobs      %smanage background jobs%s\n\n'     "$_iris" "$_nc" "$_subtle" "$_nc"
+            ;;
+    esac
+}

@@ -1,0 +1,7 @@
+machines:
+  REDACTED:
+    name: macbook
+projects:
+  - id: neovim-configs
+    locations:
+      REDACTED: ~/Documents/configs/neovim-configs

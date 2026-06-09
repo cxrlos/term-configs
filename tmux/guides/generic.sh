@@ -30,9 +30,13 @@ trap 'rm -f "$tmpfile"' EXIT
     head "Starting your day"
     body "Open a terminal and type:"
     code "tm"
-    body "fzf shows running sessions at the top, project dirs below."
+    body "fzf shows running sessions at the top, registered projects below."
     body "Pick a running session  →  resume exactly where you left off."
     body "Pick a project dir      →  create a new session in that directory."
+    gap
+    body "Register new projects from the shell:"
+    code "cd ~/path/to/project && sessionizer-add"
+    body "Import existing, bulk-import a folder of repos, or scaffold new."
     gap
     body "Once inside tmux, switch sessions without leaving:"
     code "\`f   (prefix + f)"
@@ -117,6 +121,13 @@ trap 'rm -f "$tmpfile"' EXIT
     gap
     tip  "Don't auto-start things that need manual confirmation (e.g. migrations)."
     tip  "Auto-start dev servers and watchers only — safe to run unconditionally."
+    gap
+
+    head "Git shortcuts  (shell)"
+    body "Branch switching and creation without tab completion issues:"
+    code "gsb          fzf branch switcher  (local, sorted by recency)"
+    code "gnb          new branch  (pick type → describe → auto-slug)"
+    body "gnb creates branches like feat/add-user-auth, fix/null-pointer, etc."
     gap
 
     head "Session hygiene"
