@@ -1,9 +1,7 @@
 source "$ZSH_CONFIG_DIR/palette.sh"
 
 touch ~/.hushlogin
-
-mkdir -p ~/.cache
-: > ~/.cache/zsh_bg_jobs
+mkdir -p ~/.cache && : > ~/.cache/zsh_bg_jobs
 
 _bg_write_count() {
     local n=${#jobstates}
@@ -38,14 +36,11 @@ zinit light zsh-users/zsh-syntax-highlighting
 autoload -Uz compinit
 compinit
 
-zinit light Aloxaf/fzf-tab
-
 zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}' 'r:|?=** m:{a-z}={A-Z}'
 zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
 zstyle ':completion:*' accept-exact '*(N)'
 zstyle ':completion:*' use-cache on
 zstyle ':completion:*' cache-path ~/.zsh/cache
-zstyle ':fzf-tab:*' fzf-flags --color='fg:#908caa,hl:#c4a7e7,fg+:#e0def4,hl+:#eb6f92,info:#9ccfd8,pointer:#eb6f92,marker:#f6c177,header:#9ccfd8'
 
 autoload -Uz up-line-or-beginning-search
 autoload -Uz down-line-or-beginning-search
