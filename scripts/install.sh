@@ -211,38 +211,10 @@ cat >"$HOME/.zsh/.local" <<EOF
 TERM_CONFIGS_DIR="$REPO_DIR"
 EOF
 
-# ── Sessionizer machine ID ───────────────────────────────────────────────────
-
-_get_machine_id() {
-    local id_file="${XDG_CONFIG_HOME:-$HOME/.config}/sessionizer/machine-id"
-    if [[ -f "$id_file" ]]; then
-        cat "$id_file"
-        return
-    fi
-    local mid=""
-    if [[ "$(uname)" == "Darwin" ]]; then
-        mid=$(ioreg -rd1 -c IOPlatformExpertDevice | awk -F'"' '/IOPlatformUUID/{print $4}')
-    elif [[ -f /etc/machine-id ]]; then
-        mid=$(cat /etc/machine-id)
-    fi
-    [[ -n "$mid" ]] || { echo "unknown"; return 1; }
-    mkdir -p "$(dirname "$id_file")"
-    printf '%s' "$mid" > "$id_file"
-    echo "$mid"
-}
+# ── Sessionizer ──────────────────────────────────────────────────────────────
 
 mkdir -p "${XDG_CONFIG_HOME:-$HOME/.config}/sessionizer"
-mid=$(_get_machine_id)
-
-YAML="$REPO_DIR/sessionizer/projects.yaml"
-if [[ -f "$YAML" ]] && [[ "$mid" != "unknown" ]]; then
-    if ! yq -e ".machines[\"$mid\"]" "$YAML" &>/dev/null; then
-        yq -i ".machines[\"$mid\"].name = \"$(hostname -s)\"" "$YAML"
-    fi
-    ((extras_done++))
-else
-    ((extras_ok++))
-fi
+((extras_ok++))
 
 # ── zinit ─────────────────────────────────────────────────────────────────────
 

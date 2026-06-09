@@ -15,27 +15,7 @@ if [[ -z "$RESURRECT_DIR" ]]; then
 fi
 RESTORE_SCRIPT="${TMUX_RESURRECT_RESTORE:-$HOME/.tmux/plugins/tmux-resurrect/scripts/restore.sh}"
 
-# ── Machine ID ───────────────────────────────────────────────────────────────
-
-_get_machine_id() {
-    local id_file="${XDG_CONFIG_HOME:-$HOME/.config}/sessionizer/machine-id"
-    if [[ -f "$id_file" ]]; then
-        cat "$id_file"
-        return
-    fi
-    local mid=""
-    if [[ "$(uname)" == "Darwin" ]]; then
-        mid=$(ioreg -rd1 -c IOPlatformExpertDevice | awk -F'"' '/IOPlatformUUID/{print $4}')
-    elif [[ -f /etc/machine-id ]]; then
-        mid=$(cat /etc/machine-id)
-    fi
-    [[ -n "$mid" ]] || { echo "unknown"; return 1; }
-    mkdir -p "$(dirname "$id_file")"
-    printf '%s' "$mid" > "$id_file"
-    echo "$mid"
-}
-
-MACHINE_ID=$(_get_machine_id)
+MACHINE_NAME=$(hostname -s)
 
 # ── YAML readers ─────────────────────────────────────────────────────────────
 
@@ -45,7 +25,7 @@ _read_projects() {
     local proj_count dir i
     proj_count=$(yq '.projects | length' "$YAML")
     for ((i=0; i<proj_count; i++)); do
-        dir=$(yq -r ".projects[$i].locations[\"$MACHINE_ID\"] // \"\"" "$YAML")
+        dir=$(yq -r ".projects[$i].locations[\"$MACHINE_NAME\"] // \"\"" "$YAML")
         dir="${dir/#\~/$HOME}"
         [[ -n "$dir" && -d "$dir" ]] && echo "$dir"
     done

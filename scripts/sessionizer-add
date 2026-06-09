@@ -8,24 +8,6 @@ source "$REPO_DIR/zsh/palette.sh"
 
 YAML="$REPO_DIR/sessionizer/projects.yaml"
 
-_get_machine_id() {
-    local id_file="${XDG_CONFIG_HOME:-$HOME/.config}/sessionizer/machine-id"
-    if [[ -f "$id_file" ]]; then
-        cat "$id_file"
-        return
-    fi
-    local mid=""
-    if [[ "$(uname)" == "Darwin" ]]; then
-        mid=$(ioreg -rd1 -c IOPlatformExpertDevice | awk -F'"' '/IOPlatformUUID/{print $4}')
-    elif [[ -f /etc/machine-id ]]; then
-        mid=$(cat /etc/machine-id)
-    fi
-    [[ -n "$mid" ]] || { echo "unknown"; return 1; }
-    mkdir -p "$(dirname "$id_file")"
-    printf '%s' "$mid" > "$id_file"
-    echo "$mid"
-}
-
 _usage() {
     printf '%s\n' "Usage: sessionizer-add"
     printf '%s\n' ""
@@ -37,7 +19,6 @@ _ensure_yaml() {
     [[ -f "$YAML" ]] && return
     mkdir -p "$(dirname "$YAML")"
     cat > "$YAML" <<EOF
-machines: {}
 projects: []
 EOF
 }
@@ -45,7 +26,7 @@ EOF
 _register_project() {
     local id="$1" path="$2"
 
-    if yq -e ".projects[] | select(.id == \"$id\") | .locations[\"$MACHINE_ID\"]" "$YAML" &>/dev/null; then
+    if yq -e ".projects[] | select(.id == \"$id\") | .locations[\"$MACHINE_NAME\"]" "$YAML" &>/dev/null; then
         _warn "Project '$id' already registered for this machine"
         return 1
     fi
@@ -53,10 +34,10 @@ _register_project() {
     if yq -e ".projects[] | select(.id == \"$id\")" "$YAML" &>/dev/null; then
         local idx
         idx=$(yq ".projects | to_entries | .[] | select(.value.id == \"$id\") | .key" "$YAML")
-        yq -i ".projects[$idx].locations[\"$MACHINE_ID\"] = \"$path\"" "$YAML"
+        yq -i ".projects[$idx].locations[\"$MACHINE_NAME\"] = \"$path\"" "$YAML"
         _ok "Added this machine's path to existing project '$id'"
     else
-        yq -i ".projects += [{\"id\": \"$id\", \"locations\": {\"$MACHINE_ID\": \"$path\"}}]" "$YAML"
+        yq -i ".projects += [{\"id\": \"$id\", \"locations\": {\"$MACHINE_NAME\": \"$path\"}}]" "$YAML"
         _ok "Registered project '$id' → $path"
     fi
 }
@@ -134,7 +115,7 @@ Tmux layout — create a .tmux-sessionizer file (chmod +x) using \$TMUX_SESSION:
 
 # ── Main ─────────────────────────────────────────────────────────────────────
 
-MACHINE_ID=$(_get_machine_id)
+MACHINE_NAME=$(hostname -s)
 target="$(pwd)"
 yaml_path="${target/#$HOME/~}"
 entry_id=$(basename "$target")
