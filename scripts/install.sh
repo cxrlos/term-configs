@@ -133,7 +133,6 @@ LINKS=(
     "alacritty           : .config/alacritty"
     "tmux/tmux.conf      : .tmux.conf"
     "tmux/cheatsheet.sh  : .tmux-cheatsheet.sh"
-    "tmux/guides         : .tmux-guides"
 )
 BINS=(
     "scripts/tmux-sessionizer : .local/bin/tmux-sessionizer"
@@ -170,10 +169,10 @@ _clean_all_links() {
 }
 
 _apply_map() {
-    local -n map=$1
-    local is_bin=${2:-false}
+    local is_bin=$1
+    shift
 
-    for entry in "${map[@]}"; do
+    for entry in "$@"; do
         local rel_src="${entry%%:*}"
         local rel_dst="${entry##*:}"
         rel_src="${rel_src// /}"
@@ -199,10 +198,9 @@ _apply_map() {
 
 [[ "$INSTALL_MODE" == "reinstall" ]] && _clean_all_links
 
-_apply_map LINKS false
-_apply_map BINS true
+_apply_map false "${LINKS[@]}"
+_apply_map true "${BINS[@]}"
 
-chmod +x "$HOME/.tmux-guides/"*.sh 2>/dev/null || true
 chmod +x "$HOME/.tmux-cheatsheet.sh" 2>/dev/null || true
 
 # ── Local config ──────────────────────────────────────────────────────────────
