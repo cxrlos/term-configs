@@ -91,6 +91,7 @@ _install_deps() {
                 if brew list "$dep" &>/dev/null; then
                     ((++deps_ok))
                 else
+                    # shellcheck disable=SC2015
                     brew install "$dep" &>/dev/null && ((++deps_installed)) || {
                         warn "Failed: $dep"
                         ((++deps_failed))
@@ -101,6 +102,7 @@ _install_deps() {
                 if brew list --cask "$cask" &>/dev/null; then
                     ((++deps_ok))
                 else
+                    # shellcheck disable=SC2015
                     brew install --cask "$cask" &>/dev/null && ((++deps_installed)) || {
                         warn "Failed: $cask"
                         ((++deps_failed))
@@ -114,6 +116,7 @@ _install_deps() {
                 if pacman -Qi "$dep" &>/dev/null; then
                     ((++deps_ok))
                 else
+                    # shellcheck disable=SC2015
                     sudo pacman -S --noconfirm "$dep" &>/dev/null && ((++deps_installed)) || {
                         warn "Failed: $dep"
                         ((++deps_failed))
@@ -125,6 +128,7 @@ _install_deps() {
                     if yay -Qi "$dep" &>/dev/null; then
                         ((++deps_ok))
                     else
+                        # shellcheck disable=SC2015
                         yay -S --noconfirm "$dep" &>/dev/null && ((++deps_installed)) || {
                             warn "Failed: $dep"
                             ((++deps_failed))
@@ -316,4 +320,5 @@ printf "  links:  %s new, %s ok" "$links_new" "$links_ok"
 ((links_backed > 0)) && printf ", %s backed up" "$links_backed"
 printf "\n"
 printf "  extras: %s configured, %s ok\n" "$extras_done" "$extras_ok"
+# shellcheck disable=SC2059
 printf "\n  ${GREEN}done${NC} — run ${BOLD}exec zsh${NC}\n\n"
