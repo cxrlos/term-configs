@@ -62,9 +62,9 @@ _do_import_all() {
         repo_id=$(basename "$repo")
         repo_yaml="${repo/#$HOME/~}"
         if _register_project "$repo_id" "$repo_yaml" 2>/dev/null; then
-            ((added++))
+            ((++added))
         else
-            ((skipped++))
+            ((++skipped))
         fi
     done < <(find "$target" -mindepth 2 -maxdepth 2 -name '.git' -type d 2>/dev/null | sed 's|/\.git$||' | sort)
 

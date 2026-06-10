@@ -85,16 +85,16 @@ _install_deps() {
             _ensure_brew
             for dep in "${BREW_DEPS[@]}"; do
                 if brew list "$dep" &>/dev/null; then
-                    ((deps_ok++))
+                    ((++deps_ok))
                 else
-                    brew install "$dep" &>/dev/null && ((deps_installed++)) || { warn "Failed: $dep"; ((deps_failed++)); }
+                    brew install "$dep" &>/dev/null && ((++deps_installed)) || { warn "Failed: $dep"; ((++deps_failed)); }
                 fi
             done
             for cask in "${BREW_CASKS[@]}"; do
                 if brew list --cask "$cask" &>/dev/null; then
-                    ((deps_ok++))
+                    ((++deps_ok))
                 else
-                    brew install --cask "$cask" &>/dev/null && ((deps_installed++)) || { warn "Failed: $cask"; ((deps_failed++)); }
+                    brew install --cask "$cask" &>/dev/null && ((++deps_installed)) || { warn "Failed: $cask"; ((++deps_failed)); }
                 fi
             done
             ;;
@@ -102,17 +102,17 @@ _install_deps() {
             sudo pacman -Sy --noconfirm &>/dev/null
             for dep in "${PACMAN_DEPS[@]}"; do
                 if pacman -Qi "$dep" &>/dev/null; then
-                    ((deps_ok++))
+                    ((++deps_ok))
                 else
-                    sudo pacman -S --noconfirm "$dep" &>/dev/null && ((deps_installed++)) || { warn "Failed: $dep"; ((deps_failed++)); }
+                    sudo pacman -S --noconfirm "$dep" &>/dev/null && ((++deps_installed)) || { warn "Failed: $dep"; ((++deps_failed)); }
                 fi
             done
             if _ensure_yay; then
                 for dep in "${AUR_DEPS[@]}"; do
                     if yay -Qi "$dep" &>/dev/null; then
-                        ((deps_ok++))
+                        ((++deps_ok))
                     else
-                        yay -S --noconfirm "$dep" &>/dev/null && ((deps_installed++)) || { warn "Failed: $dep"; ((deps_failed++)); }
+                        yay -S --noconfirm "$dep" &>/dev/null && ((++deps_installed)) || { warn "Failed: $dep"; ((++deps_failed)); }
                     fi
                 done
             else
@@ -145,7 +145,7 @@ _backup() {
     [[ -e "$target" || -L "$target" ]] || return 0
     local backup="${target}.bak.${TIMESTAMP}"
     mv "$target" "$backup"
-    ((links_backed++))
+    ((++links_backed))
 }
 
 _remove() {
@@ -184,7 +184,7 @@ _apply_map() {
         [[ -e "$src" ]] || { warn "Source missing: $rel_src"; continue; }
 
         if [[ "$INSTALL_MODE" != "reinstall" ]] && _is_correct_link "$src" "$dst"; then
-            ((links_ok++))
+            ((++links_ok))
             continue
         fi
 
@@ -192,7 +192,7 @@ _apply_map() {
         mkdir -p "$(dirname "$dst")"
         ln -sf "$src" "$dst"
         $is_bin && chmod +x "$dst"
-        ((links_new++))
+        ((++links_new))
     done
 }
 
@@ -212,7 +212,7 @@ EOF
 # ── Sessionizer ──────────────────────────────────────────────────────────────
 
 mkdir -p "${XDG_CONFIG_HOME:-$HOME/.config}/sessionizer"
-((extras_ok++))
+((++extras_ok))
 
 # ── zinit ─────────────────────────────────────────────────────────────────────
 
@@ -220,9 +220,9 @@ ZINIT_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}/zinit/zinit.git"
 if [[ ! -d "$ZINIT_HOME" ]]; then
     mkdir -p "$(dirname "$ZINIT_HOME")"
     git clone --quiet https://github.com/zdharma-continuum/zinit.git "$ZINIT_HOME"
-    ((extras_done++))
+    ((++extras_done))
 else
-    ((extras_ok++))
+    ((++extras_ok))
 fi
 
 # ── TPM ───────────────────────────────────────────────────────────────────────
@@ -230,9 +230,9 @@ fi
 TPM_DIR="$HOME/.tmux/plugins/tpm"
 if [[ ! -d "$TPM_DIR" ]]; then
     git clone --quiet https://github.com/tmux-plugins/tpm "$TPM_DIR"
-    ((extras_done++))
+    ((++extras_done))
 else
-    ((extras_ok++))
+    ((++extras_ok))
 fi
 "$TPM_DIR/bin/install_plugins" >/dev/null 2>&1 || true
 
@@ -268,7 +268,7 @@ for cfg in "${git_configs[@]}"; do
     read -r key val <<< "$cfg"
     git config --global "$key" "$val"
 done
-((extras_done++))
+((++extras_done))
 
 if command -v delta &>/dev/null; then
     git config --global core.pager delta
@@ -283,7 +283,7 @@ if [[ "$OS" == "macos" ]]; then
     defaults write -g ApplePressAndHoldEnabled -bool false
     defaults write -g InitialKeyRepeat -int 15
     defaults write -g KeyRepeat -int 2
-    ((extras_done++))
+    ((++extras_done))
 fi
 
 # ── Summary ───────────────────────────────────────────────────────────────────
