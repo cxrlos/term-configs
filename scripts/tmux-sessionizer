@@ -45,7 +45,7 @@ _hydrate() {
     local name="$1" dir="$2"
     local script="$dir/.tmux-sessionizer"
     if [[ -x "$script" ]]; then
-        TMUX_SESSION="$name" bash "$script"
+        TMUX_SESSION="$name" PROJECT_DIR="$dir" bash "$script"
     else
         _default_layout "$name" "$dir"
     fi

@@ -104,7 +104,8 @@ Tmux layout — create a .tmux-sessionizer file (chmod +x) using \$TMUX_SESSION:
   - Data/ML → 'notebook' launching jupyter or repl
   - If nothing extra makes sense, stop at 3 windows
 - Always select the 'editor' window at the end
-- Use tmux rename-window for window 1, tmux new-window -t \$TMUX_SESSION -n <name> -c $target for the rest
+- The sessionizer exports \$PROJECT_DIR (this machine's project path) when running the script. Use it for -c so the script stays portable across machines — never hardcode an absolute path
+- Use tmux rename-window for window 1, tmux new-window -t \$TMUX_SESSION -n <name> -c \"\$PROJECT_DIR\" for the rest
 - Use tmux send-keys -t \$TMUX_SESSION:<name> '<cmd>' Enter to run commands" 2>/dev/null
 
     _register_project "$entry_id" "$yaml_path"
