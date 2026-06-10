@@ -98,6 +98,7 @@ tmux select-window -t "$TMUX_SESSION:editor"
 
 Rules:
 - Use `$TMUX_SESSION` for targeting (set by the sessionizer before invocation).
+- Use `$PROJECT_DIR` for `-c` (also set by the sessionizer — this machine's project path). Never hardcode an absolute path; it's git-tracked and breaks when the repo syncs to another machine.
 - Rename window 1 (it always exists); don't create a duplicate `editor`.
 - End by selecting the window you want focused.
 - Include `claude --ide` so Claude Code auto-connects to Neovim's `claudecode.nvim` WebSocket bridge.
