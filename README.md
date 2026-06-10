@@ -24,6 +24,6 @@ Projects registered in `sessionizer/projects.yaml`, synced across machines via g
 
 Prefix: `` ` ``
 
-`` `f `` sessionizer · `` `g `` lazygit · `` `t `` popup shell · `` `? `` cheatsheet · `` `/ `` guide
+`` `f `` sessionizer · `` `g `` lazygit · `` `t `` popup shell · `` `? `` cheatsheet
 
 `C-h/j/k/l` pane nav (no prefix) · `` `v `` split right · `` `s `` split down · `` `z `` zoom · `` `x `` kill

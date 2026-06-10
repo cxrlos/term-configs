@@ -4,7 +4,7 @@ tmux rename-window -t "$TMUX_SESSION" 'editor'
 tmux send-keys -t "$TMUX_SESSION:editor" 'nvim .' Enter
 
 tmux new-window -t "$TMUX_SESSION" -n 'claude' -c /Users/carlos.garcia/Documents/configs/term-configs
-tmux send-keys -t "$TMUX_SESSION:claude" 'claude' Enter
+tmux send-keys -t "$TMUX_SESSION:claude" 'claude --ide' Enter
 
 tmux new-window -t "$TMUX_SESSION" -n 'shell' -c /Users/carlos.garcia/Documents/configs/term-configs
 

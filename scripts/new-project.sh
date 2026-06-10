@@ -58,8 +58,8 @@ Requirements:
 - Keep everything minimal — only what's needed to start working
 - Do NOT install dependencies, just set up the files
 - Output ONLY a YAML snippet for tmux hydration windows on the LAST line, formatted as:
-  HYDRATE: [{\"name\": \"editor\", \"cmd\": \"nvim .\"}, {\"name\": \"dev\", \"cmd\": \"npm run dev\"}, {\"name\": \"shell\"}]
-  Adapt the windows to the project type. Always include editor (nvim .) and shell." 2>/dev/null | tee /tmp/scaffold-output.txt
+  HYDRATE: [{\"name\": \"editor\", \"cmd\": \"nvim .\"}, {\"name\": \"claude\", \"cmd\": \"claude --ide\"}, {\"name\": \"dev\", \"cmd\": \"npm run dev\"}, {\"name\": \"shell\"}]
+  Adapt the windows to the project type. Always include editor (nvim .), claude (claude --ide), and shell. The --ide flag is required so Claude auto-connects to the Neovim WebSocket bridge." 2>/dev/null | tee /tmp/scaffold-output.txt
 
 hydrate_line=$(grep '^HYDRATE: ' /tmp/scaffold-output.txt 2>/dev/null | tail -1 || true)
 rm -f /tmp/scaffold-output.txt
