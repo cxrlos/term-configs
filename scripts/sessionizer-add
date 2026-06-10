@@ -116,7 +116,11 @@ Tmux layout — create a .tmux-sessionizer file (chmod +x) using \$TMUX_SESSION:
 
 # ── Main ─────────────────────────────────────────────────────────────────────
 
-MACHINE_NAME=$(hostname -s)
+if [[ "$(uname)" == "Darwin" ]]; then
+    MACHINE_NAME=$(hostname -s)
+else
+    MACHINE_NAME=$(uname -n)
+fi
 target="$(pwd)"
 yaml_path="${target/#$HOME/~}"
 entry_id=$(basename "$target")

@@ -15,7 +15,11 @@ if [[ -z "$RESURRECT_DIR" ]]; then
 fi
 RESTORE_SCRIPT="${TMUX_RESURRECT_RESTORE:-$HOME/.tmux/plugins/tmux-resurrect/scripts/restore.sh}"
 
-MACHINE_NAME=$(hostname -s)
+if [[ "$(uname)" == "Darwin" ]]; then
+    MACHINE_NAME=$(hostname -s)
+else
+    MACHINE_NAME=$(uname -n)
+fi
 
 # ── YAML readers ─────────────────────────────────────────────────────────────
 
