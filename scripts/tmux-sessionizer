@@ -28,7 +28,7 @@ _read_projects() {
 
     local proj_count dir i
     proj_count=$(yq '.projects | length' "$YAML")
-    for ((i=0; i<proj_count; i++)); do
+    for ((i = 0; i < proj_count; i++)); do
         dir=$(yq -r ".projects[$i].locations[\"$MACHINE_NAME\"] // \"\"" "$YAML")
         dir="${dir/#\~/$HOME}"
         [[ -n "$dir" && -d "$dir" ]] && echo "$dir"

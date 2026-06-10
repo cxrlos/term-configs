@@ -24,7 +24,10 @@ trap 'rm -f "$tmpfile"' EXIT
     row "f" "sessionizer"
     row "\$" "rename session"
     row "d" "detach"
+    row "Tab" "last session (toggle)"
+    row "S-Tab" "session menu — enter switch, C-x kill"
     row "( / )" "prev / next session"
+    row "Q" "kill session (confirm)"
 
     section "Windows (\`)"
     row "c" "new window"
