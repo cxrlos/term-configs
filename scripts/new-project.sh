@@ -18,9 +18,12 @@ _get_machine_id() {
     elif [[ -f /etc/machine-id ]]; then
         mid=$(cat /etc/machine-id)
     fi
-    [[ -n "$mid" ]] || { echo "unknown"; return 1; }
+    [[ -n "$mid" ]] || {
+        echo "unknown"
+        return 1
+    }
     mkdir -p "$(dirname "$id_file")"
-    printf '%s' "$mid" > "$id_file"
+    printf '%s' "$mid" >"$id_file"
     echo "$mid"
 }
 
@@ -70,7 +73,7 @@ if [[ -f "$YAML" ]]; then
     fi
 else
     mkdir -p "$(dirname "$YAML")"
-    cat > "$YAML" <<EOF
+    cat >"$YAML" <<EOF
 machines: {}
 orgs: []
 projects:

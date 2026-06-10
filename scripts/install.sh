@@ -12,7 +12,10 @@ NC=$'\033[0m'
 
 warn() { printf "%s\n" "${YELLOW}!${NC} $*"; }
 err() { printf "%s\n" "${RED}✗${NC} $*"; }
-die() { err "$@"; exit 1; }
+die() {
+    err "$@"
+    exit 1
+}
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TIMESTAMP="$(date +%Y%m%d%H%M%S)"
@@ -66,7 +69,8 @@ _ensure_yay() {
     read -r -p "  Install yay? Required for AUR packages. [y/N] " yn
     [[ "$yn" =~ ^[yY]$ ]] || return 1
     sudo pacman -S --needed --noconfirm git base-devel
-    local tmp; tmp=$(mktemp -d)
+    local tmp
+    tmp=$(mktemp -d)
     git clone https://aur.archlinux.org/yay.git "$tmp/yay"
     (cd "$tmp/yay" && makepkg -si)
     rm -rf "$tmp"
@@ -87,14 +91,20 @@ _install_deps() {
                 if brew list "$dep" &>/dev/null; then
                     ((++deps_ok))
                 else
-                    brew install "$dep" &>/dev/null && ((++deps_installed)) || { warn "Failed: $dep"; ((++deps_failed)); }
+                    brew install "$dep" &>/dev/null && ((++deps_installed)) || {
+                        warn "Failed: $dep"
+                        ((++deps_failed))
+                    }
                 fi
             done
             for cask in "${BREW_CASKS[@]}"; do
                 if brew list --cask "$cask" &>/dev/null; then
                     ((++deps_ok))
                 else
-                    brew install --cask "$cask" &>/dev/null && ((++deps_installed)) || { warn "Failed: $cask"; ((++deps_failed)); }
+                    brew install --cask "$cask" &>/dev/null && ((++deps_installed)) || {
+                        warn "Failed: $cask"
+                        ((++deps_failed))
+                    }
                 fi
             done
             ;;
@@ -104,7 +114,10 @@ _install_deps() {
                 if pacman -Qi "$dep" &>/dev/null; then
                     ((++deps_ok))
                 else
-                    sudo pacman -S --noconfirm "$dep" &>/dev/null && ((++deps_installed)) || { warn "Failed: $dep"; ((++deps_failed)); }
+                    sudo pacman -S --noconfirm "$dep" &>/dev/null && ((++deps_installed)) || {
+                        warn "Failed: $dep"
+                        ((++deps_failed))
+                    }
                 fi
             done
             if _ensure_yay; then
@@ -112,7 +125,10 @@ _install_deps() {
                     if yay -Qi "$dep" &>/dev/null; then
                         ((++deps_ok))
                     else
-                        yay -S --noconfirm "$dep" &>/dev/null && ((++deps_installed)) || { warn "Failed: $dep"; ((++deps_failed)); }
+                        yay -S --noconfirm "$dep" &>/dev/null && ((++deps_installed)) || {
+                            warn "Failed: $dep"
+                            ((++deps_failed))
+                        }
                     fi
                 done
             else
@@ -136,6 +152,7 @@ LINKS=(
 )
 BINS=(
     "scripts/tmux-sessionizer : .local/bin/tmux-sessionizer"
+    "scripts/tmux-sessions    : .local/bin/tmux-sessions"
     "scripts/sessionizer-add  : .local/bin/sessionizer-add"
     "scripts/lidrun.sh        : .local/bin/lidrun"
 )
@@ -181,7 +198,10 @@ _apply_map() {
         local src="$REPO_DIR/$rel_src"
         local dst="$HOME/$rel_dst"
 
-        [[ -e "$src" ]] || { warn "Source missing: $rel_src"; continue; }
+        [[ -e "$src" ]] || {
+            warn "Source missing: $rel_src"
+            continue
+        }
 
         if [[ "$INSTALL_MODE" != "reinstall" ]] && _is_correct_link "$src" "$dst"; then
             ((++links_ok))
@@ -265,7 +285,7 @@ git_configs=(
 )
 
 for cfg in "${git_configs[@]}"; do
-    read -r key val <<< "$cfg"
+    read -r key val <<<"$cfg"
     git config --global "$key" "$val"
 done
 ((++extras_done))
