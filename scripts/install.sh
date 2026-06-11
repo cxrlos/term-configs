@@ -78,9 +78,9 @@ _ensure_yay() {
 
 # ── Dependencies ──────────────────────────────────────────────────────────────
 
-BREW_DEPS=(starship fzf gum bat ripgrep eza zoxide git-delta tldr thefuck tmux lazygit git-absorb atuin direnv yq fd hyperfine yazi)
+BREW_DEPS=(starship fzf gum bat ripgrep eza zoxide git-delta tldr thefuck tmux lazygit git-absorb atuin direnv yq fd hyperfine yazi terminal-notifier)
 BREW_CASKS=(font-profont-nerd-font)
-PACMAN_DEPS=(starship fzf bat ripgrep eza zoxide tldr tmux ttf-profont-nerd go-yq fd hyperfine yazi)
+PACMAN_DEPS=(starship fzf bat ripgrep eza zoxide tldr tmux ttf-profont-nerd go-yq fd hyperfine yazi libnotify)
 AUR_DEPS=(gum git-delta thefuck lazygit)
 
 _install_deps() {
@@ -158,6 +158,7 @@ BINS=(
     "scripts/tmux-sessionizer : .local/bin/tmux-sessionizer"
     "scripts/tmux-sessions    : .local/bin/tmux-sessions"
     "scripts/sessionizer-add  : .local/bin/sessionizer-add"
+    "scripts/claude-tmux-state : .local/bin/claude-tmux-state"
     "scripts/lidrun.sh        : .local/bin/lidrun"
 )
 

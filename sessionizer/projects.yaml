@@ -10,6 +10,12 @@ projects:
     locations:
       carlos: /Users/carlos.garcia/Documents/configs/neovim-configs
       bastion: /home/cxrlos/Documents/configs/neovim-configs
+  - id: fable-test
+    locations:
+      carlos: /Users/carlos.garcia/Documents/personal-projects/fable-test
+  - id: world-cup-prediction-model
+    locations:
+      carlos: /Users/carlos.garcia/Documents/personal-projects/world-cup-prediction-model
   - id: papaquiniela
     locations:
       bastion: /home/cxrlos/Documents/personal-projects/papaquiniela
