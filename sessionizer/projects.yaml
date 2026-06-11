@@ -8,3 +8,9 @@ projects:
   - id: neovim-configs
     locations:
       carlos: /Users/carlos.garcia/Documents/configs/neovim-configs
+  - id: fable-test
+    locations:
+      carlos: /Users/carlos.garcia/Documents/personal-projects/fable-test
+  - id: world-cup-prediction-model
+    locations:
+      carlos: /Users/carlos.garcia/Documents/personal-projects/world-cup-prediction-model

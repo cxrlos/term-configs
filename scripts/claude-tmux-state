@@ -1,0 +1,74 @@
+#!/usr/bin/env bash
+# Claude Code hook target: reflects agent state into tmux + desktop notifications.
+# Wired in ~/.claude/settings.json:
+#   Notification(permission_prompt|elicitation_dialog) -> waiting
+#   Stop / Notification(idle_prompt)                   -> done
+#   UserPromptSubmit / PostToolUse                     -> clear
+# State lives in the window option @claude_state, rendered by tmux.conf
+# (glyph next to the window name, session:window pills in status-right).
+
+STATE="${1:-}"
+
+[ -n "${TMUX_PANE:-}" ] || exit 0
+case "$STATE" in waiting | done | clear) ;; *) exit 0 ;; esac
+
+_refresh_clients() {
+    tmux list-clients -F '#{client_name}' 2>/dev/null | while IFS= read -r client; do
+        tmux refresh-client -S -t "$client" 2>/dev/null || true
+    done
+}
+
+_terminal_focused() {
+    [ "$(uname)" = "Darwin" ] || return 1
+    lsappinfo info -only name "$(lsappinfo front 2>/dev/null)" 2>/dev/null | grep -q "Alacritty"
+}
+
+# Suppress only when the user is already looking at the window: some attached
+# client is displaying it AND the terminal is the frontmost app.
+_target_on_screen() {
+    tmux list-clients -F '#{session_name}:#{window_index}' 2>/dev/null | grep -qxF "$1" || return 1
+    _terminal_focused
+}
+
+_notify() {
+    local target title message tmux_bin
+    target=$(tmux display-message -p -t "$TMUX_PANE" '#{session_name}:#{window_index}' 2>/dev/null) || return 0
+    _target_on_screen "$target" && return 0
+    if [ "$STATE" = "waiting" ]; then
+        title="◆ Claude needs you"
+        message="$target is waiting for input"
+    else
+        title="● Claude finished"
+        message="$target is idle"
+    fi
+
+    if command -v terminal-notifier >/dev/null 2>&1; then
+        # -activate would override -execute as the click action, so the
+        # executed command both foregrounds Alacritty and jumps to the window
+        tmux_bin=$(command -v tmux)
+        terminal-notifier -title "$title" -message "$message" \
+            -group "claude-$target" \
+            -execute "/usr/bin/open -a Alacritty; $tmux_bin switch-client -c \"\$($tmux_bin list-clients -F '#{client_name}' | head -n 1)\" -t '$target'" \
+            >/dev/null 2>&1 || true
+    elif [ "$(uname)" = "Darwin" ]; then
+        osascript -e "display notification \"$message\" with title \"$title\"" >/dev/null 2>&1 || true
+    elif command -v notify-send >/dev/null 2>&1; then
+        notify-send "$title" "$message" 2>/dev/null || true
+    fi
+}
+
+case "$STATE" in
+    clear)
+        current=$(tmux show -wv -t "$TMUX_PANE" @claude_state 2>/dev/null) || exit 0
+        [ -n "$current" ] || exit 0
+        tmux set -wu -t "$TMUX_PANE" @claude_state 2>/dev/null || exit 0
+        _refresh_clients
+        ;;
+    waiting | done)
+        tmux set -w -t "$TMUX_PANE" @claude_state "$STATE" 2>/dev/null || exit 0
+        _refresh_clients
+        _notify
+        ;;
+esac
+
+exit 0
