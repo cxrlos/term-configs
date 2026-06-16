@@ -2,9 +2,14 @@ projects:
   - id: term-configs
     locations:
       carlos: /Users/carlos.garcia/Documents/configs/term-configs
+      bastion: /home/cxrlos/Documents/configs/term-configs
   - id: itaipu
     locations:
       carlos: /Users/carlos.garcia/dev/nu/itaipu
   - id: neovim-configs
     locations:
       carlos: /Users/carlos.garcia/Documents/configs/neovim-configs
+      bastion: /home/cxrlos/Documents/configs/neovim-configs
+  - id: papaquiniela
+    locations:
+      bastion: /home/cxrlos/Documents/personal-projects/papaquiniela
