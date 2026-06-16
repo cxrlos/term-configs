@@ -19,3 +19,7 @@ projects:
   - id: papaquiniela
     locations:
       bastion: /home/cxrlos/Documents/personal-projects/papaquiniela
+      carlos: /Users/carlos.garcia/Documents/personal-projects/papaquiniela
+  - id: ratatoist
+    locations:
+      carlos: /Users/carlos.garcia/Documents/personal-projects/ratatoist
