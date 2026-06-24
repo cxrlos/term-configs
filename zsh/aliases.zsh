@@ -1,3 +1,10 @@
+nvim() {
+  if (($#)); then
+    command nvim "$@"
+  else
+    command nvim .
+  fi
+}
 alias vi='nvim'
 alias vim='nvim'
 alias edit='nvim'
