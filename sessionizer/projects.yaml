@@ -23,3 +23,9 @@ projects:
   - id: ratatoist
     locations:
       carlos: /Users/carlos.garcia/Documents/personal-projects/ratatoist
+  - id: portugues-br
+    locations:
+      carlos: /Users/carlos.garcia/Documents/portugues-br
+  - id: obsidian
+    locations:
+      carlos: /Users/carlos.garcia/Documents/obsidian
