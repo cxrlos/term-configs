@@ -27,3 +27,9 @@ projects:
   - id: hyprland-configs
     locations:
       bastion: /home/cxrlos/Documents/configs/hyprland-configs
+  - id: portugues-br
+    locations:
+      carlos: /Users/carlos.garcia/Documents/portugues-br
+  - id: obsidian
+    locations:
+      carlos: /Users/carlos.garcia/Documents/obsidian
