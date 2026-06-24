@@ -23,6 +23,10 @@ projects:
   - id: ratatoist
     locations:
       carlos: /Users/carlos.garcia/Documents/personal-projects/ratatoist
+      bastion: /home/cxrlos/Documents/personal-projects/ratatoist
+  - id: hyprland-configs
+    locations:
+      bastion: /home/cxrlos/Documents/configs/hyprland-configs
   - id: portugues-br
     locations:
       carlos: /Users/carlos.garcia/Documents/portugues-br

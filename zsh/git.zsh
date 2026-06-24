@@ -19,7 +19,7 @@ alias grb='git rebase'
 alias grbi='git rebase -i'
 alias gab='git absorb --and-rebase'
 
-_fzf_git_colors="--color=fg:#908caa,hl:#c4a7e7,fg+:#e0def4,hl+:#eb6f92,info:#9ccfd8,pointer:#eb6f92,header:#9ccfd8,bg+:#26233a"
+_fzf_git_colors="--color=fg:#a6adc8,hl:#89dceb,fg+:#cdd6f4,hl+:#f38ba8,info:#89dceb,pointer:#f38ba8,header:#89dceb,bg+:#313244"
 
 gsb() {
     local branch

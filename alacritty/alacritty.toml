@@ -1,6 +1,6 @@
 [general]
 live_config_reload = true
-import = ["~/.config/alacritty/rose-pine.toml"]
+import = ["~/.config/alacritty/catppuccin.toml"]
 
 [terminal]
 shell = { program = "/bin/zsh", args = ["-l"] }
@@ -12,7 +12,7 @@ TERM = "xterm-256color"
 [window]
 padding = { x = 6, y = 6 }
 dynamic_padding = true
-opacity = 0.93
+opacity = 0.92
 blur = true
 decorations = "Full"
 decorations_theme_variant = "Dark"
@@ -20,7 +20,7 @@ dynamic_title = true
 option_as_alt = "Both"
 
 [font]
-normal = { family = "ProFont IIx Nerd Font Mono" }
+normal = { family = "MonaspiceNe Nerd Font Mono" }
 size = 10.0
 
 [cursor]

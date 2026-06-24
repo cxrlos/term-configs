@@ -51,7 +51,7 @@ bj() {
         --bind "enter:execute-silent(printf fg     > '$actionfile')+accept" \
         --bind "d:execute-silent(printf disown > '$actionfile')+accept" \
         --bind "x:execute-silent(printf kill   > '$actionfile')+accept" \
-        --color 'fg:#908caa,fg+:#e0def4,hl:#c4a7e7,hl+:#eb6f92,pointer:#eb6f92,header:#908caa,border:#c4a7e7,info:#9ccfd8')
+        --color 'fg:#a6adc8,fg+:#cdd6f4,hl:#89dceb,hl+:#f38ba8,pointer:#f38ba8,header:#a6adc8,border:#89dceb,info:#89dceb')
 
     local action; action=$(cat "$actionfile")
     rm -f "$modefile" "$actionfile"
@@ -90,7 +90,7 @@ COMMANDS
     } | fzf --ansi --reverse --no-sort \
         --prompt '  ' \
         --header '  type to filter' \
-        --color 'fg:#908caa,fg+:#e0def4,hl:#c4a7e7,hl+:#eb6f92,pointer:#eb6f92,header:#908caa,info:#9ccfd8'
+        --color 'fg:#a6adc8,fg+:#cdd6f4,hl:#89dceb,hl+:#f38ba8,pointer:#f38ba8,header:#a6adc8,info:#89dceb'
 }
 
 _u_path() {

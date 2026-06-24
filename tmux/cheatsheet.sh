@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
-h='\033[38;2;196;167;231m' # #c4a7e7 iris    — section headers
-k='\033[38;2;156;207;216m' # #9ccfd8 foam    — keys
-d='\033[38;2;144;140;170m' # #908caa muted   — descriptions
-s='\033[38;2;62;53;82m'    # #3e3552 dim     — separator
+h='\033[38;2;137;220;235m' # #89dceb sky      — section headers
+k='\033[38;2;137;220;235m' # #89dceb sky      — keys
+d='\033[38;2;166;173;200m' # #a6adc8 subtext0 — descriptions
+s='\033[38;2;69;71;90m'    # #45475a surface1 — separator
 r='\033[0m'
 
 section() { printf "\n${h}  %s${r}\n  ${s}─────────────────────────────────────${r}\n" "$1"; }
@@ -106,6 +106,6 @@ fzf <"$tmpfile" \
     --pointer="▶" \
     --bind="enter:abort" \
     --bind="esc:abort" \
-    --color="bg:#191724,bg+:#26233a,fg:#e0def4,fg+:#e0def4,\
-hl:#c4a7e7,hl+:#c4a7e7,prompt:#9ccfd8,pointer:#eb6f92,\
-gutter:#191724,separator:#393552,header:#6e6a86,border:#9ccfd8"
+    --color="bg:#1e1e2e,bg+:#313244,fg:#cdd6f4,fg+:#cdd6f4,\
+hl:#89dceb,hl+:#89dceb,prompt:#89dceb,pointer:#f38ba8,\
+gutter:#1e1e2e,separator:#45475a,header:#6c7086,border:#89dceb"
