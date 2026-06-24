@@ -80,7 +80,7 @@ _ensure_yay() {
 
 BREW_DEPS=(starship fzf gum bat ripgrep eza zoxide git-delta tldr thefuck tmux lazygit git-absorb atuin direnv yq fd hyperfine yazi terminal-notifier)
 BREW_CASKS=(font-monaspace-nerd)
-PACMAN_DEPS=(starship fzf bat ripgrep eza zoxide tldr tmux ttf-monaspace-nerd go-yq fd hyperfine yazi libnotify)
+PACMAN_DEPS=(starship fzf bat ripgrep eza zoxide tldr tmux ttf-monaspace-nerd go-yq fd hyperfine yazi libnotify atuin direnv)
 AUR_DEPS=(gum git-delta thefuck lazygit)
 
 _install_deps() {

@@ -19,7 +19,7 @@ source "$ZSH_CONFIG_DIR/aliases.zsh"
 source "$ZSH_CONFIG_DIR/utils.zsh"
 
 [[ -f "$ZSH_CONFIG_DIR/nubank.zsh" ]] && source "$ZSH_CONFIG_DIR/nubank.zsh"
-[[ -f ~/.fzf.zsh ]] && source ~/.fzf.zsh
+command -v fzf &>/dev/null && source <(fzf --zsh)   # universal (mac + linux); was mac-only ~/.fzf.zsh
 [[ -f "$ZSH_CONFIG_DIR/tmux.zsh" ]] && source "$ZSH_CONFIG_DIR/tmux.zsh"
 
 eval "$(starship init zsh)"
