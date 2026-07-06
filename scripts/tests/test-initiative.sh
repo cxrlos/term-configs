@@ -55,4 +55,14 @@ YAML
 res="$("$REPO/scripts/initiative" resolve clp)"
 assert_contains "absent repo is missing" "$(printf '\tghost\t%s/ghost\tmissing' "$INITIATIVE_DEV_ROOT")" "$res"
 
+# resolve: declared worktree but repo dir absent entirely -> missing
+cat >"$INITIATIVE_PROJECTS_ROOT/2026-07-clp/.initiative.yaml" <<'YAML'
+id: clp
+checkouts:
+  - repo: phantom
+    worktree: wt-z
+YAML
+res="$("$REPO/scripts/initiative" resolve clp)"
+assert_contains "declared worktree + absent repo is missing" "$(printf '\tphantom\t%s/phantom/.worktrees/wt-z\tmissing' "$INITIATIVE_DEV_ROOT")" "$res"
+
 tests_summary
