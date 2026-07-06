@@ -35,12 +35,12 @@ checkout(s) under `~/dev/nu`, so one tmux session opens both. The link is a mani
 `~/Documents/projects/<id>/.initiative.yaml`:
 
 ```yaml
-id: clp-new-source
-title: CLP New Spend Source Validation
+id: 2026-07-example
+title: Example initiative
 checkouts:
-  - repo: itaipu
-    worktree: clp-new-source   # omit for the main checkout
-  - repo: squidward
+  - repo: bigrepo
+    worktree: example   # omit for the main checkout
+  - repo: librepo
 ```
 
 - `` `p `` opens the initiatives picker. Selecting one hydrates a session with a `notes`
@@ -48,6 +48,6 @@ checkouts:
   workspace (with `--add-dir` to each checkout, so metadata stays out of the code repo),
   and a `shell`.
 - Worktrees live at `<repo>/.worktrees/<slug>` and are managed with `gwt` (`gwta`/`gwts`/`gwtr`
-  in zsh). This lets two initiatives work the same big repo (e.g. itaipu) without re-cloning.
+  in zsh). This lets two initiatives work the same big repo (e.g. bigrepo) without re-cloning.
 - I create initiatives with the `start-initiative` Claude skill; past projects are untouched
   until I retrofit one by dropping in a manifest.
