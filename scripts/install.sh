@@ -159,6 +159,7 @@ BINS=(
     "scripts/tmux-sessions    : .local/bin/tmux-sessions"
     "scripts/sessionizer-add  : .local/bin/sessionizer-add"
     "scripts/claude-tmux-state : .local/bin/claude-tmux-state"
+    "scripts/initiative       : .local/bin/initiative"
     "scripts/lidrun.sh        : .local/bin/lidrun"
 )
 
