@@ -172,15 +172,15 @@ help() {
     _r "v"    "split right" ; _r "s"    "split down"    ; _rn "c"    "new window"
     _r "z"    "zoom"        ; _r "x"    "kill pane"     ; _rn "X"    "kill window"
     _r "f"    "sessionizer" ; _r "g"    "lazygit"       ; _rn "t"    "popup shell"
-    _r "w"    "fzf picker"  ; _r "?"    "cheatsheet"    ; _rn "/"    "guide"
+    _r "w"    "fzf picker"  ; _r "?"    "cheatsheet"    ; _rn "p"    "projects"
     _r "Space" "thumbs"     ; _r "e"    "extrakto"      ; _rn "Enter" "copy mode"
     _r "C-s"  "save"        ; _rn "C-r" "restore"
     printf '  %sC-h/j/k/l%s  vim+tmux nav (no prefix)\n' "$i" "$n"
     printf '\n'
 
     _hr "projects"
-    _rn "tm"  "sessionizer"
-    _rn "sessionizer-add" "register or scaffold"
+    _r  "tm"   "sessionizer"   ; _rn "sessionizer-add" "register or scaffold"
+    _r  "gwta" "worktree add"  ; _r "gwts" "worktree switch" ; _rn "gwtr" "worktree remove"
     printf '\n'
 }
 
