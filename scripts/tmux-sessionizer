@@ -4,6 +4,12 @@ SCRIPT_PATH="${BASH_SOURCE[0]}"
 [[ -L "$SCRIPT_PATH" ]] && SCRIPT_PATH="$(readlink "$SCRIPT_PATH")"
 REPO_DIR="$(cd "$(dirname "$SCRIPT_PATH")/.." && pwd)"
 YAML="$REPO_DIR/sessionizer/projects.yaml"
+INITIATIVE_BIN="$REPO_DIR/scripts/initiative"
+# shellcheck disable=SC2034 # consumed by _pick_worktree, added in Phase 5
+GWT_BIN="$REPO_DIR/scripts/gwt"
+FZF_COLORS="fg:#a6adc8,hl:#89dceb,fg+:#cdd6f4,hl+:#f38ba8,info:#89dceb,pointer:#f38ba8,header:#89dceb,bg+:#313244"
+# shellcheck source=zsh/palette.sh
+. "$REPO_DIR/zsh/palette.sh"
 
 RESURRECT_DIR="${TMUX_RESURRECT_DIR:-}"
 if [[ -z "$RESURRECT_DIR" ]]; then
@@ -106,15 +112,78 @@ _open_session() {
     fi
 }
 
+_hydrate_initiative() {
+    local name="$1" ws="$2" resolved="$3"
+    local kind repo path status adddirs="" first=""
+
+    tmux rename-window -t "$name:1" notes
+    tmux send-keys -t "$name:notes" 'nvim .' Enter
+
+    while IFS=$'\t' read -r kind repo path status; do
+        [[ "$kind" == "checkout" ]] || continue
+        if [[ "$status" == "missing" ]]; then
+            _warn "checkout '$repo' missing ($path) — skipping window"
+            continue
+        fi
+        [[ "$status" == "fellback" ]] && _warn "worktree for '$repo' missing — opening main checkout"
+        tmux new-window -t "$name" -n "$repo" -c "$path"
+        tmux send-keys -t "$name:$repo" 'nvim .' Enter
+        [[ -z "$first" ]] && first="$repo"
+        adddirs="$adddirs --add-dir $path"
+    done <<EOF
+$resolved
+EOF
+
+    tmux new-window -t "$name" -n claude -c "$ws"
+    tmux send-keys -t "$name:claude" "claude --ide$adddirs" Enter
+    tmux new-window -t "$name" -n shell -c "$ws"
+
+    if [[ -n "$first" ]]; then
+        tmux select-window -t "$name:$first"
+    else
+        tmux select-window -t "$name:notes"
+    fi
+}
+
+_open_initiative() {
+    local id="$1" name resolved ws
+    name=$(printf '%s' "$id" | tr './' '__')
+    resolved=$("$INITIATIVE_BIN" resolve "$id") || { _err "cannot resolve initiative '$id'"; exit 1; }
+    ws=$(printf '%s\n' "$resolved" | awk -F'\t' '$1=="workspace"{print $2; exit}')
+    [[ -d "$ws" ]] || { _err "workspace missing: $ws"; exit 1; }
+
+    if [[ -n "${TMUX:-}" ]]; then
+        if ! tmux has-session -t="$name" 2>/dev/null; then
+            tmux new-session -ds "$name" -c "$ws"
+            _hydrate_initiative "$name" "$ws" "$resolved"
+        fi
+        tmux switch-client -t "$name"
+    else
+        if tmux has-session -t="$name" 2>/dev/null; then
+            tmux attach-session -t "$name"
+        else
+            tmux new-session -ds "$name" -c "$ws"
+            _hydrate_initiative "$name" "$ws" "$resolved"
+            tmux attach-session -t "$name"
+        fi
+    fi
+}
+
 # ── Main ─────────────────────────────────────────────────────────────────────
 
-if [[ $# -eq 1 ]]; then
+if [[ "${1:-}" == "--initiatives" ]]; then
+    selected=$(
+        "$INITIATIVE_BIN" list 2>/dev/null | sed 's/^/[initiative] /' | grep -v '^$' |
+            fzf --prompt="  " --header="  projects" --color="$FZF_COLORS"
+    ) || exit 0
+elif [[ $# -eq 1 ]]; then
     selected=$1
 else
     restore=""
     [[ -f "$RESURRECT_DIR/last" ]] && restore="[restore] last saved"
 
     sessions=$(tmux list-sessions -F "[session] #{session_name}" 2>/dev/null)
+    inits=$("$INITIATIVE_BIN" list 2>/dev/null | sed 's/^/[initiative] /')
     dirs=$(_read_projects | sed "s|$HOME|~|" | sort)
 
     selected=$(
@@ -122,11 +191,12 @@ else
             echo "[new] add project"
             echo "$restore"
             echo "$sessions"
+            echo "$inits"
             echo "$dirs"
         } | grep -v '^$' |
             fzf --prompt="  " \
                 --header="  switch or open project" \
-                --color="fg:#a6adc8,hl:#89dceb,fg+:#cdd6f4,hl+:#f38ba8,info:#89dceb,pointer:#f38ba8,header:#89dceb,bg+:#313244"
+                --color="$FZF_COLORS"
     ) || exit 0
 fi
 
@@ -144,6 +214,11 @@ fi
 
 if [[ "$selected" == "[session] "* ]]; then
     _attach_or_switch "${selected#"[session] "}"
+    exit 0
+fi
+
+if [[ "$selected" == "[initiative] "* ]]; then
+    _open_initiative "${selected#"[initiative] "}"
     exit 0
 fi
 
