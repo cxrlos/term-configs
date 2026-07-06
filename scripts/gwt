@@ -1,0 +1,148 @@
+#!/usr/bin/env bash
+# gwt — git worktree helper. Worktrees live at <main-checkout>/.worktrees/<slug>.
+# Usage: gwt {add <slug> [--prefix P] [--repo DIR] | list [--repo DIR]
+#             | remove <slug> [--repo DIR] | path <slug> [--repo DIR]
+#             | main [--repo DIR] | guard [--repo DIR] | slug <text>}
+set -u
+
+SCRIPT_PATH="${BASH_SOURCE[0]}"
+[[ -L "$SCRIPT_PATH" ]] && SCRIPT_PATH="$(readlink "$SCRIPT_PATH")"
+REPO_DIR="$(cd "$(dirname "$SCRIPT_PATH")/.." && pwd)"
+# shellcheck source=zsh/palette.sh
+. "$REPO_DIR/zsh/palette.sh"
+
+# Newline-separated setup files copied from the main checkout into a new worktree.
+GWT_SEED_FILES="${GWT_SEED_FILES:-.mise.toml
+CLAUDE.local.md}"
+
+_main_checkout() { # start-dir -> primary checkout path
+    local start="${1:-.}" common
+    common=$(cd "$start" 2>/dev/null && git rev-parse --git-common-dir 2>/dev/null) || return 1
+    case "$common" in
+        /*) dirname "$common" ;;
+        *)  (cd "$start" && git rev-parse --show-toplevel) ;;
+    esac
+}
+
+_ensure_ignored() { # main-checkout
+    local main="$1" exclude
+    ( cd "$main" && git check-ignore -q .worktrees ) && return 0
+    exclude="$main/.git/info/exclude"
+    grep -qxF '.worktrees/' "$exclude" 2>/dev/null || printf '.worktrees/\n' >>"$exclude"
+}
+
+_seed() { # main-checkout worktree-dir
+    local main="$1" wt="$2" f
+    printf '%s\n' "$GWT_SEED_FILES" | while IFS= read -r f; do
+        [[ -z "$f" ]] && continue
+        if [[ -e "$main/$f" && ! -e "$wt/$f" ]]; then
+            cp -R "$main/$f" "$wt/$f" 2>/dev/null && _info "seeded $f" >&2
+        fi
+    done
+}
+
+_add() {
+    local slug="" prefix="feat" repo="" main branch wtdir
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --prefix) prefix="$2"; shift 2 ;;
+            --repo)   repo="$2"; shift 2 ;;
+            *)        slug="$1"; shift ;;
+        esac
+    done
+    [[ -z "$slug" ]] && { _err "usage: gwt add <slug> [--prefix P] [--repo DIR]"; return 2; }
+    main=$(_main_checkout "${repo:-.}") || { _err "not a git repo"; return 1; }
+    _ensure_ignored "$main"
+    branch="$prefix/$slug"
+    wtdir="$main/.worktrees/$slug"
+    if [[ -d "$wtdir" ]]; then
+        _warn "worktree exists: $wtdir" >&2
+        printf '%s\n' "$wtdir"; return 0
+    fi
+    if git -C "$main" show-ref --verify --quiet "refs/heads/$branch"; then
+        git -C "$main" worktree add "$wtdir" "$branch" >&2 || return 1
+    else
+        git -C "$main" worktree add "$wtdir" -b "$branch" >&2 || return 1
+    fi
+    _seed "$main" "$wtdir"
+    _ok "worktree $wtdir (branch $branch)" >&2
+    printf '%s\n' "$wtdir"
+}
+
+_list() {
+    local repo="" main d
+    [[ "${1:-}" == "--repo" ]] && repo="$2"
+    main=$(_main_checkout "${repo:-.}") || return 1
+    [[ -d "$main/.worktrees" ]] || return 0
+    for d in "$main"/.worktrees/*/; do
+        [[ -d "$d" ]] || continue
+        basename "$d"
+    done
+}
+
+_remove() {
+    local slug="" repo="" main wtdir
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --repo) repo="$2"; shift 2 ;;
+            *)      slug="$1"; shift ;;
+        esac
+    done
+    [[ -z "$slug" ]] && { _err "usage: gwt remove <slug> [--repo DIR]"; return 2; }
+    main=$(_main_checkout "${repo:-.}") || return 1
+    wtdir="$main/.worktrees/$slug"
+    git -C "$main" worktree remove "$wtdir" || return 1
+    git -C "$main" worktree prune
+    _ok "removed $wtdir" >&2
+}
+
+_path() {
+    local slug="" repo="" main
+    while [[ $# -gt 0 ]]; do
+        case "$1" in --repo) repo="$2"; shift 2 ;; *) slug="$1"; shift ;; esac
+    done
+    main=$(_main_checkout "${repo:-.}") || return 1
+    printf '%s\n' "$main/.worktrees/$slug"
+}
+
+_main_cmd() {
+    local repo=""
+    [[ "${1:-}" == "--repo" ]] && repo="$2"
+    _main_checkout "${repo:-.}"
+}
+
+_guard() {
+    local repo="" main exclude
+    [[ "${1:-}" == "--repo" ]] && repo="$2"
+    main=$(_main_checkout "${repo:-.}") || return 1
+    exclude="$main/.git/info/exclude"
+    if grep -qF 'initiative-guard' "$exclude" 2>/dev/null; then
+        _info "guard already present in $exclude" >&2; return 0
+    fi
+    cat >>"$exclude" <<'EOF'
+
+# initiative-guard — personal, never committed
+.claude/
+CLAUDE.local.md
+*.local
+scratch/
+EOF
+    _ok "seeded personal-ignore guard in $exclude" >&2
+}
+
+_slug() {
+    printf '%s' "${1:-}" | tr '[:upper:]' '[:lower:]' | tr -cs '[:alnum:]' '-' | sed 's/^-//;s/-$//'
+}
+
+cmd="${1:-}"
+shift 2>/dev/null || true
+case "$cmd" in
+    add)    _add "$@" ;;
+    list)   _list "$@" ;;
+    remove) _remove "$@" ;;
+    path)   _path "$@" ;;
+    main)   _main_cmd "$@" ;;
+    guard)  _guard "$@" ;;
+    slug)   _slug "$@" ;;
+    *) _err "usage: gwt {add|list|remove|path|main|guard|slug}"; exit 2 ;;
+esac
