@@ -37,3 +37,28 @@ gnb() {
     slug=$(printf '%s' "$desc" | tr '[:upper:]' '[:lower:]' | tr -cs '[:alnum:]' '-' | sed 's/^-//;s/-$//')
     git switch -c "${prefix}/${slug}"
 }
+
+gwta() {
+    local prefix desc slug
+    prefix=$(printf 'feat\nfix\nchore\nrefactor\ndocs\ntest\nci' |
+        fzf --prompt="  " --header="  branch type" $_fzf_git_colors) || return
+    read -r "desc?  description: "
+    [[ -z "$desc" ]] && return 1
+    slug=$(command gwt slug "$desc")
+    command gwt add "$slug" --prefix "$prefix"
+}
+
+gwts() {
+    local main wt
+    main=$(command gwt main 2>/dev/null) || { print -r -- "not a git repo"; return 1; }
+    wt=$(command gwt list 2>/dev/null |
+        fzf --prompt="  " --header="  switch worktree" $_fzf_git_colors) || return
+    cd "$main/.worktrees/$wt" || return
+}
+
+gwtr() {
+    local wt
+    wt=$(command gwt list 2>/dev/null |
+        fzf --prompt="  " --header="  remove worktree" $_fzf_git_colors) || return
+    command gwt remove "$wt"
+}
