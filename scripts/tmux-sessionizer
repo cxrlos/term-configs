@@ -184,8 +184,9 @@ _pick_worktree() {
         "[+ new worktree]")
             printf '  new worktree slug: ' >&2
             read -r slug
+            slug=$("$GWT_BIN" slug "$slug")
             [[ -z "$slug" ]] && return 1
-            "$GWT_BIN" add "$(printf '%s' "$slug" | tr -cs '[:alnum:]' '-')" --repo "$repo"
+            "$GWT_BIN" add "$slug" --repo "$repo"
             ;;
         "[worktree] "*)     printf '%s\n' "$repo/.worktrees/${choice#"[worktree] "}" ;;
         *) return 1 ;;
