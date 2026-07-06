@@ -39,4 +39,20 @@ assert_eq "main prints primary checkout" "$TMP/proj" "$("$GWT" main)"
 "$GWT" remove feature-x
 assert_eq "worktree removed" "no" "$([[ -d "$TMP/proj/.worktrees/feature-x" ]] && echo yes || echo no)"
 
+# _main_checkout must resolve the PRIMARY checkout even when invoked from inside a worktree
+"$GWT" add wt-two --prefix feat >/dev/null
+assert_eq "main from inside a worktree" "$TMP/proj" "$(cd "$TMP/proj/.worktrees/wt-two" && "$GWT" main)"
+assert_eq "path from inside a worktree" "$TMP/proj/.worktrees/wt-two" "$(cd "$TMP/proj/.worktrees/wt-two" && "$GWT" path wt-two)"
+
+# slug normalization
+assert_eq "slug normalizes" "my-feature-name" "$("$GWT" slug 'My Feature Name')"
+
+# guard seeds an idempotent personal-ignore block (run twice -> marker appears once)
+"$GWT" guard >/dev/null
+"$GWT" guard >/dev/null
+assert_eq "guard marker present once" "1" "$(grep -c 'initiative-guard' "$TMP/proj/.git/info/exclude")"
+
+# --repo targets a repo from outside its tree
+assert_contains "list --repo finds worktree" "wt-two" "$(cd /tmp && "$GWT" list --repo "$TMP/proj")"
+
 tests_summary
