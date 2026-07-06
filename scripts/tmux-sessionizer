@@ -5,7 +5,6 @@ SCRIPT_PATH="${BASH_SOURCE[0]}"
 REPO_DIR="$(cd "$(dirname "$SCRIPT_PATH")/.." && pwd)"
 YAML="$REPO_DIR/sessionizer/projects.yaml"
 INITIATIVE_BIN="$REPO_DIR/scripts/initiative"
-# shellcheck disable=SC2034 # consumed by _pick_worktree, added in Phase 5
 GWT_BIN="$REPO_DIR/scripts/gwt"
 FZF_COLORS="fg:#a6adc8,hl:#89dceb,fg+:#cdd6f4,hl+:#f38ba8,info:#89dceb,pointer:#f38ba8,header:#89dceb,bg+:#313244"
 # shellcheck source=zsh/palette.sh
@@ -90,10 +89,10 @@ _do_restore() {
 }
 
 _open_session() {
-    local selected="$1"
+    local selected="$1" name="${2:-}"
     [[ -d "$selected" ]] || exit 1
-    local name
-    name=$(basename "$selected" | tr '.' '_')
+    [[ -z "$name" ]] && name=$(basename "$selected")
+    name=$(printf '%s' "$name" | tr './' '__')
 
     if [[ -n "${TMUX:-}" ]]; then
         if ! tmux has-session -t="$name" 2>/dev/null; then
@@ -169,6 +168,30 @@ _open_initiative() {
     fi
 }
 
+_pick_worktree() {
+    local repo="$1" wts choice slug
+    wts=$("$GWT_BIN" list --repo "$repo" 2>/dev/null)
+    choice=$(
+        {
+            echo "[main] $(basename "$repo")"
+            printf '%s\n' "$wts" | sed 's/^/[worktree] /'
+            echo "[+ new worktree]"
+        } | grep -v '^\[worktree\] $' | grep -v '^$' |
+            fzf --prompt="  " --header="  worktree" --color="$FZF_COLORS"
+    ) || return 1
+    case "$choice" in
+        "[main] "*)         printf '%s\n' "$repo" ;;
+        "[+ new worktree]")
+            printf '  new worktree slug: ' >&2
+            read -r slug
+            [[ -z "$slug" ]] && return 1
+            "$GWT_BIN" add "$(printf '%s' "$slug" | tr -cs '[:alnum:]' '-')" --repo "$repo"
+            ;;
+        "[worktree] "*)     printf '%s\n' "$repo/.worktrees/${choice#"[worktree] "}" ;;
+        *) return 1 ;;
+    esac
+}
+
 # ── Main ─────────────────────────────────────────────────────────────────────
 
 if [[ "${1:-}" == "--initiatives" ]]; then
@@ -223,4 +246,13 @@ if [[ "$selected" == "[initiative] "* ]]; then
 fi
 
 selected="${selected/#\~/$HOME}"
-_open_session "$selected"
+if [[ -d "$selected/.worktrees" ]]; then
+    target=$(_pick_worktree "$selected") || exit 0
+    if [[ "$target" == "$selected" ]]; then
+        _open_session "$target"
+    else
+        _open_session "$target" "$(basename "$selected")-$(basename "$target")"
+    fi
+else
+    _open_session "$selected"
+fi
