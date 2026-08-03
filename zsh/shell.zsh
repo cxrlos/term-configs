@@ -30,11 +30,17 @@ setopt PUSHD_IGNORE_DUPS
 setopt PUSHD_MINUS
 
 zinit light zsh-users/zsh-completions
-zinit light zsh-users/zsh-autosuggestions
-zinit light zsh-users/zsh-syntax-highlighting
 
 autoload -Uz compinit
 compinit
+
+zinit light Aloxaf/fzf-tab
+
+zinit ice wait'0a' lucid
+zinit light zsh-users/zsh-autosuggestions
+
+zinit ice wait'0b' lucid
+zinit light zsh-users/zsh-syntax-highlighting
 
 zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}' 'r:|?=** m:{a-z}={A-Z}'
 zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
@@ -48,5 +54,12 @@ zle -N up-line-or-beginning-search
 zle -N down-line-or-beginning-search
 
 command -v zoxide &>/dev/null && eval "$(zoxide init zsh)"
-command -v thefuck &>/dev/null && eval "$(thefuck --alias f)"
+
+if command -v thefuck &>/dev/null; then
+    f() {
+        unset -f f
+        eval "$(thefuck --alias f)"
+        f "$@"
+    }
+fi
 

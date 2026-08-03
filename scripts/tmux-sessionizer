@@ -31,13 +31,11 @@ fi
 _read_projects() {
     [[ -f "$YAML" ]] || return
 
-    local proj_count dir i
-    proj_count=$(yq '.projects | length' "$YAML")
-    for ((i = 0; i < proj_count; i++)); do
-        dir=$(yq -r ".projects[$i].locations[\"$MACHINE_NAME\"] // \"\"" "$YAML")
+    local dir
+    while IFS= read -r dir; do
         dir="${dir/#\~/$HOME}"
         [[ -n "$dir" && -d "$dir" ]] && echo "$dir"
-    done
+    done < <(yq -r ".projects[].locations[\"$MACHINE_NAME\"] // \"\"" "$YAML")
 }
 
 # ── Hydration ────────────────────────────────────────────────────────────────
