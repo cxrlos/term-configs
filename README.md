@@ -49,5 +49,6 @@ checkouts:
   and a `shell`.
 - Worktrees live at `<repo>/.worktrees/<slug>` and are managed with `gwt` (`gwta`/`gwts`/`gwtr`
   in zsh). This lets two initiatives work the same big repo (e.g. bigrepo) without re-cloning.
-- I create initiatives with the `start-initiative` Claude skill; past projects are untouched
-  until I retrofit one by dropping in a manifest.
+- I create initiatives with the `start-initiative` Claude skill (shipped in `skills/`,
+  symlinked to `~/.claude/skills/` by `install.sh`); past projects are untouched until I
+  retrofit one by dropping in a manifest.

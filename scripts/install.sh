@@ -153,6 +153,7 @@ LINKS=(
     "alacritty           : .config/alacritty"
     "tmux/tmux.conf      : .tmux.conf"
     "tmux/cheatsheet.sh  : .tmux-cheatsheet.sh"
+    "skills/start-initiative : .claude/skills/start-initiative"
 )
 BINS=(
     "scripts/tmux-sessionizer : .local/bin/tmux-sessionizer"
