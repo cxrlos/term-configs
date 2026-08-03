@@ -21,6 +21,11 @@ jobs:
           shellcheck -x scripts/install.sh
           shellcheck -x scripts/tmux-sessionizer
           shellcheck -x scripts/sessionizer-add
+          shellcheck -x scripts/initiative
+          shellcheck -x scripts/gwt
+          shellcheck -x scripts/tests/lib.sh
+          shellcheck -x scripts/tests/test-initiative.sh
+          shellcheck -x scripts/tests/test-gwt.sh
           shellcheck -x tmux/cheatsheet.sh
 
   validate:
@@ -40,3 +45,17 @@ jobs:
           for f in zsh/*.zsh zsh/.zshrc; do
             zsh -n "$f" 2>&1 && echo "✓ $f" || echo "✗ $f"
           done
+
+  tests:
+    name: Script tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install yq
+        run: sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 && sudo chmod +x /usr/local/bin/yq
+
+      - name: Run script tests
+        run: |
+          bash scripts/tests/test-initiative.sh
+          bash scripts/tests/test-gwt.sh

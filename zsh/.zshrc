@@ -1,6 +1,3 @@
-autoload -U +X compinit && compinit
-autoload -U +X bashcompinit && bashcompinit
-
 ZINIT_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}/zinit/zinit.git"
 if [[ ! -d "$ZINIT_HOME" ]]; then
     mkdir -p "$(dirname "$ZINIT_HOME")"
@@ -27,7 +24,19 @@ command -v atuin  &>/dev/null && eval "$(atuin init zsh)"
 command -v direnv &>/dev/null && eval "$(direnv hook zsh)"
 
 export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+nvm() {
+    unset -f nvm node npm npx
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+    [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+    nvm "$@"
+}
+node() { nvm >/dev/null; node "$@"; }
+npm()  { nvm >/dev/null; npm "$@"; }
+npx()  { nvm >/dev/null; npx "$@"; }
 
 tm
+
+fpath+=~/.zfunc; autoload -Uz compinit; compinit
+
+zstyle ':completion:*' menu select
+export PATH="$HOME/miniforge3/condabin:$PATH"

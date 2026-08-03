@@ -32,7 +32,7 @@ trap 'rm -f "$tmpfile"' EXIT
     section "Windows (\`)"
     row "c" "new window"
     row "1..9" "jump to window"
-    row "n / p" "next / prev window"
+    row "n / b" "next / prev window"
     row "^" "last window"
     row "< / >" "move window left / right"
     row "," "rename window"
@@ -56,7 +56,7 @@ trap 'rm -f "$tmpfile"' EXIT
 
     section "Popups (\`)"
     row "?" "cheatsheet"
-    row "/" "workflow guide"
+    row "p" "projects (initiatives)"
     row "f" "sessionizer"
     row "g" "lazygit"
     row "t" "popup shell"

@@ -1,0 +1,78 @@
+#!/usr/bin/env bash
+# initiative — read ~/Documents/projects/*/.initiative.yaml manifests.
+# Usage: initiative {list | workspace <id> | title <id> | resolve <id>}
+set -u
+
+PROJECTS_ROOT="${INITIATIVE_PROJECTS_ROOT:-$HOME/Documents/projects}"
+DEV_ROOT="${INITIATIVE_DEV_ROOT:-$HOME/dev/nu}"
+
+_id_of() { # manifest-file -> id (falls back to parent dir name)
+    local f="$1" id
+    id=$(yq '.id // ""' "$f" 2>/dev/null)
+    [[ -z "$id" || "$id" == "null" ]] && id=$(basename "$(dirname "$f")")
+    printf '%s\n' "$id"
+}
+
+_manifest_for() { # id -> manifest path (or non-zero)
+    local id="$1" f
+    for f in "$PROJECTS_ROOT"/*/.initiative.yaml; do
+        [[ -f "$f" ]] || continue
+        [[ "$(_id_of "$f")" == "$id" ]] && { printf '%s\n' "$f"; return 0; }
+    done
+    return 1
+}
+
+_list() {
+    local f
+    for f in "$PROJECTS_ROOT"/*/.initiative.yaml; do
+        [[ -f "$f" ]] || continue
+        _id_of "$f"
+    done | sort
+}
+
+_workspace() {
+    local f
+    f=$(_manifest_for "$1") || return 1
+    dirname "$f"
+}
+
+_title() {
+    local f t
+    f=$(_manifest_for "$1") || return 1
+    t=$(yq '.title // ""' "$f" 2>/dev/null)
+    [[ -z "$t" || "$t" == "null" ]] && t="$1"
+    printf '%s\n' "$t"
+}
+
+_resolve() {
+    local id="$1" f ws count i repo wt main path status
+    f=$(_manifest_for "$id") || { printf 'initiative %s not found\n' "$id" >&2; return 1; }
+    ws=$(dirname "$f")
+    printf 'workspace\t%s\n' "$ws"
+    count=$(yq '.checkouts | length' "$f" 2>/dev/null)
+    [[ -z "$count" || "$count" == "null" ]] && count=0
+    for ((i = 0; i < count; i++)); do
+        repo=$(yq -r ".checkouts[$i].repo // \"\"" "$f" 2>/dev/null)
+        wt=$(yq -r ".checkouts[$i].worktree // \"\"" "$f" 2>/dev/null)
+        [[ -z "$repo" || "$repo" == "null" ]] && continue
+        main="$DEV_ROOT/$repo"
+        if [[ -n "$wt" && "$wt" != "null" ]]; then
+            path="$main/.worktrees/$wt"
+            if [[ -d "$path" ]]; then status="ok"
+            elif [[ -d "$main" ]]; then path="$main"; status="fellback"
+            else status="missing"; fi
+        else
+            path="$main"
+            if [[ -d "$path" ]]; then status="ok"; else status="missing"; fi
+        fi
+        printf 'checkout\t%s\t%s\t%s\n' "$repo" "$path" "$status"
+    done
+}
+
+case "${1:-}" in
+    list)      _list ;;
+    workspace) _workspace "${2:-}" ;;
+    title)     _title "${2:-}" ;;
+    resolve)   _resolve "${2:-}" ;;
+    *) printf 'usage: initiative {list|workspace <id>|title <id>|resolve <id>}\n' >&2; exit 2 ;;
+esac
