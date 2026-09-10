@@ -37,6 +37,8 @@ projects:
   - id: kileleni-landing
     locations:
       carlos: /Users/carlos.garcia/Documents/personal-projects/kileleni-landing
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
   - id: weekly-updates
     locations:
       carlos: /Users/carlos.garcia/Documents/misc/weekly-updates
@@ -46,3 +48,57 @@ projects:
   - id: core-limit-policies-monitoring-data-jobs
     locations:
       carlos: /Users/carlos.garcia/dev/nu/core-limit-policies-monitoring-data-jobs
+||||||| Stash base
+=======
+  - id: sustainlabs-ai
+    locations:
+      bastion: ~/Documents/sustainlabs-ai
+  - id: log-pose
+    locations:
+      bastion: ~/Documents/sustainlabs-ai/log-pose
+  - id: ohara
+    locations:
+      bastion: ~/Documents/sustainlabs-ai/ohara
+  - id: pluton
+    locations:
+      bastion: ~/Documents/sustainlabs-ai/pluton
+  - id: impel-down
+    locations:
+      bastion: ~/Documents/sustainlabs-ai/impel-down
+  - id: risk-mod
+    locations:
+      bastion: ~/Documents/sustainlabs-ai/risk-mod
+  - id: sustainlabs-github
+    locations:
+      bastion: ~/Documents/sustainlabs-ai/.github
+  - id: kuma
+    locations:
+      bastion: /home/cxrlos/Documents/personal-projects/kuma
+>>>>>>> Stashed changes
+||||||| Stash base
+=======
+  - id: sustainlabs-ai
+    locations:
+      bastion: ~/Documents/sustainlabs-ai
+  - id: log-pose
+    locations:
+      bastion: ~/Documents/sustainlabs-ai/log-pose
+  - id: ohara
+    locations:
+      bastion: ~/Documents/sustainlabs-ai/ohara
+  - id: pluton
+    locations:
+      bastion: ~/Documents/sustainlabs-ai/pluton
+  - id: impel-down
+    locations:
+      bastion: ~/Documents/sustainlabs-ai/impel-down
+  - id: risk-mod
+    locations:
+      bastion: ~/Documents/sustainlabs-ai/risk-mod
+  - id: sustainlabs-github
+    locations:
+      bastion: ~/Documents/sustainlabs-ai/.github
+  - id: kuma
+    locations:
+      bastion: /home/cxrlos/Documents/personal-projects/kuma
+>>>>>>> Stashed changes

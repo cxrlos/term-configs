@@ -39,6 +39,8 @@ fpath+=~/.zfunc; autoload -Uz compinit; compinit
 zstyle ':completion:*' menu select
 export PATH="$HOME/miniforge3/condabin:$PATH"
 
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
 # Source nucli environment (managed by Jamf)
 [ -f "${HOME}/.nurc" ] && source "${HOME}/.nurc"
 
@@ -55,3 +57,15 @@ export CURL_CA_BUNDLE="$NUBANK_CA_CERT"                  # curl, libcurl
 export AWS_CA_BUNDLE="$NUBANK_CA_CERT"                   # AWS CLI, boto3, AWS SDKs
 export NODE_EXTRA_CA_CERTS="$NUBANK_CA_CERT"             # Node.js, Bun, Claude Code, Cursor, VS Code, Copilot
 # <<< Nubank SSL Inspection CA <<<
+||||||| Stash base
+=======
+
+# Added by Antigravity CLI installer
+export PATH="/home/cxrlos/.local/bin:$PATH"
+>>>>>>> Stashed changes
+||||||| Stash base
+=======
+
+# Added by Antigravity CLI installer
+export PATH="/home/cxrlos/.local/bin:$PATH"
+>>>>>>> Stashed changes
