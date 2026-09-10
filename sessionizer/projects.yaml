@@ -27,6 +27,7 @@ projects:
   - id: hyprland-configs
     locations:
       bastion: /home/cxrlos/Documents/configs/hyprland-configs
+      carlos: /Users/carlos.garcia/Documents/configs/hyprland-configs
   - id: portugues-br
     locations:
       carlos: /Users/carlos.garcia/Documents/portugues-br
@@ -36,3 +37,12 @@ projects:
   - id: kileleni-landing
     locations:
       carlos: /Users/carlos.garcia/Documents/personal-projects/kileleni-landing
+  - id: weekly-updates
+    locations:
+      carlos: /Users/carlos.garcia/Documents/misc/weekly-updates
+  - id: vivre
+    locations:
+      carlos: /Users/carlos.garcia/dev/nu/vivre
+  - id: core-limit-policies-monitoring-data-jobs
+    locations:
+      carlos: /Users/carlos.garcia/dev/nu/core-limit-policies-monitoring-data-jobs

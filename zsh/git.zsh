@@ -19,19 +19,17 @@ alias grb='git rebase'
 alias grbi='git rebase -i'
 alias gab='git absorb --and-rebase'
 
-_fzf_git_colors="--color=fg:#a6adc8,hl:#89dceb,fg+:#cdd6f4,hl+:#f38ba8,info:#89dceb,pointer:#f38ba8,header:#89dceb,bg+:#313244"
-
 gsb() {
     local branch
     branch=$(git branch --sort=-committerdate --format='%(refname:short)' 2>/dev/null |
-        fzf --prompt="  " --header="  switch branch" $_fzf_git_colors) || return
+        fzf --prompt="  " --header="  switch branch" $_fzf_colors) || return
     git switch "$branch"
 }
 
 gnb() {
     local prefix desc slug
     prefix=$(printf 'feat\nfix\nchore\nrefactor\ndocs\ntest\nci' |
-        fzf --prompt="  " --header="  branch type" $_fzf_git_colors) || return
+        fzf --prompt="  " --header="  branch type" $_fzf_colors) || return
     read -r "desc?  description: "
     [[ -z "$desc" ]] && return 1
     slug=$(printf '%s' "$desc" | tr '[:upper:]' '[:lower:]' | tr -cs '[:alnum:]' '-' | sed 's/^-//;s/-$//')
@@ -41,7 +39,7 @@ gnb() {
 gwta() {
     local prefix desc slug
     prefix=$(printf 'feat\nfix\nchore\nrefactor\ndocs\ntest\nci' |
-        fzf --prompt="  " --header="  branch type" $_fzf_git_colors) || return
+        fzf --prompt="  " --header="  branch type" $_fzf_colors) || return
     read -r "desc?  description: "
     [[ -z "$desc" ]] && return 1
     slug=$(command gwt slug "$desc")
@@ -52,13 +50,13 @@ gwts() {
     local main wt
     main=$(command gwt main 2>/dev/null) || { print -r -- "not a git repo"; return 1; }
     wt=$(command gwt list 2>/dev/null |
-        fzf --prompt="  " --header="  switch worktree" $_fzf_git_colors) || return
+        fzf --prompt="  " --header="  switch worktree" $_fzf_colors) || return
     cd "$main/.worktrees/$wt" || return
 }
 
 gwtr() {
     local wt
     wt=$(command gwt list 2>/dev/null |
-        fzf --prompt="  " --header="  remove worktree" $_fzf_git_colors) || return
+        fzf --prompt="  " --header="  remove worktree" $_fzf_colors) || return
     command gwt remove "$wt"
 }

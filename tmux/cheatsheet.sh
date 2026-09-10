@@ -1,13 +1,10 @@
 #!/usr/bin/env bash
 
-h='\033[38;2;137;220;235m' # #89dceb sky      — section headers
-k='\033[38;2;137;220;235m' # #89dceb sky      — keys
-d='\033[38;2;166;173;200m' # #a6adc8 subtext0 — descriptions
-s='\033[38;2;69;71;90m'    # #45475a surface1 — separator
-r='\033[0m'
+REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+source "$REPO_DIR/zsh/palette.sh"
 
-section() { printf "\n${h}  %s${r}\n  ${s}─────────────────────────────────────${r}\n" "$1"; }
-row() { printf "  ${k}%-18s${r} ${d}%s${r}\n" "$1" "$2"; }
+section() { printf "\n${_iris}  %s${_nc}\n  ${_muted}─────────────────────────────────────${_nc}\n" "$1"; }
+row() { printf "  ${_iris}%-18s${_nc} ${_subtle}%s${_nc}\n" "$1" "$2"; }
 
 tmpfile=$(mktemp)
 trap 'rm -f "$tmpfile"' EXIT
@@ -106,6 +103,4 @@ fzf <"$tmpfile" \
     --pointer="▶" \
     --bind="enter:abort" \
     --bind="esc:abort" \
-    --color="bg:#1e1e2e,bg+:#313244,fg:#cdd6f4,fg+:#cdd6f4,\
-hl:#89dceb,hl+:#89dceb,prompt:#89dceb,pointer:#f38ba8,\
-gutter:#1e1e2e,separator:#45475a,header:#6c7086,border:#89dceb"
+    $_fzf_colors
