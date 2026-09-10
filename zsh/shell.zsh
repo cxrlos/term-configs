@@ -6,7 +6,7 @@ mkdir -p ~/.cache && : > ~/.cache/zsh_bg_jobs
 _bg_write_count() {
     local n=${#jobstates}
     if (( n > 0 )); then
-        printf '#[fg=#f38ba8]%d ● #[fg=#45475a]│ ' "$n" > "$HOME/.cache/zsh_bg_jobs"
+        printf '#[fg=%s]%d ● #[fg=%s]│ ' "$_hex_gold" "$n" "$_hex_muted" > "$HOME/.cache/zsh_bg_jobs"
     else
         : > "$HOME/.cache/zsh_bg_jobs"
     fi

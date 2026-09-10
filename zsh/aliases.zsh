@@ -46,3 +46,7 @@ command -v rg  &>/dev/null && alias grep='rg'
 
 alias rat='ratatoist'
 alias claude-cloud='unset ANTHROPIC_BASE_URL; unset ANTHROPIC_AUTH_TOKEN; unset ANTHROPIC_DEFAULT_HAIKU_MODEL; unset ANTHROPIC_DEFAULT_SONNET_MODEL; unset ANTHROPIC_DEFAULT_OPUS_MODEL; unset ANTHROPIC_MODEL; claude'
+
+# scalafmt for itaipu files while inside a linked git worktree (sbt-git/JGit can't read worktrees).
+# Auto-resolves the main checkout; run from anywhere in the worktree. See the script header for usage.
+alias fmt-itaipu='/Users/carlos.garcia/Documents/projects/2025-11-risk-adjusted-margin-reorg/scripts/fmt-itaipu-worktree.zsh'

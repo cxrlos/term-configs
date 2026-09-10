@@ -1,6 +1,6 @@
 # Terminal Configuration
 
-Alacritty + Zsh + tmux + Starship. Catppuccin Mocha, Monaspace Neon Nerd Font. macOS and Arch Linux.
+Alacritty + Zsh + tmux + Starship. Rose Pine, Monaspace Neon Nerd Font. macOS and Arch Linux.
 
 ## Install
 

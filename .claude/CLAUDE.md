@@ -1,6 +1,6 @@
 # Terminal Config
 
-Personal terminal stack: Alacritty + Zsh + tmux + Starship. Rose Pine everywhere, ProFont Nerd Font. Targets macOS and Arch Linux.
+Personal terminal stack: Alacritty + Zsh + tmux + Starship. Rose Pine everywhere, Monaspace Neon Nerd Font. Targets macOS and Arch Linux.
 
 ## Stack
 

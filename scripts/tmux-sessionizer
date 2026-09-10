@@ -145,9 +145,15 @@ EOF
 _open_initiative() {
     local id="$1" name resolved ws
     name=$(printf '%s' "$id" | tr './' '__')
-    resolved=$("$INITIATIVE_BIN" resolve "$id") || { _err "cannot resolve initiative '$id'"; exit 1; }
+    resolved=$("$INITIATIVE_BIN" resolve "$id") || {
+        _err "cannot resolve initiative '$id'"
+        exit 1
+    }
     ws=$(printf '%s\n' "$resolved" | awk -F'\t' '$1=="workspace"{print $2; exit}')
-    [[ -d "$ws" ]] || { _err "workspace missing: $ws"; exit 1; }
+    [[ -d "$ws" ]] || {
+        _err "workspace missing: $ws"
+        exit 1
+    }
 
     if [[ -n "${TMUX:-}" ]]; then
         if ! tmux has-session -t="$name" 2>/dev/null; then
@@ -178,7 +184,7 @@ _pick_worktree() {
             fzf --prompt="  " --header="  worktree" --color="$FZF_COLORS"
     ) || return 1
     case "$choice" in
-        "[main] "*)         printf '%s\n' "$repo" ;;
+        "[main] "*) printf '%s\n' "$repo" ;;
         "[+ new worktree]")
             printf '  new worktree slug: ' >&2
             read -r slug
@@ -186,7 +192,7 @@ _pick_worktree() {
             [[ -z "$slug" ]] && return 1
             "$GWT_BIN" add "$slug" --repo "$repo"
             ;;
-        "[worktree] "*)     printf '%s\n' "$repo/.worktrees/${choice#"[worktree] "}" ;;
+        "[worktree] "*) printf '%s\n' "$repo/.worktrees/${choice#"[worktree] "}" ;;
         *) return 1 ;;
     esac
 }
