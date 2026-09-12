@@ -143,7 +143,7 @@ printf '\n'
 choice=$(printf '%b' "$options" |
     fzf --prompt="  " \
         --header="  $entry_id" \
-        --color="fg:#a6adc8,hl:#89dceb,fg+:#cdd6f4,hl+:#f38ba8,info:#89dceb,pointer:#f38ba8,header:#89dceb,bg+:#313244"
+        $_fzf_colors
 ) || exit 0
 
 case "$choice" in

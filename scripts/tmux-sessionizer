@@ -6,7 +6,6 @@ REPO_DIR="$(cd "$(dirname "$SCRIPT_PATH")/.." && pwd)"
 YAML="$REPO_DIR/sessionizer/projects.yaml"
 INITIATIVE_BIN="$REPO_DIR/scripts/initiative"
 GWT_BIN="$REPO_DIR/scripts/gwt"
-FZF_COLORS="fg:#a6adc8,hl:#89dceb,fg+:#cdd6f4,hl+:#f38ba8,info:#89dceb,pointer:#f38ba8,header:#89dceb,bg+:#313244"
 # shellcheck source=zsh/palette.sh
 . "$REPO_DIR/zsh/palette.sh"
 
@@ -181,7 +180,7 @@ _pick_worktree() {
             printf '%s\n' "$wts" | sed 's/^/[worktree] /'
             echo "[+ new worktree]"
         } | grep -v '^\[worktree\] $' | grep -v '^$' |
-            fzf --prompt="  " --header="  worktree" --color="$FZF_COLORS"
+            fzf --prompt="  " --header="  worktree" $_fzf_colors
     ) || return 1
     case "$choice" in
         "[main] "*) printf '%s\n' "$repo" ;;
@@ -202,7 +201,7 @@ _pick_worktree() {
 if [[ "${1:-}" == "--initiatives" ]]; then
     selected=$(
         "$INITIATIVE_BIN" list 2>/dev/null | sed 's/^/[initiative] /' | grep -v '^$' |
-            fzf --prompt="  " --header="  projects" --color="$FZF_COLORS"
+            fzf --prompt="  " --header="  projects" $_fzf_colors
     ) || exit 0
 elif [[ $# -eq 1 ]]; then
     selected=$1
@@ -224,7 +223,7 @@ else
         } | grep -v '^$' |
             fzf --prompt="  " \
                 --header="  switch or open project" \
-                --color="$FZF_COLORS"
+                $_fzf_colors
     ) || exit 0
 fi
 

@@ -2,6 +2,10 @@
 # Active-session menu: Enter switches. Ctrl-X kills marked sessions (Tab to mark)
 # and stays open, reloading the list; killing the last session closes the popup.
 
+REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# shellcheck source=zsh/palette.sh
+. "$REPO_DIR/zsh/palette.sh"
+
 current=$(tmux display-message -p '#S' 2>/dev/null)
 
 selected=$(
@@ -13,7 +17,7 @@ selected=$(
             --prompt="  " \
             --header=$'  ● '"$current"$'\n  enter switch · tab mark · C-x kill' \
             --bind="ctrl-x:execute-silent(for s in {+}; do tmux kill-session -t \"\$s\"; done)+clear-selection+reload(tmux list-sessions -F '#{session_name}' 2>/dev/null | sort)" \
-            --color="fg:#a6adc8,hl:#89dceb,fg+:#cdd6f4,hl+:#f38ba8,info:#89dceb,pointer:#f38ba8,header:#89dceb,bg+:#313244"
+            $_fzf_colors
 ) || exit 0
 
 [[ -z "$selected" ]] && exit 0
