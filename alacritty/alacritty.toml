@@ -20,7 +20,7 @@ dynamic_title = true
 option_as_alt = "Both"
 
 [font]
-normal = { family = "BerkeleyMono Nerd Font Mono" }
+normal = { family = "Mononoki Nerd Font Mono" }
 size = 10.0
 
 [cursor]
