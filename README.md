@@ -1,6 +1,6 @@
 # Terminal Configuration
 
-Alacritty + Zsh + tmux + Starship. Rose Pine, Monaspace Neon Nerd Font. macOS and Arch Linux.
+Alacritty + Zsh + tmux + Starship. Gruvbox, BerkeleyMono Nerd Font Mono. macOS and Arch Linux.
 
 ## Install
 

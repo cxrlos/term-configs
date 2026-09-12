@@ -17,7 +17,7 @@ echo -ne '\e[5 q'
 
 # Light tint on the visual selection so the region (and the block cursor) read
 # clearly. Other contexts keep their defaults.
-zle_highlight=('region:bg=#26233a' 'special:standout' 'suffix:bold' 'isearch:underline' 'paste:standout')
+zle_highlight=('region:bg=#504945' 'special:standout' 'suffix:bold' 'isearch:underline' 'paste:standout')
 
 bindkey '^[[A' up-line-or-beginning-search
 bindkey '^[[B' down-line-or-beginning-search

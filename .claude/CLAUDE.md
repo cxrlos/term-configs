@@ -1,6 +1,6 @@
 # Terminal Config
 
-Personal terminal stack: Alacritty + Zsh + tmux + Starship. Rose Pine everywhere, Monaspace Neon Nerd Font. Targets macOS and Arch Linux.
+Personal terminal stack: Alacritty + Zsh + tmux + Starship. Gruvbox everywhere, Monaspace Neon Nerd Font. Targets macOS and Arch Linux.
 
 ## Stack
 
@@ -17,7 +17,7 @@ Personal terminal stack: Alacritty + Zsh + tmux + Starship. Rose Pine everywhere
 
 | Dir / file                  | Purpose                                                       |
 |-----------------------------|---------------------------------------------------------------|
-| `alacritty/`                | Terminal config (font, padding, Rose Pine theme)              |
+| `alacritty/`                | Terminal config (font, padding, Gruvbox theme)              |
 | `starship/`                 | Prompt config                                                 |
 | `tmux/tmux.conf`            | tmux config — prefix is backtick (`` ` ``)                    |
 | `tmux/cheatsheet.sh`        | `` `? `` popup — key reference                                 |
@@ -34,7 +34,7 @@ Personal terminal stack: Alacritty + Zsh + tmux + Starship. Rose Pine everywhere
 
 ## Conventions
 
-Inherits all global conventions (Rose Pine, rounded popups, foam/iris/pine/gold semantics, sensitive-file rules). Specific to this repo:
+Inherits all global conventions (Gruvbox, rounded popups, foam/iris/pine/gold semantics, sensitive-file rules). Specific to this repo:
 
 - **All shell scripts target Bash 3.2.** macOS ships ancient bash; Homebrew bash isn't on PATH at install time. No `local -n` (namedref, 4.3+), no `${var,,}` (lowercase, 4.0+), no associative arrays without `declare -A` guards, no `mapfile`/`readarray`. Pass array contents as positional args (`shift`+`"$@"`).
 - **Color codes via `palette.sh` only.** Source `$REPO_DIR/zsh/palette.sh` and use `$_iris`, `$_foam`, `$_pine`, `$_gold`, `$_love`, `$_rose`, `$_subtle`. Never hardcode hex in scripts.
@@ -164,13 +164,13 @@ The script shells out to `claude --print --dangerously-skip-permissions` and `gr
 Same rule applies to anything containing real customer IDs, account IDs, S3 paths from work pipelines, or API tokens.
 
 **`palette.sh` is the single source of color truth**
-Never reintroduce inline hex literals in shell scripts. Source `palette.sh`, use `$_iris`, `$_foam`, etc. Adding a new color: edit `palette.sh` first. Same applies for tmux color strings — keep them centralized in `tmux.conf` near the Rose Pine palette comment block.
+Never reintroduce inline hex literals in shell scripts. Source `palette.sh`, use `$_iris`, `$_foam`, etc. Adding a new color: edit `palette.sh` first. Same applies for tmux color strings — keep them centralized in `tmux.conf` near the Gruvbox palette comment block.
 
 **TPM auto-installs plugins on first tmux launch**
 The bottom of `tmux.conf` clones TPM if missing. First tmux session: prefix + I to install plugins. After that: no-op. If plugins look broken, run `~/.tmux/plugins/tpm/bin/install_plugins`.
 
-**`.zshrc` ends with `tm`**
-Last line of `.zshrc` launches the sessionizer (`tm`) automatically. Shell never lands on a bare prompt — you always pick or open a session. If you ssh in and want a plain shell, prefix `BASH_ENV= zsh -f` or comment out the line for that session.
+**`tm` no longer auto-launches on shell start**
+`tm` (the sessionizer) is defined as a function in `zsh/tmux.zsh` and is invoked manually. `.zshrc` used to call it unconditionally on every new shell — removed because it caused annoying bugs. New shells land on a bare prompt now.
 
 **Status helpers write to `~/.cache/zsh_bg_jobs`**
 `_bg_write_count` (in `zsh/shell.zsh`) is a precmd hook that writes a count of background jobs to a cache file, read by tmux's status bar. If the status bar shows a stale job count, the file may be stale; `touch ~/.cache/zsh_bg_jobs` or just type `enter` to retrigger.

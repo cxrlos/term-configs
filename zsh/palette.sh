@@ -1,29 +1,29 @@
 # ANSI truecolor escapes — for printf-based status helpers below.
-_love=$'\033[38;2;235;111;146m'
-_gold=$'\033[38;2;246;193;119m'
-_foam=$'\033[38;2;156;207;216m'
-_pine=$'\033[38;2;49;116;143m'
-_rose=$'\033[38;2;235;188;186m'
-_iris=$'\033[38;2;196;167;231m'
-_subtle=$'\033[38;2;144;140;170m'
-_muted=$'\033[38;2;110;106;134m'
+_love=$'\033[38;2;251;73;52m'
+_gold=$'\033[38;2;250;189;47m'
+_foam=$'\033[38;2;142;192;124m'
+_pine=$'\033[38;2;184;187;38m'
+_rose=$'\033[38;2;254;128;25m'
+_iris=$'\033[38;2;211;134;155m'
+_subtle=$'\033[38;2;168;153;132m'
+_muted=$'\033[38;2;124;111;100m'
 _bold=$'\033[1m'
 _nc=$'\033[0m'
 
 # Plain hex — for tools that take literal color strings (fzf --color, tmux
 # color specs) rather than ANSI escapes.
-_hex_base=#191724
-_hex_surface=#1f1d2e
-_hex_overlay=#26233a
-_hex_muted=#6e6a86
-_hex_subtle=#908caa
-_hex_text=#e0def4
-_hex_love=#eb6f92
-_hex_gold=#f6c177
-_hex_rose=#ebbcba
-_hex_pine=#31748f
-_hex_foam=#9ccfd8
-_hex_iris=#c4a7e7
+_hex_base=#282828
+_hex_surface=#3c3836
+_hex_overlay=#504945
+_hex_muted=#7c6f64
+_hex_subtle=#a89984
+_hex_text=#ebdbb2
+_hex_love=#fb4934
+_hex_gold=#fabd2f
+_hex_rose=#fe8019
+_hex_pine=#b8bb26
+_hex_foam=#8ec07c
+_hex_iris=#d3869b
 
 # Shared fzf theme — reused by git.zsh, utils.zsh, and tmux/cheatsheet.sh so
 # all fzf pickers agree on which token plays which role.

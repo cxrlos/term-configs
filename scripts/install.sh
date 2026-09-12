@@ -79,9 +79,17 @@ _ensure_yay() {
 # ── Dependencies ──────────────────────────────────────────────────────────────
 
 BREW_DEPS=(starship fzf gum bat ripgrep eza zoxide git-delta tldr thefuck tmux lazygit git-absorb atuin direnv yq fd hyperfine yazi)
-BREW_CASKS=(font-monaspace-nerd)
-PACMAN_DEPS=(starship fzf bat ripgrep eza zoxide tldr tmux ttf-monaspace-nerd go-yq fd hyperfine yazi atuin direnv)
+PACMAN_DEPS=(starship fzf bat ripgrep eza zoxide tldr tmux go-yq fd hyperfine yazi atuin direnv)
 AUR_DEPS=(gum git-delta thefuck lazygit)
+
+_check_font() {
+    if ! fc-list 2>/dev/null | grep -qi "berkeleymono nerd font"; then
+        warn "BerkeleyMono Nerd Font Mono not found."
+        warn "It's a paid font — no brew cask or AUR package exists for it."
+        warn "Buy + download: https://usgraphics.com/products/berkeley-mono"
+        warn "Patch with https://github.com/ryanoasis/nerd-fonts (or use their pre-patched download option), then install the font."
+    fi
+}
 
 _install_deps() {
     case "$OS" in
@@ -94,17 +102,6 @@ _install_deps() {
                     # shellcheck disable=SC2015
                     brew install "$dep" &>/dev/null && ((++deps_installed)) || {
                         warn "Failed: $dep"
-                        ((++deps_failed))
-                    }
-                fi
-            done
-            for cask in "${BREW_CASKS[@]}"; do
-                if brew list --cask "$cask" &>/dev/null; then
-                    ((++deps_ok))
-                else
-                    # shellcheck disable=SC2015
-                    brew install --cask "$cask" &>/dev/null && ((++deps_installed)) || {
-                        warn "Failed: $cask"
                         ((++deps_failed))
                     }
                 fi
@@ -143,6 +140,7 @@ _install_deps() {
 }
 
 _install_deps
+_check_font
 
 # ── Link map ──────────────────────────────────────────────────────────────────
 
