@@ -70,3 +70,9 @@ projects:
   - id: kuma
     locations:
       bastion: /home/cxrlos/Documents/personal-projects/kuma
+  - id: reverse-mountain
+    locations:
+      bastion: ~/Documents/sustainlabs-ai/reverse-mountain
+  - id: morgans
+    locations:
+      bastion: /home/cxrlos/Documents/sustainlabs-ai/morgans

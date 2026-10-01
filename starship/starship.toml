@@ -16,7 +16,7 @@ $line_break\
 $character"""
 
 add_newline = true
-scan_timeout = 15
+scan_timeout = 100
 command_timeout = 1000
 
 [palettes.gruvbox]
