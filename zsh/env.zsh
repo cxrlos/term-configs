@@ -15,4 +15,4 @@ if [[ -f /opt/homebrew/bin/brew ]]; then
     eval "$(/opt/homebrew/bin/brew shellenv)"
 fi
 
-command -v gh &>/dev/null && export GITHUB_TOKEN=$(gh auth token)
+command -v gh &>/dev/null && GITHUB_TOKEN=$(gh auth token 2>/dev/null) && export GITHUB_TOKEN

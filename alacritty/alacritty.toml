@@ -34,7 +34,7 @@ hide_when_typing = true
 save_to_clipboard = true
 
 [[hints.enabled]]
-command = "open"
+command = { program = "sh", args = ["-c", 'exec "$(command -v xdg-open || echo open)" "$0"'] }
 post_processing = true
 regex = "(https?://)[\\w.-]+\\.[a-z]{2,}[/\\w._~:/?#@!$&'()*+,;=%\\-]*"
 

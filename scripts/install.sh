@@ -63,24 +63,10 @@ _ensure_brew() {
     fi
 }
 
-_ensure_yay() {
-    command -v yay &>/dev/null && return 0
-    warn "yay (AUR helper) not found"
-    read -r -p "  Install yay? Required for AUR packages. [y/N] " yn
-    [[ "$yn" =~ ^[yY]$ ]] || return 1
-    sudo pacman -S --needed --noconfirm git base-devel
-    local tmp
-    tmp=$(mktemp -d)
-    git clone https://aur.archlinux.org/yay.git "$tmp/yay"
-    (cd "$tmp/yay" && makepkg -si)
-    rm -rf "$tmp"
-}
-
 # ── Dependencies ──────────────────────────────────────────────────────────────
 
 BREW_DEPS=(starship fzf gum bat ripgrep eza zoxide git-delta tldr thefuck tmux lazygit git-absorb atuin direnv yq fd hyperfine yazi)
-PACMAN_DEPS=(starship fzf bat ripgrep eza zoxide tldr tmux go-yq fd hyperfine yazi atuin direnv ttf-mononoki-nerd)
-AUR_DEPS=(gum git-delta thefuck lazygit)
+PACMAN_DEPS=(zsh git alacritty neovim starship fzf gum bat ripgrep eza zoxide git-delta tldr thefuck tmux lazygit go-yq fd hyperfine yazi atuin direnv htop python wl-clipboard ttf-mononoki-nerd)
 BREW_CASKS=(font-mononoki-nerd-font)
 
 _install_deps() {
@@ -111,33 +97,18 @@ _install_deps() {
             done
             ;;
         arch)
-            sudo pacman -Sy --noconfirm &>/dev/null
+            sudo pacman -Syu --noconfirm
             for dep in "${PACMAN_DEPS[@]}"; do
                 if pacman -Qi "$dep" &>/dev/null; then
                     ((++deps_ok))
                 else
                     # shellcheck disable=SC2015
-                    sudo pacman -S --noconfirm "$dep" &>/dev/null && ((++deps_installed)) || {
+                    sudo pacman -S --needed --noconfirm "$dep" &>/dev/null && ((++deps_installed)) || {
                         warn "Failed: $dep"
                         ((++deps_failed))
                     }
                 fi
             done
-            if _ensure_yay; then
-                for dep in "${AUR_DEPS[@]}"; do
-                    if yay -Qi "$dep" &>/dev/null; then
-                        ((++deps_ok))
-                    else
-                        # shellcheck disable=SC2015
-                        yay -S --noconfirm "$dep" &>/dev/null && ((++deps_installed)) || {
-                            warn "Failed: $dep"
-                            ((++deps_failed))
-                        }
-                    fi
-                done
-            else
-                warn "Skipped AUR: ${AUR_DEPS[*]}"
-            fi
             ;;
     esac
 }
@@ -235,6 +206,21 @@ chmod +x "$HOME/.tmux-cheatsheet.sh" 2>/dev/null || true
 cat >"$HOME/.zsh/.local" <<EOF
 TERM_CONFIGS_DIR="$REPO_DIR"
 EOF
+
+[[ -f "$REPO_DIR/CLAUDE.md" ]] || printf '@AGENTS.md\n' >"$REPO_DIR/CLAUDE.md"
+
+# ── Login shell & locale ─────────────────────────────────────────────────────
+
+if [[ "$(basename "$SHELL")" != "zsh" ]]; then
+    chsh -s "$(command -v zsh)" && ((++extras_done))
+else
+    ((++extras_ok))
+fi
+
+# env.zsh exports LC_ALL=en_US.UTF-8; a fresh Arch only has the locales picked at install.
+if [[ "$OS" == "arch" ]] && ! locale -a | grep -qix 'en_US.utf8'; then
+    warn "en_US.UTF-8 not generated — uncomment it in /etc/locale.gen and run: sudo locale-gen"
+fi
 
 # ── Sessionizer ──────────────────────────────────────────────────────────────
 

@@ -1,6 +1,6 @@
 # Terminal Config
 
-Personal terminal stack: Alacritty + Zsh + tmux + Starship. Gruvbox everywhere, Monaspace Neon Nerd Font. Targets macOS and Arch Linux.
+Personal terminal stack: Alacritty + Zsh + tmux + Starship. Gruvbox everywhere, Mononoki Nerd Font. Targets macOS and Arch Linux.
 
 ## Stack
 
@@ -28,9 +28,10 @@ Personal terminal stack: Alacritty + Zsh + tmux + Starship. Gruvbox everywhere, 
 | `scripts/tmux-sessionizer`  | The session picker (`tm` from shell, `` `f `` from tmux)       |
 | `scripts/sessionizer-add`   | Register / scaffold a project at `pwd`                        |
 | `scripts/new-project.sh`    | (Legacy) Project scaffolder — superseded by sessionizer-add   |
-| `scripts/lidrun.sh`         | One-shot script runner                                        |
+| `scripts/lidrun.sh`         | One-shot script runner (macOS only)                           |
 | `scripts/format.sh`         | Bulk formatter                                                |
 | `sessionizer/projects.yaml` | **Cross-machine** project registry (see "Sessionizer" below)  |
+| `tmp/verify-install.md`     | Post-install verification prompt for Claude on a new machine  |
 
 ## Conventions
 
@@ -46,11 +47,31 @@ Inherits all global conventions (Gruvbox, rounded popups, foam/iris/pine/gold se
   ```
 - **zsh module load order is in `.zshrc`** — env → shell → vim → git → aliases → utils → nubank (if present) → fzf → tmux. Don't add new top-level concerns without picking a position.
 
+## Machines
+
+One tracked config serves every machine. A change made on one must not break the others.
+
+| Host key | Hardware | OS | Form |
+|---|---|---|---|
+| `carlos` | MacBook, Apple Silicon (arm64) | macOS | laptop (work) |
+| `bastion` | Intel i5-12400F (x86_64), AMD RX 6750 XT | Arch | desktop |
+| *(set at install)* | ThinkPad T14, Intel Core Ultra 5 (x86_64), Intel Arc iGPU | Arch | laptop |
+
+The host key is `hostname -s` on macOS and `uname -n` on Linux; Arch doesn't ship `hostname` (it's in `inetutils`). Every machine needs a unique one, or it reads and writes another machine's `projects.yaml` entries. Fill the T14's key in above once it exists.
+
+Rules for non-breaking changes:
+- **Branch on capability, never on hostname.** OS via `uname` (`Darwin`/`Linux`), tools via `command -v`, laptop via `/sys/class/power_supply/BAT*`, display server via `$XDG_SESSION_TYPE`. Same "present only when the hardware is" rule as hyprland-configs.
+- **No architecture assumptions.** Both Linux machines are x86_64, the Mac is arm64. Anything that downloads a binary picks it by `uname -m`; Homebrew paths stay behind an existence check (`env.zsh`).
+- **Machine-local values live in gitignored files** (`zsh/.local`, `zsh/nubank.zsh`), never in tracked config. The only tracked absolute paths are `projects.yaml` entries under their own host key.
+- **New dependency → both lists in `install.sh`** (`BREW_DEPS`, `PACMAN_DEPS`), with the Arch name checked via `pacman -Si`. If it only exists on one OS, guard its use with `command -v`.
+- **Laptop-only features stay inert on the desktop.** Nothing in this repo is laptop-specific today; display scaling belongs to the compositor (hyprland-configs monitor scale), so `alacritty.toml` keeps one font size.
+- **Verify the platforms you can't run.** `bash -n` + `/bin/bash -n` (3.2), `zsh -n`, shellcheck. If a change touches an OS branch you couldn't execute, say so in the handoff.
+
 ## Sessionizer & cross-machine projects
 
 This is the architectural choice that everything else hangs on. **Read this section before touching `projects.yaml`, `sessionizer-add`, `new-project.sh`, or `tmux-sessionizer`.**
 
-`sessionizer/projects.yaml` is a registry of projects shared across all my machines. Each project has one ID and a `locations` map keyed by `hostname -s`:
+`sessionizer/projects.yaml` is a registry of projects shared across all my machines. Each project has one ID and a `locations` map keyed by the host key (see Machines):
 
 ```yaml
 projects:
@@ -63,7 +84,7 @@ projects:
       carlos:  /Users/carlos.garcia/dev/nu/itaipu
 ```
 
-**The intent:** the same logical project lives at different absolute paths on different machines. The YAML maps `id` → `(machine, path)`. The file is git-tracked and synced via push/pull. `tmux-sessionizer` filters by `hostname -s` and surfaces only the entries that exist on the current machine.
+**The intent:** the same logical project lives at different absolute paths on different machines. The YAML maps `id` → `(machine, path)`. The file is git-tracked and synced via push/pull. `tmux-sessionizer` filters by the host key and surfaces only the entries that exist on the current machine.
 
 **Behavior of `sessionizer-add`:**
 - If `id` doesn't exist → adds new project entry with `(this machine, this path)`.
@@ -172,16 +193,22 @@ The bottom of `tmux.conf` clones TPM if missing. First tmux session: prefix + I 
 **`tm` no longer auto-launches on shell start**
 `tm` (the sessionizer) is defined as a function in `zsh/tmux.zsh` and is invoked manually. `.zshrc` used to call it unconditionally on every new shell — removed because it caused annoying bugs. New shells land on a bare prompt now.
 
+**`CLAUDE.md` is a local shim**
+`CLAUDE.md` (`@AGENTS.md`) and `.claude/` are gitignored; `install.sh` writes the shim when missing. After pulling this change, re-run `install.sh` (or `echo @AGENTS.md > CLAUDE.md`) on each machine.
+
+**tmux-thumbs needs cargo**
+`` `Space `` (thumbs) compiles a Rust binary on first use; `install.sh` doesn't install Rust. Without `cargo`, thumbs prompts and fails. Optional: `rustup default stable`, then trigger it once.
+
 **Status helpers write to `~/.cache/zsh_bg_jobs`**
 `_bg_write_count` (in `zsh/shell.zsh`) is a precmd hook that writes a count of background jobs to a cache file, read by tmux's status bar. If the status bar shows a stale job count, the file may be stale; `touch ~/.cache/zsh_bg_jobs` or just type `enter` to retrigger.
 
 **Sessionizer hostname keys**
-`MACHINE_NAME=$(hostname -s)`. If your hostname changes (e.g., macOS prompts to rename your Mac), existing entries in `projects.yaml` don't auto-migrate. Add a new entry under the new hostname; the old one becomes harmless dead weight (won't show up for any machine).
+`MACHINE_NAME` is `hostname -s` on macOS, `uname -n` on Linux. If your hostname changes (e.g., macOS prompts to rename your Mac), existing entries in `projects.yaml` don't auto-migrate. Add a new entry under the new hostname; the old one becomes harmless dead weight (won't show up for any machine).
 
 ## Debugging strategy
 
 1. **`install.sh` failures**: re-run with `bash -x scripts/install.sh` to see exact failing line. If error mentions "invalid option" or "namedref" → bash version. Check `bash --version`; install via `brew install bash` and re-run. The Homebrew bash auto-resolves via the script's `#!/usr/bin/env bash` shebang once Homebrew's bin is on PATH.
-2. **Sessionizer not finding a project**: run `hostname -s` and grep `sessionizer/projects.yaml` for that exact key. If missing or wrong → `cd` into the project and run `sessionizer-add`.
+2. **Sessionizer not finding a project**: run `uname -n` (Linux) or `hostname -s` (macOS) and grep `sessionizer/projects.yaml` for that exact key. If missing or wrong → `cd` into the project and run `sessionizer-add`.
 3. **tmux config not reloading**: prefix + r reloads. `tmux source ~/.tmux.conf` from any shell also works. `tmux show-options -g` to inspect live config.
 4. **TPM not installing**: prefix + I from inside tmux. If still nothing, `ls ~/.tmux/plugins/` to confirm TPM cloned, then `~/.tmux/plugins/tpm/bin/install_plugins`.
 5. **`claude --ide` doesn't connect** (from a project hydrated by `.tmux-sessionizer`): `ls ~/.claude/ide/*.lock`. If empty, Neovim isn't running with `claudecode.nvim` loaded yet — start Neovim first, then `/ide` inside Claude.

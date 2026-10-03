@@ -20,9 +20,8 @@ zsh/.local
 .cursor/
 .cursorignore
 .cursorindexingignore
-.claude/*
+.claude/
 CLAUDE.md
-!.claude/CLAUDE.md
 
 # Temp / swap
 *~
