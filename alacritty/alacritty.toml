@@ -66,4 +66,6 @@ bindings = [
     { key = "F", mods = "Command|Control", action = "ToggleSimpleFullscreen" },
     { key = "F", mods = "Command", action = "SearchForward" },
     { key = "K", mods = "Command", action = "ClearHistory" },
+
+    { key = "Return", mods = "Shift", chars = "\u001B\r" },
 ]
