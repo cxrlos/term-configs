@@ -10,6 +10,9 @@ if [[ $OSTYPE == darwin* && -d /opt/homebrew ]]; then
 fi
 path=(~/.local/bin ~/.cargo/bin(N) $path) # ~/.local/bin first: the wl-copy shim must win
 
+export AGENT=claude          # CLI agent for the sessionizer's `agent` window; swap freely
+export TS_ROOTS=$HOME/dev    # sessionizer: git repos under these (colon-separated); override in ~/.zshrc.local
+
 export FZF_DEFAULT_COMMAND='fd --type f --hidden --exclude .git'
 export FZF_CTRL_T_COMMAND=$FZF_DEFAULT_COMMAND
 export FZF_DEFAULT_OPTS='--height=40% --layout=reverse --border

@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+# Pick a git repo under $TS_ROOTS (colon-separated) and switch to its tmux session, creating
+# it with windows editor, agent ($AGENT) and shell. A repo's executable `.tmux-sessionizer`
+# then runs once (TS_SESSION, TS_DIR set) to add extras, e.g. a `server` window.
+# Sessions are named by their path under the root (~/dev/work/api -> work/api); the picker
+# lists open sessions first, marked with *.
+# Usage: tmux-sessionizer [dir]
+IFS=: read -r -a roots <<< "${TS_ROOTS:-$HOME/dev}"
+
+session_name() { # path relative to its root, without . and : (tmux reserves them)
+    local d=$1 r
+    for r in "${roots[@]}"; do
+        case $d in "$r"/*) d=${d#"$r"/}; break ;; esac
+    done
+    [ "$d" = "$1" ] && d=$(basename "$d")
+    printf '%s' "$d" | tr '.:' '__'
+}
+
+if [ $# -ge 1 ]; then
+    dir=$(cd "$1" && pwd) || exit 1
+else
+    open=$(tmux list-sessions -F '#S' 2>/dev/null)
+    pick=$(find "${roots[@]}" -mindepth 2 -maxdepth 3 -name .git -prune 2>/dev/null |
+        sed 's|/\.git$||' | sort -u | while read -r d; do
+            n=$(session_name "$d")
+            if printf '%s\n' "$open" | grep -qxF "$n"; then printf '0\t* %s\t%s\n' "$n" "$d"
+            else printf '1\t  %s\t%s\n' "$n" "$d"; fi
+        done | sort | cut -f2- |
+        fzf --prompt='project> ' --delimiter='\t' --with-nth=1 --scheme=path) || exit 0
+    dir=${pick#*$'\t'}
+fi
+[ -d "$dir" ] || exit 1
+name=$(session_name "$dir")
+
+if ! tmux has-session -t "=$name" 2>/dev/null; then
+    tmux new-session -ds "$name" -c "$dir" -n editor
+    tmux send-keys -t "=$name:editor" "${EDITOR:-nvim}" Enter
+    tmux new-window -d -t "=$name:" -n agent -c "$dir"
+    [ -n "$AGENT" ] && tmux send-keys -t "=$name:agent" "$AGENT" Enter
+    tmux new-window -d -t "=$name:" -n shell -c "$dir"
+    [ -x "$dir/.tmux-sessionizer" ] && (cd "$dir" && TS_SESSION=$name TS_DIR=$dir ./.tmux-sessionizer)
+fi
+if [ -n "$TMUX" ]; then tmux switch-client -t "=$name"; else tmux attach -t "=$name"; fi

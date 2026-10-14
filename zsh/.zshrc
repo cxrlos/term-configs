@@ -52,7 +52,7 @@ for km in viins vicmd; do
 done
 
 alias ls='eza --icons=auto --group-directories-first' ll='ls -la --git --header' la='ls -a' lt='ls --tree --level=2 --git-ignore'
-alias vi=nvim vim=nvim
+alias vi=nvim vim=nvim tm=tmux-sessionizer
 alias cheat="less ${${(%):-%N}:A:h:h}/CHEATSHEET.md" # repo root, resolved through the ~/.zshrc symlink
 
 # gnb: new branch named type/slug ("feat" + "Add CLI flag" -> feat/add-cli-flag)

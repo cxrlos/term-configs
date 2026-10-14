@@ -32,6 +32,13 @@ Elsewhere: sway keys `Super+?` · tmux keys `prefix ?` · nvim keys `<leader>` a
 - `gh pr create` / `gh pr checkout <n>` / `gh pr view --web`
 - Commits and tags are SSH-signed (`git log --show-signature`)
 
+## Projects (tmux)
+- `tm` (or prefix f inside tmux): pick a repo under `$TS_ROOTS`; open sessions are listed
+  first with `*`. A new session gets windows editor, agent (`$AGENT`), shell
+- A repo's executable `.tmux-sessionizer` adds extras, e.g.
+  `tmux new-window -d -t "$TS_SESSION:" -n server -c "$TS_DIR"` (then send-keys `just dev`)
+- Keys: prefix `?` · scrollback: prefix Enter, `/` search, `v` select, `y` copy
+
 ## Per project
 - `.envrc` + `direnv allow`: env vars load on cd and unload on leave
 - `just`: list the justfile recipes · `just <recipe> [args]`
