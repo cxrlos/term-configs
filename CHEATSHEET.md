@@ -46,7 +46,7 @@ Elsewhere: sway keys `Super+?` · tmux keys `prefix ?` · nvim keys `<leader>` a
 - `just`: list the justfile recipes · `just <recipe> [args]`
 
 ## Alacritty
-- Ctrl+Shift+C / V copy / paste · select + middle-click pastes the selection
-- Ctrl+Shift+F / B search · Ctrl+Shift+O open a URL (or click it)
-- Ctrl+Shift+Space: vi mode over scrollback · Ctrl+= / - / 0 font size
+- Mouse is off (also tmux, nvim). Copy: tmux copy mode, or vi mode below then Ctrl+Shift+C
+- Ctrl+Shift+V paste · Ctrl+Shift+F / B search · Ctrl+Shift+O pick a URL to open
+- Ctrl+Shift+Space: vi mode over scrollback (v select, y copy) · Ctrl+= / - / 0 font size
 - Shift+Return: newline without sending (Claude Code)
