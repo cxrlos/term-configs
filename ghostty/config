@@ -7,3 +7,11 @@ window-padding-x = 6
 window-padding-y = 6
 macos-option-as-alt = true
 keybind = shift+enter=text:\x1b\r
+
+# Mouse: the wheel scrolls, clicks do as little as Ghostty allows (tmux takes the mouse and
+# ignores clicks). Shift+drag selection and middle-click paste can't be disabled.
+copy-on-select = false
+right-click-action = ignore
+link-url = false
+link-previews = false
+cursor-click-to-move = false

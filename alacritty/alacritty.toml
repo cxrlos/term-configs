@@ -13,3 +13,26 @@ size = 10.0
 
 [keyboard]
 bindings = [{ key = "Return", mods = "Shift", chars = "\u001B\r" }] # newline in agent TUIs
+
+# Mouse: the wheel scrolls, clicks do nothing (same in tmux and nvim). Selection can't be
+# disabled, only cancelled the moment it starts; copy with tmux copy mode or vi mode.
+[mouse]
+bindings = [
+  { mouse = "Left", action = "ClearSelection" },
+  { mouse = "Left", mods = "Control", action = "ClearSelection" },
+  { mouse = "Left", mods = "Shift", action = "ClearSelection" },
+  { mouse = "Left", mods = "Alt", action = "ClearSelection" },
+  { mouse = "Middle", action = "None" },
+  { mouse = "Right", action = "None" },
+  { mouse = "Right", mods = "Control", action = "None" },
+]
+
+# The built-in URL hint, with clicking removed (Ctrl+Shift+O still picks a link)
+[[hints.enabled]]
+command = "xdg-open"
+hyperlinks = true
+post_processing = true
+persist = false
+mouse.enabled = false
+binding = { key = "O", mods = "Control|Shift" }
+regex = "(ipfs:|ipns:|magnet:|mailto:|gemini://|gopher://|https://|http://|news:|file:|git://|ssh:|ftp://)[^\u0000-\u001F\u007F-\u009F<>\"\\s{-}\\^⟨⟩`\\\\]+"
