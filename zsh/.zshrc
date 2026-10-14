@@ -53,6 +53,7 @@ done
 
 alias ls='eza --icons=auto --group-directories-first' ll='ls -la --git --header' la='ls -a' lt='ls --tree --level=2 --git-ignore'
 alias vi=nvim vim=nvim
+alias cheat="less ${${(%):-%N}:A:h:h}/CHEATSHEET.md" # repo root, resolved through the ~/.zshrc symlink
 
 # Plugins from dnf/brew; syntax highlighting must load last
 _zp() { local f; for f in /usr/share/$1/$1.zsh ${HOMEBREW_PREFIX:+$HOMEBREW_PREFIX/share/$1/$1.zsh}; do [[ -r $f ]] && { source $f; return }; done }
