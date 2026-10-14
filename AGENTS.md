@@ -49,7 +49,7 @@ Machine-only shell config goes in `~/.zshrc.local` (never committed).
 
 ## Keybind documentation
 - Every binding documents itself: tmux `bind -N "…"`, nvim `desc = "…"`, sway (fedora-configs)
-  `bindsym … # Description`. A bind added or changed without its note is incomplete.
+  `bindsym … exec … # Description` (built-in sway commands: no trailing text; see fedora-configs AGENTS.md). A bind added or changed without its note is incomplete.
 - Things with no binding source (zsh vi mode, atuin/fzf/zoxide, CLI tools, Alacritty keys)
   live ONLY in `CHEATSHEET.md`. Whenever such a command, alias or keybind is created, updated
   or deleted, update `CHEATSHEET.md` in the same commit. Never copy sway, tmux or nvim binds
