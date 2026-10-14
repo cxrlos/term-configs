@@ -1,6 +1,6 @@
 # Terminal Configuration
 
-Alacritty + Zsh + tmux + Starship. Gruvbox, Mononoki Nerd Font. macOS and Arch Linux.
+Alacritty + Zsh + tmux + Starship. Gruvbox, Mononoki Nerd Font. macOS and Fedora.
 
 ## Install
 

@@ -2,14 +2,12 @@ projects:
   - id: term-configs
     locations:
       carlos: /Users/carlos.garcia/Documents/configs/term-configs
-      bastion: /home/cxrlos/Documents/configs/term-configs
   - id: itaipu
     locations:
       carlos: /Users/carlos.garcia/dev/nu/itaipu
   - id: neovim-configs
     locations:
       carlos: /Users/carlos.garcia/Documents/configs/neovim-configs
-      bastion: /home/cxrlos/Documents/configs/neovim-configs
   - id: fable-test
     locations:
       carlos: /Users/carlos.garcia/Documents/personal-projects/fable-test
@@ -18,15 +16,12 @@ projects:
       carlos: /Users/carlos.garcia/Documents/personal-projects/world-cup-prediction-model
   - id: papaquiniela
     locations:
-      bastion: /home/cxrlos/Documents/personal-projects/papaquiniela
       carlos: /Users/carlos.garcia/Documents/personal-projects/papaquiniela
   - id: ratatoist
     locations:
       carlos: /Users/carlos.garcia/Documents/personal-projects/ratatoist
-      bastion: /home/cxrlos/Documents/personal-projects/ratatoist
   - id: hyprland-configs
     locations:
-      bastion: /home/cxrlos/Documents/configs/hyprland-configs
       carlos: /Users/carlos.garcia/Documents/configs/hyprland-configs
   - id: portugues-br
     locations:
@@ -46,33 +41,3 @@ projects:
   - id: core-limit-policies-monitoring-data-jobs
     locations:
       carlos: /Users/carlos.garcia/dev/nu/core-limit-policies-monitoring-data-jobs
-  - id: sustainlabs-ai
-    locations:
-      bastion: ~/Documents/sustainlabs-ai
-  - id: log-pose
-    locations:
-      bastion: ~/Documents/sustainlabs-ai/log-pose
-  - id: ohara
-    locations:
-      bastion: ~/Documents/sustainlabs-ai/ohara
-  - id: pluton
-    locations:
-      bastion: ~/Documents/sustainlabs-ai/pluton
-  - id: impel-down
-    locations:
-      bastion: ~/Documents/sustainlabs-ai/impel-down
-  - id: risk-mod
-    locations:
-      bastion: ~/Documents/sustainlabs-ai/risk-mod
-  - id: sustainlabs-github
-    locations:
-      bastion: ~/Documents/sustainlabs-ai/.github
-  - id: kuma
-    locations:
-      bastion: /home/cxrlos/Documents/personal-projects/kuma
-  - id: reverse-mountain
-    locations:
-      bastion: ~/Documents/sustainlabs-ai/reverse-mountain
-  - id: morgans
-    locations:
-      bastion: /home/cxrlos/Documents/sustainlabs-ai/morgans

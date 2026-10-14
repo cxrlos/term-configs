@@ -1,6 +1,6 @@
 # Terminal Config
 
-Personal terminal stack: Alacritty + Zsh + tmux + Starship. Gruvbox everywhere, Mononoki Nerd Font. Targets macOS and Arch Linux.
+Personal terminal stack: Alacritty + Zsh + tmux + Starship. Gruvbox everywhere, Mononoki Nerd Font. Targets macOS and Fedora.
 
 ## Stack
 
@@ -24,7 +24,7 @@ Personal terminal stack: Alacritty + Zsh + tmux + Starship. Gruvbox everywhere, 
 | `zsh/`                      | Modular shell config (one concern per file)                   |
 | `zsh/palette.sh`            | **Only** place hex codes live. Source it, use `$_iris` etc.   |
 | `zsh/nubank.zsh`            | Work overlay — gitignored, sensitive                          |
-| `scripts/install.sh`        | Bootstrap installer (macOS + Arch)                            |
+| `scripts/install.sh`        | Bootstrap installer (macOS + Fedora)                          |
 | `scripts/tmux-sessionizer`  | The session picker (`tm` from shell, `` `f `` from tmux)       |
 | `scripts/sessionizer-add`   | Register / scaffold a project at `pwd`                        |
 | `scripts/new-project.sh`    | (Legacy) Project scaffolder — superseded by sessionizer-add   |
@@ -54,17 +54,16 @@ One tracked config serves every machine. A change made on one must not break the
 | Host key | Hardware | OS | Form |
 |---|---|---|---|
 | `carlos` | MacBook, Apple Silicon (arm64) | macOS | laptop (work) |
-| `bastion` | Intel i5-12400F (x86_64), AMD RX 6750 XT | Arch | desktop |
-| *(set at install)* | ThinkPad T14, Intel Core Ultra 5 (x86_64), Intel Arc iGPU | Arch | laptop |
+| `thinkpunk` | ThinkPad T14 Gen 6, Intel Core Ultra 5 235U (x86_64), Intel Arc iGPU | Fedora | laptop |
 
-The host key is `hostname -s` on macOS and `uname -n` on Linux; Arch doesn't ship `hostname` (it's in `inetutils`). Every machine needs a unique one, or it reads and writes another machine's `projects.yaml` entries. Fill the T14's key in above once it exists.
+The host key is `hostname -s` on macOS and `uname -n` on Linux. Fedora's default hostname is `fedora`; set a real one (`hostnamectl set-hostname`) before running `sessionizer-add`. Every machine needs a unique one, or it reads and writes another machine's `projects.yaml` entries.
 
 Rules for non-breaking changes:
 - **Branch on capability, never on hostname.** OS via `uname` (`Darwin`/`Linux`), tools via `command -v`, laptop via `/sys/class/power_supply/BAT*`, display server via `$XDG_SESSION_TYPE`. Same "present only when the hardware is" rule as hyprland-configs.
-- **No architecture assumptions.** Both Linux machines are x86_64, the Mac is arm64. Anything that downloads a binary picks it by `uname -m`; Homebrew paths stay behind an existence check (`env.zsh`).
+- **No architecture assumptions.** The Linux machine is x86_64, the Mac is arm64. Anything that downloads a binary picks it by `uname -m`; Homebrew paths stay behind an existence check (`env.zsh`).
 - **Machine-local values live in gitignored files** (`zsh/.local`, `zsh/nubank.zsh`), never in tracked config. The only tracked absolute paths are `projects.yaml` entries under their own host key.
-- **New dependency → both lists in `install.sh`** (`BREW_DEPS`, `PACMAN_DEPS`), with the Arch name checked via `pacman -Si`. If it only exists on one OS, guard its use with `command -v`.
-- **Laptop-only features stay inert on the desktop.** Nothing in this repo is laptop-specific today; display scaling belongs to the compositor (hyprland-configs monitor scale), so `alacritty.toml` keeps one font size.
+- **New dependency → both lists in `install.sh`** (`BREW_DEPS`, `DNF_DEPS`), with the Fedora name checked via `dnf info`. Not in the Fedora repos → `DNF_COPRS` (`"owner/project:package"`). If it only exists on one OS, guard its use with `command -v`.
+- **Laptop-only features stay behind a battery check.** Nothing in this repo is laptop-specific today; display scaling belongs to the compositor, so `alacritty.toml` keeps one font size.
 - **Verify the platforms you can't run.** `bash -n` + `/bin/bash -n` (3.2), `zsh -n`, shellcheck. If a change touches an OS branch you couldn't execute, say so in the handoff.
 
 ## Sessionizer & cross-machine projects

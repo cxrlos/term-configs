@@ -8,7 +8,7 @@ claude "$(cat tmp/verify-install.md)"
 
 ---
 
-You are verifying that `term-configs` installed correctly on this machine. Read `AGENTS.md` first, especially **Machines** and **Sessionizer & cross-machine projects**. The repo is shared by a macOS laptop (arm64), an Arch desktop (`bastion`, x86_64) and this machine, probably the ThinkPad T14 (Arch, Intel Core Ultra 5, x86_64).
+You are verifying that `term-configs` installed correctly on this machine. Read `AGENTS.md` first, especially **Machines** and **Sessionizer & cross-machine projects**. The repo is shared by a macOS laptop (arm64) and this machine, the ThinkPad T14 Gen 6 (Fedora, Intel Core Ultra 5, x86_64).
 
 ## Ground rules
 
@@ -24,8 +24,8 @@ You are verifying that `term-configs` installed correctly on this machine. Read 
 
 Run each group and record PASS / WARN / FAIL with the command output that proves it.
 
-1. **Machine identity.** `uname -n`, `uname -m`, `lscpu | grep 'Model name'`, `lspci | grep -iE 'vga|3d|display'`, `ls /sys/class/power_supply/`, `echo $XDG_SESSION_TYPE $XDG_CURRENT_DESKTOP`. FAIL if the host key equals a key already in the Machines table (`bastion`, `carlos`). WARN if `hostname` isn't installed; that's expected on Arch.
-2. **Packages.** Parse `PACMAN_DEPS` from `scripts/install.sh` and run `pacman -Qi` on each. FAIL for any missing.
+1. **Machine identity.** `uname -n`, `uname -m`, `lscpu | grep 'Model name'`, `lspci | grep -iE 'vga|3d|display'`, `ls /sys/class/power_supply/`, `echo $XDG_SESSION_TYPE $XDG_CURRENT_DESKTOP`. FAIL if the host key equals a key already in the Machines table (`carlos`). WARN if it's still Fedora's default `fedora`.
+2. **Packages.** Parse `DNF_DEPS` and the package half of `DNF_COPRS` from `scripts/install.sh` and run `rpm -q --whatprovides` on each. FAIL for any missing.
 3. **Links.** For each `LINKS` and `BINS` entry in `scripts/install.sh`, confirm `$HOME/<dst>` is a symlink resolving to `<repo>/<src>`. Confirm `~/.zsh/.local` sets `TERM_CONFIGS_DIR` to this repo and that `CLAUDE.md` (`@AGENTS.md`) exists at the repo root. WARN on dangling symlinks into this repo under `~` and `~/.config`.
 4. **Shell.**
    - Login shell is zsh: `getent passwd "$USER" | cut -d: -f7`.
@@ -60,13 +60,13 @@ Run each group and record PASS / WARN / FAIL with the command output that proves
    - **Prompt:** the directory and git branch sit on the left, the time is right-aligned on the same row, and the input goes on the next line.
    - **Vi mode:** the cursor is a bar in insert mode and a steady block after `Esc`.
    - **Window:** it's translucent with blur.
-   - **Font size:** it's readable at this panel's scale (`hyprctl monitors | grep scale`). On a laptop, size is the compositor's job, not alacritty's (AGENTS.md).
+   - **Font size:** it's readable at this panel's scale (GNOME Settings → Displays). On a laptop, size is the compositor's job, not alacritty's (AGENTS.md).
    - **tmux status bar:** two lines, with the session name on the left and the branch and clock on the right.
    - **Pane border:** the active pane's border is foam green.
    - **Popups:** `` `? `` `` `f `` `` `g `` `` `t `` all open with rounded iris borders.
    - **Clipboard:** copy mode `` `Enter ``, select with `v`, yank with `y`, then `wl-paste` prints the selection.
    - **Navigation:** `C-h/j/k/l` moves between tmux panes and nvim splits.
-   - **URL hint:** a Super+click on a URL in Alacritty opens the browser. It may conflict with Hyprland's Super+drag; report what happens.
+   - **URL hint:** a Super+click on a URL in Alacritty opens the browser. GNOME may grab Super+click; report what happens.
 
 ## Report
 
@@ -75,7 +75,7 @@ End with:
 1. A table with one row per check group: group, status, and one line of evidence.
 2. Each FAIL and WARN with a proposed fix, tagged:
    - **machine**: only this machine needs it, for example a package, a locale or a hostname.
-   - **repo**: the tracked config needs it. Say whether the fix is safe for the macOS laptop and `bastion` per the Machines rules, and which of them you couldn't verify.
+   - **repo**: the tracked config needs it. Say whether the fix is safe for the macOS laptop per the Machines rules, and say so if you couldn't verify it.
 3. The rendering items I confirmed or rejected.
 
 Don't apply fixes. I'll pick which ones to do.
