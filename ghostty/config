@@ -1,0 +1,9 @@
+# Ghostty (macOS terminal; Alacritty on Fedora). Mirrors alacritty.toml; Ghostty defaults otherwise.
+# Size: Ghostty's default (13 pt on macOS); set font-size here only if the Mac needs it.
+font-family = CommitMono Nerd Font Mono
+theme = TokyoNight Night
+background-opacity = 0.92
+window-padding-x = 6
+window-padding-y = 6
+macos-option-as-alt = true
+keybind = shift+enter=text:\x1b\r

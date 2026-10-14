@@ -66,7 +66,7 @@ LINKS="zsh/.zshenv:.zshenv zsh/.zprofile:.zprofile zsh/.zshrc:.zshrc
   oh-my-posh/prompt.toml:.config/oh-my-posh/prompt.toml atuin/config.toml:.config/atuin/config.toml
   direnv/direnv.toml:.config/direnv/direnv.toml scripts/tmux-sessionizer:.local/bin/tmux-sessionizer
   scripts/wt:.local/bin/wt scripts/agent-run:.local/bin/agent-run"
-[ $os = fedora ] && LINKS="$LINKS alacritty:.config/alacritty"
+if [ $os = fedora ]; then LINKS="$LINKS alacritty:.config/alacritty"; else LINKS="$LINKS ghostty/config:.config/ghostty/config"; fi
 section links
 backup=${XDG_STATE_HOME:-$HOME/.local/state}/term-configs/backup-$(date +%Y%m%d-%H%M%S)
 ok=0 backed=
