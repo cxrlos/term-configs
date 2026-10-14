@@ -29,7 +29,9 @@ for m in viopp visual; do                                                     # 
     for c in {a,i}${(s..)^:-'()[]{}<>bB'}; do bindkey -M $m -- $c select-bracketed; done
     for c in {a,i}{\',\",\`}; do bindkey -M $m -- $c select-quoted; done
 done
-bindkey -M vicmd cs change-surround ds delete-surround ys add-surround; bindkey -M visual S add-surround
+# Surround on sa/sd/sr (mini.surround keys, same as nvim); plain s is freed so they need no timeout
+bindkey -M vicmd -r s
+bindkey -M vicmd sa add-surround sd delete-surround sr change-surround; bindkey -M visual S add-surround
 _vi_cursor() { [[ $KEYMAP == vicmd ]] && print -n '\e[2 q' || print -n '\e[6 q' }
 zle-keymap-select() { _vi_cursor }; zle -N zle-keymap-select
 zle-line-init() { _vi_cursor }; zle -N zle-line-init
