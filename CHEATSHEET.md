@@ -32,12 +32,11 @@ Elsewhere: sway keys `Super+?` · tmux keys `prefix ?` · nvim keys `<leader>` a
 - `gh pr create` / `gh pr checkout <n>` / `gh pr view --web`
 - Commits and tags are SSH-signed (`git log --show-signature`)
 
-## Projects (tmux)
-- `tm` (or prefix f inside tmux): org, then repo (Enter opens, Esc goes up; `*` = open).
-  A new session gets windows editor, agent (`$AGENT`), shell
-- A repo's executable `.tmux-sessionizer` adds extras, e.g.
-  `tmux new-window -d -t "$TS_SESSION:" -n server -c "$TS_DIR"` (then send-keys `just dev`)
-- Keys: prefix `?` · scrollback: prefix Enter, `/` search, `v` select, `y` copy
+## Projects and worktrees (tmux)
+- `tm` / prefix f: org → repo (Enter opens, Esc up, `*` open). prefix s: session tree
+- Main checkout = editor, shell. `wt new feat "Add X"` → `<repo>.wt/feat-add-x` session
+  with editor, agent, shell (agent edits only; you commit). `wt rm` cleans up (refuses if dirty)
+- Repo hook `.tmux-sessionizer` runs only after `tmux-sessionizer --allow <dir>`
 
 ## Per project
 - `.envrc` + `direnv allow`: env vars load on cd and unload on leave

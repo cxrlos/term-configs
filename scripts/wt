@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+# wt: one git worktree per task at <repo>.wt/<branch-slug> (next to the repo, never inside),
+# opened as its own tmux session (editor | agent | shell). bash 3.2-safe, prompt-free.
+#   wt new <type> <description>   e.g. wt new feat "Add CLI flag" -> feat/add-cli-flag
+#   wt new <branch>               existing or new branch
+#   wt rm [dir]                   refuses if dirty or unpushed; deletes the branch if merged
+slug() { printf '%s' "$*" | tr 'A-Z' 'a-z' | tr -cs 'a-z0-9' '-' | sed 's/^-*//;s/-*$//'; }
+main_of() { local c; c=$(git -C "$1" rev-parse --path-format=absolute --git-common-dir) && printf '%s' "${c%/.git}"; }
+cmd=$1; shift
+case $cmd in
+new)
+    [ $# -ge 1 ] || { echo "usage: wt new <type> <description> | <branch>" >&2; exit 2; }
+    if [ $# -ge 2 ]; then t=$1; shift; b="$t/$(slug "$@")"; else b=$1; fi
+    main=$(main_of .) || exit 1
+    dir="$main.wt/$(printf '%s' "$b" | tr / -)"
+    git -C "$main" fetch -q origin 2>/dev/null
+    base=$(git -C "$main" symbolic-ref -q --short refs/remotes/origin/HEAD || echo HEAD)
+    if git -C "$main" show-ref -q --verify "refs/heads/$b"; then
+        git -C "$main" worktree add "$dir" "$b" || exit 1
+    else
+        git -C "$main" worktree add -b "$b" "$dir" "$base" || exit 1
+    fi
+    for f in ${WT_COPY-}; do [ -e "$main/$f" ] && cp -R "$main/$f" "$dir/$f"; done   # opt-in only
+    if [ -f "$dir/.envrc" ] && command -v direnv >/dev/null; then
+        if cmp -s "$main/.envrc" "$dir/.envrc"; then direnv allow "$dir"
+        else echo "wt: .envrc differs from the main checkout; review it, then: direnv allow $dir" >&2; fi
+    fi
+    if [ -f "$dir/justfile" ] && (cd "$dir" && just --summary 2>/dev/null | tr ' ' '\n' | grep -qx setup); then
+        (cd "$dir" && just setup)
+    fi
+    s=$(tmux-sessionizer -d "$dir")
+    if [ -t 1 ] && [ -n "$TMUX" ]; then tmux switch-client -t "=$s"; else echo "session: $s"; fi ;;
+rm)
+    dir=$(git -C "${1:-.}" rev-parse --show-toplevel) || exit 1
+    main=$(main_of "$dir") || exit 1
+    [ "$dir" != "$main" ] || { echo "wt: $dir is the main checkout" >&2; exit 1; }
+    [ -z "$(git -C "$dir" status --porcelain)" ] || { echo "wt: $dir has uncommitted changes" >&2; exit 1; }
+    b=$(git -C "$dir" branch --show-current)
+    if [ -n "$b" ] && [ -n "$(git -C "$dir" log --oneline "@{u}.." 2>/dev/null || git -C "$dir" log --oneline "origin/HEAD..")" ]; then
+        echo "wt: $b has unpushed commits" >&2; exit 1
+    fi
+    s=$(tmux list-sessions -F '#{session_path}|#S' 2>/dev/null | awk -F'|' -v d="$dir" '$1==d {print $2}')
+    git -C "$main" worktree remove "$dir" || exit 1
+    if [ -n "$b" ]; then
+        if [ "$(cd "$main" && gh pr view "$b" --json state -q .state 2>/dev/null)" = MERGED ]; then
+            git -C "$main" branch -D "$b"
+        else
+            git -C "$main" branch -d "$b" 2>/dev/null || echo "wt: kept unmerged branch $b" >&2
+        fi
+    fi
+    [ -z "$s" ] || tmux kill-session -t "=$s" ;;   # last: may be our own session
+*) echo "usage: wt new <type> <description> | wt new <branch> | wt rm [dir]" >&2; exit 2 ;;
+esac

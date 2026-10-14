@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# agent-run: start $AGENT with an allowlisted environment (no SSH agent, GitHub token, D-Bus,
+# tmux socket or anything else not listed). Hygiene only: the sandbox (later) is enforcement.
+# Keeps direnv's non-secret project env (PATH_add, venv, PORT). bash 3.2-safe.
+: "${AGENT:?AGENT not set}"
+run="${AGENT_WRAP-} $AGENT"   # captured before the scrub below unsets AGENT
+eval "$(direnv export bash 2>/dev/null)"
+keep=" HOME PATH TERM COLORTERM LANG USER SHELL TMPDIR EDITOR VISUAL PORT VIRTUAL_ENV COMPOSE_PROJECT_NAME UV_CACHE_DIR ${AGENT_ENV_PASS-} "
+for v in $(compgen -e); do
+    case "$keep" in *" $v "*) ;; *) unset "$v" ;; esac
+done
+export DO_NOT_TRACK=1 LANG="${LANG:-C.UTF-8}"
+exec $run "$@"

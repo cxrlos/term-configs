@@ -12,7 +12,9 @@ holds the old config until the rebuild merges.
 | `git/config` | `~/.config/git/config` | Shared git settings; includes machine-local `config.local` (identity, signing key) |
 | `ssh/config` | `~/.ssh/config` | Shared ssh client; includes machine-local `config.local` |
 | `tmux/tmux.conf` | `~/.config/tmux/tmux.conf` | Sessions, windows, copy mode; no plugins; every bind has `-N` |
-| `scripts/tmux-sessionizer` | `~/.local/bin/tmux-sessionizer` (`tm`, prefix f) | Repos under `$TS_ROOTS` → session named by path (`work/api`); windows editor, agent (`$AGENT`), shell; repo `.tmux-sessionizer` adds extras |
+| `scripts/tmux-sessionizer` | `~/.local/bin/tmux-sessionizer` (`tm`, prefix f) | Repos under `$TS_ROOTS`, browsed org → repo; session named by path (`nu/api`). Main checkout: editor, shell. Linked worktree: editor, agent, shell. Repo `.tmux-sessionizer` hook runs only after `--allow` (hash-pinned) |
+| `scripts/wt` | `~/.local/bin/wt` | Worktree per task at `<repo>.wt/<branch>`; `wt new`, `wt rm` |
+| `scripts/agent-run` | `~/.local/bin/agent-run` | Starts `$AGENT` with an allowlisted env (no ssh-agent, tokens, D-Bus, tmux) |
 | `atuin/config.toml` | `~/.config/atuin/config.toml` | History search UI (Ctrl+R); non-defaults only |
 | `direnv/direnv.toml` | `~/.config/direnv/direnv.toml` | Quiet per-project env loading |
 | `CHEATSHEET.md` | `cheat` alias | Keys and commands that have no keybind source |
@@ -28,7 +30,7 @@ Machine-only shell config goes in `~/.zshrc.local` (never committed).
 | Command line: editing (vi mode), history, dir jumps, file finding, small helpers (`gnb`) | zsh (+ atuin, zoxide, fzf) |
 | Code: editing, LSP navigation, review of changes, hunks, blame, commit, rebase/fixup | nvim (gitsigns + neogit) |
 | GitHub: PRs | gh |
-| AI agent | any CLI agent in the project's `agent` window. Never tie config to one provider |
+| AI agent | any CLI agent (`$AGENT`) in a worktree session's `agent` window, started by `agent-run`. Agents edit files only: humans stage, commit, sign, push. Never tie config to one provider |
 | Per-project env / tasks | direnv / just |
 
 ## Rules
