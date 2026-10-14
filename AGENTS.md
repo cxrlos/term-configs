@@ -9,7 +9,8 @@ Terminal setup shared by two machines: `thinkpunk` (Fedora 44, sway) and the mac
 |---|---|---|
 | `install.sh` | — | Installer (bash 3.2). Fedora packages (`DNF_PKGS`), pinned + hash-checked font, links (real files are backed up to `~/.local/state/term-configs/`), then what's left for you |
 | `Brewfile` | — | macOS packages and casks (`brew bundle`) |
-| `alacritty/` | `~/.config/alacritty` | Terminal; Tokyo Night theme in `tokyonight.toml` (folke/tokyonight.nvim extras) |
+| `alacritty/` | `~/.config/alacritty` | Terminal (Fedora); Tokyo Night theme in `tokyonight.toml` (folke/tokyonight.nvim extras) |
+| `ghostty/config` | `~/.config/ghostty/config` (macOS) | Terminal (macOS); mirrors Alacritty: Commit Mono, built-in `TokyoNight Night` theme |
 | `zsh/.zshenv`, `zsh/.zprofile`, `zsh/.zshrc` | `~/.zshenv`, `~/.zprofile`, `~/.zshrc` | Env for every zsh; login (re-applies `zsh/path.zsh` after macOS path_helper); interactive shell |
 | `git/config` | `~/.config/git/config` | Shared git settings; includes machine-local `config.local` (identity, signing key) |
 | `ssh/config` | `~/.ssh/config` | Shared ssh client; includes machine-local `config.local` |
@@ -28,7 +29,7 @@ Machine-only shell config goes in `~/.zshrc.local` (never committed).
 | Job | Owner |
 |---|---|
 | Apps, workspaces, launch, notifications, lock, screenshots, clipboard history | sway + DankMaterialShell (fedora-configs) |
-| One terminal window, fonts, opening URLs | Alacritty |
+| One terminal window, fonts, opening URLs | Alacritty (Fedora) / Ghostty (macOS) |
 | Projects: one persistent session each; windows editor, agent, shell (+ server/ad-hoc per project); scrollback search and copy mode | tmux + sessionizer |
 | Command line: editing (vi mode), history, dir jumps, file finding, small helpers (`gnb`) | zsh (+ atuin, zoxide, fzf) |
 | Code: editing, LSP navigation, review of changes, hunks, blame, commit, rebase/fixup | nvim (gitsigns + neogit) |
