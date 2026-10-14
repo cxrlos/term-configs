@@ -1,0 +1,51 @@
+#:schema https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/schema.json
+# Prompt: path · git branch and state, then ❯ (red after a failed command). Tokyo Night.
+# Vi mode shows as the cursor shape (zsh owns it), not in the prompt.
+version = 3
+final_space = true
+
+[upgrade]
+  notice = false
+  auto = false
+
+[[blocks]]
+  type = 'prompt'
+  alignment = 'left'
+  newline = true
+
+  [[blocks.segments]]
+    type = 'path'
+    style = 'plain'
+    foreground = '#7aa2f7'
+    template = '{{ .Path }} '
+    [blocks.segments.properties]
+      style = 'full'
+
+  [[blocks.segments]]
+    type = 'git'
+    style = 'plain'
+    foreground = '#bb9af7'
+    template = '{{ .HEAD }}{{ if .Staging.Changed }} +{{ end }}{{ if .Working.Changed }} *{{ end }}{{ if gt .Ahead 0 }} ⇡{{ .Ahead }}{{ end }}{{ if gt .Behind 0 }} ⇣{{ .Behind }}{{ end }} '
+    [blocks.segments.properties]
+      fetch_status = true
+
+  [[blocks.segments]]
+    type = 'executiontime'
+    style = 'plain'
+    foreground = '#565f89'
+    template = '{{ .FormattedMs }} '
+    [blocks.segments.properties]
+      threshold = 5000
+      style = 'austin'
+
+[[blocks]]
+  type = 'prompt'
+  alignment = 'left'
+  newline = true
+
+  [[blocks.segments]]
+    type = 'text'
+    style = 'plain'
+    foreground = '#9ece6a'
+    foreground_templates = ['{{ if gt .Code 0 }}#f7768e{{ end }}']
+    template = '❯'

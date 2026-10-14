@@ -7,6 +7,10 @@ setopt EXTENDED_HISTORY INC_APPEND_HISTORY HIST_IGNORE_DUPS HIST_IGNORE_SPACE \
        HIST_REDUCE_BLANKS HIST_EXPIRE_DUPS_FIRST HIST_VERIFY
 setopt AUTO_CD AUTO_PUSHD PUSHD_IGNORE_DUPS PUSHD_SILENT INTERACTIVE_COMMENTS NO_BEEP NO_FLOW_CONTROL
 mkdir -p $XDG_STATE_HOME/zsh $XDG_CACHE_HOME/zsh
+zshaddhistory() { # don't keep lines that look like they carry a secret (same filter as atuin)
+    setopt localoptions extendedglob
+    [[ $1 != *(#i)(password|passwd|token|secret|api[_-]key)=* ]]
+}
 
 # Completion (once, after every fpath change)
 fpath=(~/.zfunc(N) ${HOMEBREW_PREFIX:+$HOMEBREW_PREFIX/share/zsh/site-functions} $fpath)
@@ -37,7 +41,7 @@ zle-keymap-select() { _vi_cursor }; zle -N zle-keymap-select
 zle-line-init() { _vi_cursor }; zle -N zle-line-init
 
 # Tools (zoxide after compinit; atuin after fzf so it wins Ctrl+R)
-eval "$(starship init zsh)"
+eval "$(oh-my-posh init zsh --config ${XDG_CONFIG_HOME:-$HOME/.config}/oh-my-posh/prompt.toml)"
 eval "$(zoxide init zsh)"
 FZF_CTRL_R_COMMAND= FZF_ALT_C_COMMAND= source <(fzf --zsh)
 eval "$(atuin init zsh --disable-up-arrow)"
@@ -51,7 +55,7 @@ for km in viins vicmd; do
                    '^[[B' down-line-or-beginning-search '^[OB' down-line-or-beginning-search
 done
 
-alias ls='eza --icons=auto --group-directories-first' ll='ls -la --git --header' la='ls -a' lt='ls --tree --level=2 --git-ignore'
+alias ll='ls -lah'
 alias vi=nvim vim=nvim tm=tmux-sessionizer
 alias cheat="less ${${(%):-%N}:A:h:h}/CHEATSHEET.md" # repo root, resolved through the ~/.zshrc symlink
 

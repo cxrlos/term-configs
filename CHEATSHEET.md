@@ -14,7 +14,7 @@ Elsewhere: sway keys `Super+?` · tmux keys `prefix ?` · nvim keys `<leader>` a
 - `Ctrl+R` (or Esc `/`): atuin over all history. Ctrl+R again cycles the filter
   (global, host, session, directory, workspace = this git repo). Enter/Tab puts the
   command on the line; Enter again runs it
-- Leading space: ` cmd` is not saved
+- Leading space: ` cmd` is not saved; lines with `password=`/`token=`/`api_key=`… never are
 
 ## Finding and jumping
 - `Ctrl+T`: pick a file and insert its path · `cmd **<Tab>`: fuzzy-complete a path
@@ -24,7 +24,7 @@ Elsewhere: sway keys `Super+?` · tmux keys `prefix ?` · nvim keys `<leader>` a
 - `fd name` find files · `rg text` search contents · `jq '.a.b' f.json` read JSON
 
 ## Listing and reading
-- `ls` `ll` (git status) `la` `lt` (tree)
+- `ll` = `ls -lah`. Prompt: path · branch (`+` staged, `*` changed, ⇡⇣) · time if >5s; red ❯ = last cmd failed
 - `tldr cmd`: practical examples (`tldr --update` refreshes the pages)
 
 ## Git (nvim owns review/staging/history; these are the shell bits)

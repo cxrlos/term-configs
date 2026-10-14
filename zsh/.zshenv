@@ -2,10 +2,11 @@
 export XDG_CONFIG_HOME=$HOME/.config XDG_CACHE_HOME=$HOME/.cache XDG_STATE_HOME=$HOME/.local/state
 export LANG=en_US.UTF-8
 export EDITOR=nvim VISUAL=nvim PAGER=less LESS=-RFi
+export DO_NOT_TRACK=1                     # opt out of telemetry in tools that honour it
 
 typeset -U path fpath
 if [[ $OSTYPE == darwin* && -d /opt/homebrew ]]; then
-    export HOMEBREW_PREFIX=/opt/homebrew
+    export HOMEBREW_PREFIX=/opt/homebrew HOMEBREW_NO_ANALYTICS=1
     path=($HOMEBREW_PREFIX/bin $HOMEBREW_PREFIX/sbin $path)
 fi
 path=(~/.local/bin ~/.cargo/bin(N) $path) # ~/.local/bin first: the wl-copy shim must win

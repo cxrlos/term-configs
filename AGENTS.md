@@ -15,7 +15,8 @@ holds the old config until the rebuild merges.
 | `scripts/tmux-sessionizer` | `~/.local/bin/tmux-sessionizer` (`tm`, prefix f) | Repos under `$TS_ROOTS`, browsed org → repo; session named by path (`nu/api`). Main checkout: editor, shell. Linked worktree: editor, agent, shell. Repo `.tmux-sessionizer` hook runs only after `--allow` (hash-pinned) |
 | `scripts/wt` | `~/.local/bin/wt` | Worktree per task at `<repo>.wt/<branch>`; `wt new`, `wt rm` |
 | `scripts/agent-run` | `~/.local/bin/agent-run` | Starts `$AGENT` with an allowlisted env (no ssh-agent, tokens, D-Bus, tmux) |
-| `atuin/config.toml` | `~/.config/atuin/config.toml` | History search UI (Ctrl+R); non-defaults only |
+| `oh-my-posh/prompt.toml` | `~/.config/oh-my-posh/prompt.toml` | Prompt (Fedora/brew `oh-my-posh`): path, git, slow-command time, ❯; upgrade notices off |
+| `atuin/config.toml` | `~/.config/atuin/config.toml` | History search UI (Ctrl+R): AI off, secret filter; non-defaults only |
 | `direnv/direnv.toml` | `~/.config/direnv/direnv.toml` | Quiet per-project env loading |
 | `CHEATSHEET.md` | `cheat` alias | Keys and commands that have no keybind source |
 

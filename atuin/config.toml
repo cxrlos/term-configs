@@ -4,3 +4,12 @@ style = "compact"
 inline_height = 20     # popup under the prompt, not full screen
 workspaces = true      # adds a "workspace" filter: the current git repo
 update_check = false
+# Never record lines that look like they carry a secret (mirrored in zsh's zshaddhistory)
+history_filter = [
+  "(?i)(password|passwd|token|secret|api[_-]?key)=",
+  "secret-tool store",
+  "security add-generic-password",
+]
+
+[ai]
+enabled = false        # upstream defaults to on (cloud AI on '?'); off everywhere
