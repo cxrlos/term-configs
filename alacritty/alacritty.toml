@@ -5,7 +5,6 @@ import = ["~/.config/alacritty/gruvbox.toml"]
 padding = { x = 6, y = 6 }
 dynamic_padding = true
 opacity = 0.92
-decorations_theme_variant = "Dark"
 option_as_alt = "Both" # macOS: Option acts as Alt
 
 [font]
