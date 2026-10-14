@@ -18,7 +18,7 @@ new)
     if git -C "$main" show-ref -q --verify "refs/heads/$b"; then
         git -C "$main" worktree add "$dir" "$b" || exit 1
     else
-        git -C "$main" worktree add -b "$b" "$dir" "$base" || exit 1
+        git -C "$main" worktree add --no-track -b "$b" "$dir" "$base" || exit 1   # first push sets origin/<branch>
     fi
     for f in ${WT_COPY-}; do [ -e "$main/$f" ] && cp -R "$main/$f" "$dir/$f"; done   # opt-in only
     if [ -f "$dir/.envrc" ] && command -v direnv >/dev/null; then
@@ -36,8 +36,10 @@ rm)
     [ "$dir" != "$main" ] || { echo "wt: $dir is the main checkout" >&2; exit 1; }
     [ -z "$(git -C "$dir" status --porcelain)" ] || { echo "wt: $dir has uncommitted changes" >&2; exit 1; }
     b=$(git -C "$dir" branch --show-current)
-    if [ -n "$b" ] && [ -n "$(git -C "$dir" log --oneline "@{u}.." 2>/dev/null || git -C "$dir" log --oneline "origin/HEAD..")" ]; then
-        echo "wt: $b has unpushed commits" >&2; exit 1
+    if [ -n "$b" ]; then   # unpushed = commits on neither origin/<branch> nor origin's default branch
+        git -C "$dir" fetch -q origin 2>/dev/null
+        ref=origin/$b; git -C "$dir" rev-parse -q --verify "$ref" >/dev/null || ref=origin/HEAD
+        [ -z "$(git -C "$dir" log --oneline "$ref..HEAD")" ] || { echo "wt: $b has commits not on $ref (push first)" >&2; exit 1; }
     fi
     s=$(tmux list-sessions -F '#{session_path}|#S' 2>/dev/null | awk -F'|' -v d="$dir" '$1==d {print $2}')
     git -C "$main" worktree remove "$dir" || exit 1
