@@ -22,7 +22,7 @@ esac
 # ── Packages: Fedora list here, macOS in Brewfile (keep both in sync) ─────────────
 DNF_PKGS="zsh git alacritty neovim tmux fzf ripgrep fd-find zoxide atuin direnv oh-my-posh
   git-delta git-absorb gitleaks gh just jq zsh-autosuggestions zsh-syntax-highlighting wl-clipboard
-  curl fontconfig tree-sitter-cli gcc"
+  curl fontconfig unzip tree-sitter-cli gcc nodejs22-npm ruff nodejs-bash-language-server ShellCheck"
 section packages
 if [ $os = fedora ]; then
     missing=
@@ -58,6 +58,55 @@ if [ $os = fedora ]; then
         fc-cache -f "$font_dir"
         note "CommitMono Nerd Font $NF_VERSION installed"
     fi
+fi
+
+# ── Language servers for nvim (macOS: Brewfile). Pinned; to upgrade, change version + hash ──
+# npm packages land in ~/.local (commands in ~/.local/bin); --ignore-scripts: nothing runs on install.
+# typescript stays on 6.x: 7 has no tsserver, which ts_ls drives.
+NPM_PKGS="typescript-language-server@6.0.2 typescript@6.0.3 basedpyright@1.40.2
+  vscode-langservers-extracted@4.10.0 yaml-language-server@1.25.0"
+# Release binaries: name version sha256 url path-in-archive (- = the file itself).
+# GitHub: the release's sha256 digest. HashiCorp: SHA256SUMS, GPG-verified against their key.
+BINS="lua-language-server 3.19.2 93ad326b10f6c00911dd8c450fa098332dbd8f9f45d1052f5636a2d54479b947 https://github.com/LuaLS/lua-language-server/releases/download/3.19.2/lua-language-server-3.19.2-linux-x64.tar.gz bin/lua-language-server
+marksman 2026-02-08 be5098e8213219269c47fc0d916a66fa31ce0602ec967475c722260aabf26087 https://github.com/artempyanykh/marksman/releases/download/2026-02-08/marksman-linux-x64 -
+terraform 1.16.6 38034b38d03096399a7a1264a14561a8029b2b496fd1f169452656e53968f1b7 https://releases.hashicorp.com/terraform/1.16.6/terraform_1.16.6_linux_amd64.zip terraform
+terraform-ls 0.39.0 7750edc736845fd8c04ff0fc6332423c12d8275b358668c8c17e8aedc43ef971 https://releases.hashicorp.com/terraform-ls/0.39.0/terraform-ls_0.39.0_linux_amd64.zip terraform-ls"
+if [ $os = fedora ]; then
+    section "language servers"
+    missing=
+    for p in $NPM_PKGS; do
+        v=$(jq -r .version "$HOME/.local/lib/node_modules/${p%@*}/package.json" 2>/dev/null || true)
+        [ "$v" = "${p##*@}" ] || missing="$missing $p"
+    done
+    npm=$(command -v npm || command -v npm-22 || true)
+    if [ -z "$missing" ]; then note "npm: pinned versions present"
+    elif [ -n "$check" ]; then todo "npm missing or wrong version:$missing"
+    elif [ -z "$npm" ]; then todo "npm not installed (nodejs22-npm); re-run after the dnf step"
+    else
+        "$npm" install --global --prefix "$HOME/.local" --ignore-scripts --no-fund --no-audit $missing >/dev/null
+        note "npm installed:$missing"
+    fi
+    while read -r name ver sha url path; do
+        dir=$HOME/.local/opt/$name-$ver link=$HOME/.local/bin/$name
+        if [ "$path" = - ]; then target=$dir/$name; else target=$dir/$path; fi
+        if [ "$(readlink "$link" 2>/dev/null)" = "$target" ] && [ -x "$target" ]; then note "$name $ver ok"; continue; fi
+        if [ -n "$check" ]; then todo "$name $ver missing"; continue; fi
+        tmp=$(mktemp -d) && file=$tmp/${url##*/}
+        curl -fsSL -o "$file" "$url"
+        echo "$sha  $file" | sha256sum -c --quiet - ||
+            { echo "$name download doesn't match the pinned SHA-256; not installing" >&2; exit 1; }
+        rm -rf "$dir" && mkdir -p "$dir" "$HOME/.local/bin"
+        case $file in
+            *.tar.gz) tar -xzf "$file" -C "$dir" ;;
+            *.zip) unzip -q "$file" -d "$dir" ;;
+            *) install -m 755 "$file" "$dir/$name" ;;
+        esac
+        rm -rf "$tmp"
+        ln -sfn "$target" "$link"
+        note "$name $ver installed"
+    done <<EOF
+$BINS
+EOF
 fi
 
 # ── Links: "repo path:home path". Real files in the way are backed up, never deleted ──
@@ -108,6 +157,7 @@ case $(basename "${SHELL-}") in
     zsh) ;;
     *) todo "login shell is ${SHELL-unset}; run: chsh -s \"\$(command -v zsh)\"" ;;
 esac
+rust-analyzer --version >/dev/null 2>&1 || note "Rust: rustup component add rust-analyzer (LSP for nvim)"
 [ -f "$HOME/.zshrc.local" ] || note "optional: ~/.zshrc.local (TS_ROOTS, work-only env)"
 [ -f "$HOME/.ssh/config.local" ] || note "optional: ~/.ssh/config.local (machine-only hosts)"
 
