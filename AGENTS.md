@@ -7,7 +7,7 @@ holds the old config until the rebuild merges.
 ## Layout
 | Path | Linked to | What |
 |---|---|---|
-| `alacritty/` | `~/.config/alacritty` | Terminal; gruvbox theme in `gruvbox.toml` |
+| `alacritty/` | `~/.config/alacritty` | Terminal; Tokyo Night theme in `tokyonight.toml` (folke/tokyonight.nvim extras) |
 | `zsh/.zshenv`, `zsh/.zshrc` | `~/.zshenv`, `~/.zshrc` | Env/PATH for every zsh; interactive shell |
 | `git/config` | `~/.config/git/config` | Shared git settings; includes machine-local `config.local` (identity, signing key) |
 | `ssh/config` | `~/.ssh/config` | Shared ssh client; includes machine-local `config.local` |

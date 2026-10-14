@@ -1,5 +1,5 @@
 [general]
-import = ["~/.config/alacritty/gruvbox.toml"]
+import = ["~/.config/alacritty/tokyonight.toml"]
 
 [window]
 padding = { x = 6, y = 6 }
