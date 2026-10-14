@@ -1,5 +1,7 @@
 # Shared git settings (linked as ~/.config/git/config). Identity and signing key are
-# machine-local in ~/.config/git/config.local (personal on thinkpunk, work on the Mac).
+# machine-local in ~/.config/git/config.local: personal by default; on the Mac it also has
+# [includeIf "hasconfig:remote.*.url:git@github.com:<work-org>/**"] path = config.work
+# (work email + key), so identity follows the repo's remote, never its directory.
 [include]
     path = config.local
 [init]
@@ -7,11 +9,16 @@
 [core]
     editor = nvim
     pager = delta
+    hooksPath = ~/.config/git/hooks   # gitleaks pre-commit, signed-only pre-push; repo hooks still run (git/hooks/chain)
 [interactive]
     diffFilter = delta --color-only
 [delta]
     navigate = true
     line-numbers = true
+    side-by-side = true       # one diff: git -c delta.side-by-side=false diff
+    dark = true               # don't query the terminal (stalls in tmux/ssh); we're always dark
+    hyperlinks = true         # Ctrl+click commit hashes (GitHub) and file paths
+    syntax-theme = ansi       # code colours from the terminal palette = Tokyo Night
     # Tokyo Night (folke/tokyonight.nvim extras/delta)
     minus-style = syntax "#4a272f"
     minus-non-emph-style = syntax "#4a272f"
@@ -38,6 +45,7 @@
     default = current
     autoSetupRemote = true
     followTags = true
+    useForceIfIncludes = true   # --force-with-lease also refuses if you never pulled what you'd overwrite
 [pull]
     rebase = true
 [fetch]
