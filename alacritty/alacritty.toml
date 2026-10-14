@@ -8,7 +8,7 @@ opacity = 0.92
 option_as_alt = "Both" # macOS: Option acts as Alt
 
 [font]
-normal = { family = "JetBrainsMono Nerd Font Mono" }
+normal = { family = "CommitMono Nerd Font Mono" }
 size = 10.0
 
 [keyboard]
