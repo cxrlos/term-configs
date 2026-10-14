@@ -14,11 +14,8 @@ size = 10.0
 [keyboard]
 bindings = [{ key = "Return", mods = "Shift", chars = "\u001B\r" }] # newline in agent TUIs
 
-# Mouse off (keyboard only, like tmux and nvim). Selection can't be disabled, only cancelled
-# the moment it starts; copy with tmux copy mode or vi mode (Ctrl+Shift+Space).
-[scrolling]
-multiplier = 0 # wheel does nothing: no scrollback, no arrow keys sent to nvim/tmux
-
+# Mouse: the wheel scrolls, clicks do nothing (same in tmux and nvim). Selection can't be
+# disabled, only cancelled the moment it starts; copy with tmux copy mode or vi mode.
 [mouse]
 bindings = [
   { mouse = "Left", action = "ClearSelection" },

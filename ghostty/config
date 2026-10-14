@@ -8,10 +8,8 @@ window-padding-y = 6
 macos-option-as-alt = true
 keybind = shift+enter=text:\x1b\r
 
-# Mouse as off as Ghostty allows (keyboard only, like tmux and nvim). Drag-select and
-# middle-click paste can't be disabled; the wheel can only be slowed (minimum 0.01).
-mouse-scroll-multiplier = 0.01
-mouse-reporting = false
+# Mouse: the wheel scrolls, clicks do as little as Ghostty allows (tmux takes the mouse and
+# ignores clicks). Shift+drag selection and middle-click paste can't be disabled.
 copy-on-select = false
 right-click-action = ignore
 link-url = false
