@@ -23,9 +23,9 @@ Elsewhere: sway keys `Super+?` · tmux keys `prefix ?` · nvim keys `<leader>` a
 - `..` or a directory name alone cds into it · `cd -<Tab>`: recent directories
 - `fd name` find files · `rg text` search contents · `jq '.a.b' f.json` read JSON
 
-## Listing and reading
-- `ll` = `ls -lah`. Prompt: path · branch (`+` staged, `*` changed, ⇡⇣) · time if >5s; red ❯ = last cmd failed
-- `tldr cmd`: practical examples (`tldr --update` refreshes the pages)
+## Prompt and reading
+- path (@ = ~/dev) · branch `+`staged `*`changed ⇡⇣ `✗gone` `≡`stash · (venv) :PORT · time >5s;
+  next line: ✦jobs, exit code, ❯ (red = failed) · `ll` = `ls -lah` · `tldr cmd` examples
 
 ## Git (nvim owns review/staging/history; these are the shell bits)
 - `gnb`: new branch `type/slug`: pick the type, type a description
