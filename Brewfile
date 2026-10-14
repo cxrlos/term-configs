@@ -2,6 +2,7 @@
 # change both together.
 brew "git"
 brew "neovim"
+brew "tree-sitter-cli"
 brew "tmux"
 brew "fzf"
 brew "ripgrep"
