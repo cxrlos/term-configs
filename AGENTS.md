@@ -11,6 +11,8 @@ holds the old config until the rebuild merges.
 | `zsh/.zshenv`, `zsh/.zshrc` | `~/.zshenv`, `~/.zshrc` | Env/PATH for every zsh; interactive shell |
 | `git/config` | `~/.config/git/config` | Shared git settings; includes machine-local `config.local` (identity, signing key) |
 | `ssh/config` | `~/.ssh/config` | Shared ssh client; includes machine-local `config.local` |
+| `atuin/config.toml` | `~/.config/atuin/config.toml` | History search UI (Ctrl+R); non-defaults only |
+| `direnv/direnv.toml` | `~/.config/direnv/direnv.toml` | Quiet per-project env loading |
 | `CHEATSHEET.md` | `cheat` alias | Keys and commands that have no keybind source |
 
 Machine-only shell config goes in `~/.zshrc.local` (never committed).

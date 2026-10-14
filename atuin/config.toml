@@ -1,0 +1,6 @@
+# atuin owns Ctrl+R (zsh inits it with --disable-up-arrow). Only non-defaults here.
+enter_accept = false   # Enter/Tab put the command on the line; Enter again runs it
+style = "compact"
+inline_height = 20     # popup under the prompt, not full screen
+workspaces = true      # adds a "workspace" filter: the current git repo
+update_check = false

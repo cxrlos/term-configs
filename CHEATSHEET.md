@@ -12,7 +12,8 @@ Elsewhere: sway keys `Super+?` · tmux keys `prefix ?` · nvim keys `<leader>` a
 ## History
 - Type a prefix, then `↑` / `↓`: this session's commands starting with it
 - `Ctrl+R` (or Esc `/`): atuin over all history. Ctrl+R again cycles the filter
-  (global, host, session, directory, workspace). Enter/Tab puts the command on the line
+  (global, host, session, directory, workspace = this git repo). Enter/Tab puts the
+  command on the line; Enter again runs it
 - Leading space: ` cmd` is not saved
 
 ## Finding and jumping
