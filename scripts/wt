@@ -41,6 +41,7 @@ rm)
     fi
     s=$(tmux list-sessions -F '#{session_path}|#S' 2>/dev/null | awk -F'|' -v d="$dir" '$1==d {print $2}')
     git -C "$main" worktree remove "$dir" || exit 1
+    rmdir "$main.wt" 2>/dev/null   # last worktree gone: drop the empty <repo>.wt
     if [ -n "$b" ]; then
         if [ "$(cd "$main" && gh pr view "$b" --json state -q .state 2>/dev/null)" = MERGED ]; then
             git -C "$main" branch -D "$b"
