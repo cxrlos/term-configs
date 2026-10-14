@@ -24,8 +24,8 @@ TIMESTAMP="$(date +%Y%m%d%H%M%S)"
 
 OS="unknown"
 [[ "$(uname)" == "Darwin" ]] && OS="macos"
-[[ -f /etc/arch-release ]] && OS="arch"
-[[ "$OS" == "unknown" ]] && die "Unsupported OS — targets macOS and Arch Linux."
+[[ -f /etc/fedora-release ]] && OS="fedora"
+[[ "$OS" == "unknown" ]] && die "Unsupported OS — targets macOS and Fedora."
 
 printf "\n%s\n" "${BOLD}Terminal config installer  [${OS}]${NC}"
 
@@ -66,8 +66,38 @@ _ensure_brew() {
 # ── Dependencies ──────────────────────────────────────────────────────────────
 
 BREW_DEPS=(starship fzf gum bat ripgrep eza zoxide git-delta tldr thefuck tmux lazygit git-absorb atuin direnv yq fd hyperfine yazi)
-PACMAN_DEPS=(zsh git alacritty neovim starship fzf gum bat ripgrep eza zoxide git-delta tldr thefuck tmux lazygit go-yq fd hyperfine yazi atuin direnv htop python wl-clipboard ttf-mononoki-nerd)
+DNF_DEPS=(zsh git alacritty neovim fzf gum bat ripgrep eza zoxide git-delta tldr thefuck tmux yq fd-find hyperfine atuin direnv htop python3 wl-clipboard fontconfig)
+# Not in the Fedora repos: "copr-project:package"
+DNF_COPRS=("atim/starship:starship" "atim/lazygit:lazygit" "lihaohong/yazi:yazi")
 BREW_CASKS=(font-mononoki-nerd-font)
+NERD_FONT_URL="https://github.com/ryanoasis/nerd-fonts/releases/latest/download/Mononoki.tar.xz"
+
+_dnf_install() {
+    if rpm -q --whatprovides "$1" &>/dev/null; then
+        ((++deps_ok))
+    else
+        # shellcheck disable=SC2015
+        sudo dnf install -y "$1" &>/dev/null && ((++deps_installed)) || {
+            warn "Failed: $1"
+            ((++deps_failed))
+        }
+    fi
+}
+
+# Fedora doesn't package Nerd Fonts; drop the release into the user font dir.
+_install_nerd_font() {
+    if fc-list | grep -qi 'Mononoki Nerd Font'; then
+        ((++deps_ok))
+        return 0
+    fi
+    local font_dir="${XDG_DATA_HOME:-$HOME/.local/share}/fonts/MononokiNerdFont"
+    mkdir -p "$font_dir"
+    # shellcheck disable=SC2015
+    curl -fsSL "$NERD_FONT_URL" | tar -xJ -C "$font_dir" && fc-cache -f "$font_dir" >/dev/null && ((++deps_installed)) || {
+        warn "Failed: Mononoki Nerd Font"
+        ((++deps_failed))
+    }
+}
 
 _install_deps() {
     case "$OS" in
@@ -96,19 +126,16 @@ _install_deps() {
                 fi
             done
             ;;
-        arch)
-            sudo pacman -Syu --noconfirm
-            for dep in "${PACMAN_DEPS[@]}"; do
-                if pacman -Qi "$dep" &>/dev/null; then
-                    ((++deps_ok))
-                else
-                    # shellcheck disable=SC2015
-                    sudo pacman -S --needed --noconfirm "$dep" &>/dev/null && ((++deps_installed)) || {
-                        warn "Failed: $dep"
-                        ((++deps_failed))
-                    }
-                fi
+        fedora)
+            sudo dnf upgrade -y --refresh
+            for dep in "${DNF_DEPS[@]}"; do
+                _dnf_install "$dep"
             done
+            for entry in "${DNF_COPRS[@]}"; do
+                rpm -q "${entry##*:}" &>/dev/null || sudo dnf copr enable -y "${entry%%:*}" &>/dev/null || warn "COPR failed: ${entry%%:*}"
+                _dnf_install "${entry##*:}"
+            done
+            _install_nerd_font
             ;;
     esac
 }
@@ -217,9 +244,9 @@ else
     ((++extras_ok))
 fi
 
-# env.zsh exports LC_ALL=en_US.UTF-8; a fresh Arch only has the locales picked at install.
-if [[ "$OS" == "arch" ]] && ! locale -a | grep -qix 'en_US.utf8'; then
-    warn "en_US.UTF-8 not generated — uncomment it in /etc/locale.gen and run: sudo locale-gen"
+# env.zsh exports LC_ALL=en_US.UTF-8; Fedora ships locales as langpacks.
+if [[ "$OS" == "fedora" ]] && ! locale -a | grep -qix 'en_US.utf8'; then
+    warn "en_US.UTF-8 missing — run: sudo dnf install glibc-langpack-en"
 fi
 
 # ── Sessionizer ──────────────────────────────────────────────────────────────
