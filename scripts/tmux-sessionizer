@@ -1,36 +1,46 @@
 #!/usr/bin/env bash
-# Pick a git repo under $TS_ROOTS (colon-separated) and switch to its tmux session, creating
-# it with windows editor, agent ($AGENT) and shell. A repo's executable `.tmux-sessionizer`
-# then runs once (TS_SESSION, TS_DIR set) to add extras, e.g. a `server` window.
-# Sessions are named by their path under the root (~/dev/work/api -> work/api); the picker
-# lists open sessions first, marked with *.
-# Usage: tmux-sessionizer [dir]
+# Pick a git repo under $TS_ROOTS (colon-separated) level by level (org, then repo) and switch
+# to its tmux session, creating it with windows editor, agent ($AGENT) and shell. A repo's
+# executable `.tmux-sessionizer` then runs once (TS_SESSION, TS_DIR set) to add extras.
+# A folder holding a single repo collapses to `folder/repo`. Sessions are named by path under
+# the root (~/dev/nu/api -> nu/api). `*` marks open sessions (or folders containing one).
+# Enter opens a folder or project; Esc goes up a level. Usage: tmux-sessionizer [dir]
 IFS=: read -r -a roots <<< "${TS_ROOTS:-$HOME/dev}"
+open=$(tmux list-sessions -F '#S' 2>/dev/null)
 
-session_name() { # path relative to its root, without . and : (tmux reserves them)
-    local d=$1 r
-    for r in "${roots[@]}"; do
-        case $d in "$r"/*) d=${d#"$r"/}; break ;; esac
-    done
-    [ "$d" = "$1" ] && d=$(basename "$d")
-    printf '%s' "$d" | tr '.:' '__'
+rel() { local r; for r in "${roots[@]}"; do case $1 in "$r"/*) printf '%s' "${1#"$r"/}"; return ;; esac; done; basename "$1"; }
+repos_under() { find "$1" -mindepth 2 -maxdepth 4 -name .git -prune 2>/dev/null | sed 's|/\.git$||'; }
+
+entries() { # one line per child of the given dirs: mark<TAB>label<TAB>kind<TAB>path
+    local base c n r
+    for base in "$@"; do for c in "$base"/*/; do
+        c=${c%/}; [ -d "$c" ] || continue
+        if [ -e "$c/.git" ]; then r=$c; n=1
+        else r=$(repos_under "$c"); n=$(printf '%s' "$r" | grep -c .); fi
+        [ "$n" -eq 0 ] && continue
+        if [ "$n" -eq 1 ]; then
+            name=$(rel "$r"); printf '%s' "$open" | grep -qxF "$name" && m='*' || m=' '
+            printf '%s\t%s %s\t%s\t%s\n' "$m" "$m" "$name" repo "$r"
+        else
+            name=$(rel "$c"); printf '%s' "$open" | grep -q "^$name/" && m='*' || m=' '
+            printf '%s\t%s %s/  (%s)\t%s\t%s\n' "$m" "$m" "$name" "$n" dir "$c"
+        fi
+    done; done | sort -t$'\t' -k1,1r -k2,2 | cut -f2-
 }
 
-if [ $# -ge 1 ]; then
-    dir=$(cd "$1" && pwd) || exit 1
-else
-    open=$(tmux list-sessions -F '#S' 2>/dev/null)
-    pick=$(find "${roots[@]}" -mindepth 2 -maxdepth 3 -name .git -prune 2>/dev/null |
-        sed 's|/\.git$||' | sort -u | while read -r d; do
-            n=$(session_name "$d")
-            if printf '%s\n' "$open" | grep -qxF "$n"; then printf '0\t* %s\t%s\n' "$n" "$d"
-            else printf '1\t  %s\t%s\n' "$n" "$d"; fi
-        done | sort | cut -f2- |
-        fzf --prompt='project> ' --delimiter='\t' --with-nth=1 --scheme=path) || exit 0
-    dir=${pick#*$'\t'}
-fi
-[ -d "$dir" ] || exit 1
-name=$(session_name "$dir")
+pick() { # browse from the given dirs; prints the chosen repo path
+    local line kind path
+    while :; do
+        line=$(entries "$@" | fzf --prompt="${prompt:-project}> " --delimiter='\t' --with-nth=1 \
+            --header='enter: open · esc: up') || return 1
+        kind=$(printf '%s' "$line" | cut -f2); path=$(printf '%s' "$line" | cut -f3)
+        [ "$kind" = repo ] && { printf '%s' "$path"; return 0; }
+        prompt=$(rel "$path") pick "$path" && return 0
+    done
+}
+
+if [ $# -ge 1 ]; then dir=$(cd "$1" && pwd) || exit 1; else dir=$(pick "${roots[@]}") || exit 0; fi
+name=$(rel "$dir" | tr '.:' '__')
 
 if ! tmux has-session -t "=$name" 2>/dev/null; then
     tmux new-session -ds "$name" -c "$dir" -n editor
