@@ -35,7 +35,8 @@ Elsewhere: sway keys `Super+?` · tmux keys `prefix ?` · nvim keys `<leader>` a
 ## Projects and worktrees (tmux)
 - `tm` / prefix f: org → repo (Enter opens, Esc up, `*` open). prefix s: session tree
 - Main checkout = editor, shell. `wt new feat "Add X"` → `<repo>.wt/feat-add-x` session
-  with editor, agent, shell (agent edits only; you commit). `wt rm` cleans up (refuses if dirty)
+  from fresh origin default (`--from upstream` / `--from origin/rel`); editor, agent, shell.
+  Agent edits only; you commit. `wt rm` cleans up (refuses if dirty or unpushed)
 - Repo hook `.tmux-sessionizer` runs only after `tmux-sessionizer --allow <dir>`
 
 ## Per project
