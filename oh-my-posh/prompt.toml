@@ -1,0 +1,69 @@
+#:schema https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/schema.json
+# Prompt: path (~/dev shown as @) · git branch and state · venv/port when set · time if >5s,
+# then [jobs] [exit code] ❯ (red after a failure; # as root). Tokyo Night.
+# Vi mode shows as the cursor shape (zsh owns it), not in the prompt.
+version = 3
+final_space = true
+
+[upgrade]
+  notice = false
+  auto = false
+
+[[blocks]]
+  type = 'prompt'
+  alignment = 'left'
+  newline = true
+
+  [[blocks.segments]]
+    type = 'path'
+    style = 'plain'
+    foreground = '#7aa2f7'
+    template = '{{ .Path }} '
+    [blocks.segments.properties]
+      style = 'full'
+      [blocks.segments.properties.mapped_locations]
+        '~/dev' = '@'
+
+  [[blocks.segments]]
+    type = 'git'
+    style = 'plain'
+    foreground = '#bb9af7'
+    template = '{{ .HEAD }}{{ if .Staging.Changed }} +{{ end }}{{ if .Working.Changed }} *{{ end }}{{ if gt .Ahead 0 }} ⇡{{ .Ahead }}{{ end }}{{ if gt .Behind 0 }} ⇣{{ .Behind }}{{ end }}{{ if and .UpstreamGone .Upstream }} ✗gone{{ end }}{{ if gt .StashCount 0 }} ≡{{ .StashCount }}{{ end }} '
+    [blocks.segments.properties]
+      fetch_status = true
+
+  [[blocks.segments]]
+    type = 'python'
+    style = 'plain'
+    foreground = '#e0af68'
+    template = '{{ if .Venv }}({{ .Venv }}) {{ end }}'
+    [blocks.segments.properties]
+      display_mode = 'environment'
+      fetch_version = false
+
+  [[blocks.segments]]
+    type = 'text'
+    style = 'plain'
+    foreground = '#7dcfff'
+    template = '{{ if .Env.PORT }}:{{ .Env.PORT }} {{ end }}'
+
+  [[blocks.segments]]
+    type = 'executiontime'
+    style = 'plain'
+    foreground = '#565f89'
+    template = '{{ .FormattedMs }} '
+    [blocks.segments.properties]
+      threshold = 5000
+      style = 'austin'
+
+[[blocks]]
+  type = 'prompt'
+  alignment = 'left'
+  newline = true
+
+  [[blocks.segments]]
+    type = 'text'
+    style = 'plain'
+    foreground = '#9ece6a'
+    foreground_templates = ['{{ if gt .Code 0 }}#f7768e{{ end }}']
+    template = '{{ if gt .Jobs 0 }}✦{{ .Jobs }} {{ end }}{{ if gt .Code 0 }}{{ .Code }} {{ end }}{{ if .Root }}#{{ else }}❯{{ end }}'

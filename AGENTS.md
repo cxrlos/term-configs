@@ -1,213 +1,85 @@
-# Terminal Config
+# term-configs
 
-Personal terminal stack: Alacritty + Zsh + tmux + Starship. Gruvbox everywhere, Mononoki Nerd Font. Targets macOS and Fedora.
-
-## Stack
-
-| Layer        | Choice                                                |
-|--------------|-------------------------------------------------------|
-| Terminal     | Alacritty (`alacritty/alacritty.toml`)                |
-| Shell        | Zsh + zinit (plugins loaded by `zsh/.zshrc`)          |
-| Multiplexer  | tmux + TPM (resurrect, fzf, thumbs, extrakto, open)   |
-| Prompt       | Starship (`starship/starship.toml`)                   |
-| History      | Atuin · Dir-jump: zoxide · Env: direnv                |
-| Fuzzy        | fzf everywhere — sessionizer, branch switcher, gum    |
+Terminal setup shared by two machines: `thinkpunk` (Fedora 44, sway) and the macOS work Mac
+(`carlos`). Being rebuilt element by element on branch `rebuild` (draft PR #19); main still
+holds the old config until the rebuild merges.
 
 ## Layout
+| Path | Linked to | What |
+|---|---|---|
+| `alacritty/` | `~/.config/alacritty` | Terminal; Tokyo Night theme in `tokyonight.toml` (folke/tokyonight.nvim extras) |
+| `zsh/.zshenv`, `zsh/.zshrc` | `~/.zshenv`, `~/.zshrc` | Env/PATH for every zsh; interactive shell |
+| `git/config` | `~/.config/git/config` | Shared git settings; includes machine-local `config.local` (identity, signing key) |
+| `ssh/config` | `~/.ssh/config` | Shared ssh client; includes machine-local `config.local` |
+| `tmux/tmux.conf` | `~/.config/tmux/tmux.conf` | Sessions, windows, copy mode; no plugins; every bind has `-N` |
+| `scripts/tmux-sessionizer` | `~/.local/bin/tmux-sessionizer` (`tm`, prefix f) | Repos under `$TS_ROOTS`, browsed org → repo; session named by path (`nu/api`). Main checkout: editor, shell. Linked worktree: editor, agent, shell. Repo `.tmux-sessionizer` hook runs only after `--allow` (hash-pinned) |
+| `scripts/wt` | `~/.local/bin/wt` | Worktree per task at `<repo>.wt/<branch>`; `wt new`, `wt rm` |
+| `scripts/agent-run` | `~/.local/bin/agent-run` | Starts `$AGENT` with an allowlisted env (no ssh-agent, tokens, D-Bus, tmux) |
+| `oh-my-posh/prompt.toml` | `~/.config/oh-my-posh/prompt.toml` | Prompt (Fedora/brew `oh-my-posh`): path, git, slow-command time, ❯; upgrade notices off |
+| `atuin/config.toml` | `~/.config/atuin/config.toml` | History search UI (Ctrl+R): AI off, secret filter; non-defaults only |
+| `direnv/direnv.toml` | `~/.config/direnv/direnv.toml` | Quiet per-project env loading |
+| `CHEATSHEET.md` | `cheat` alias | Keys and commands that have no keybind source |
 
-| Dir / file                  | Purpose                                                       |
-|-----------------------------|---------------------------------------------------------------|
-| `alacritty/`                | Terminal config (font, padding, Gruvbox theme)              |
-| `starship/`                 | Prompt config                                                 |
-| `tmux/tmux.conf`            | tmux config — prefix is backtick (`` ` ``)                    |
-| `tmux/cheatsheet.sh`        | `` `? `` popup — key reference                                 |
-| `zsh/`                      | Modular shell config (one concern per file)                   |
-| `zsh/palette.sh`            | **Only** place hex codes live. Source it, use `$_iris` etc.   |
-| `zsh/nubank.zsh`            | Work overlay — gitignored, sensitive                          |
-| `scripts/install.sh`        | Bootstrap installer (macOS + Fedora)                          |
-| `scripts/tmux-sessionizer`  | The session picker (`tm` from shell, `` `f `` from tmux)       |
-| `scripts/sessionizer-add`   | Register / scaffold a project at `pwd`                        |
-| `scripts/new-project.sh`    | (Legacy) Project scaffolder — superseded by sessionizer-add   |
-| `scripts/lidrun.sh`         | One-shot script runner (macOS only)                           |
-| `scripts/format.sh`         | Bulk formatter                                                |
-| `sessionizer/projects.yaml` | **Cross-machine** project registry (see "Sessionizer" below)  |
-| `tmp/verify-install.md`     | Post-install verification prompt for Claude on a new machine  |
+Machine-only shell config goes in `~/.zshrc.local` (never committed).
 
-## Conventions
+## Workflow map (one owner per job; check here before adding config)
+| Job | Owner |
+|---|---|
+| Apps, workspaces, launch, notifications, lock, screenshots, clipboard history | sway + DankMaterialShell (fedora-configs) |
+| One terminal window, fonts, opening URLs | Alacritty |
+| Projects: one persistent session each; windows editor, agent, shell (+ server/ad-hoc per project); scrollback search and copy mode | tmux + sessionizer |
+| Command line: editing (vi mode), history, dir jumps, file finding, small helpers (`gnb`) | zsh (+ atuin, zoxide, fzf) |
+| Code: editing, LSP navigation, review of changes, hunks, blame, commit, rebase/fixup | nvim (gitsigns + neogit) |
+| GitHub: PRs | gh |
+| AI agent | any CLI agent (`$AGENT`) in a worktree session's `agent` window, started by `agent-run`. Agents edit files only: humans stage, commit, sign, push. Never tie config to one provider |
+| Per-project env / tasks | direnv / just |
 
-Inherits all global conventions (Gruvbox, rounded popups, foam/iris/pine/gold semantics, sensitive-file rules). Specific to this repo:
+## Rules
+- Both OSes must keep working. Shared files have no OS-specific paths; branch on
+  `$OSTYPE` / `$HOMEBREW_PREFIX`, or put it in `~/.zshrc.local`. The installer's macOS path
+  must stay bash 3.2 compatible.
+- One owner per feature (terminal, shell, tmux, nvim, desktop). Don't configure a tool's
+  default, and don't rebuild something a tool already does.
+- Packaged tools only (dnf / brew). No plugin managers.
 
-- **All shell scripts target Bash 3.2.** macOS ships ancient bash; Homebrew bash isn't on PATH at install time. No `local -n` (namedref, 4.3+), no `${var,,}` (lowercase, 4.0+), no associative arrays without `declare -A` guards, no `mapfile`/`readarray`. Pass array contents as positional args (`shift`+`"$@"`).
-- **Color codes via `palette.sh` only.** Source `$REPO_DIR/zsh/palette.sh` and use `$_iris`, `$_foam`, `$_pine`, `$_gold`, `$_love`, `$_rose`, `$_subtle`. Never hardcode hex in scripts.
-- **Status helpers from palette:** `_err`, `_warn`, `_info`, `_ok`, `_dim` — single-character glyph + colored prefix. Use these instead of raw printf for user-facing status lines.
-- **`_` prefix = private.** Functions like `_apply_map`, `_register_project`, `_ensure_yaml` aren't called outside the script.
-- **Repo path resolution from a subdir-script:**
-  ```bash
-  REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-  ```
-- **zsh module load order is in `.zshrc`** — env → shell → vim → git → aliases → utils → nubank (if present) → fzf → tmux. Don't add new top-level concerns without picking a position.
+## Keybind documentation
+- Every binding documents itself: tmux `bind -N "…"`, nvim `desc = "…"`, sway (fedora-configs)
+  `bindsym … # Description`. A bind added or changed without its note is incomplete.
+- Things with no binding source (zsh vi mode, atuin/fzf/zoxide, CLI tools, Alacritty keys)
+  live ONLY in `CHEATSHEET.md`. Whenever such a command, alias or keybind is created, updated
+  or deleted, update `CHEATSHEET.md` in the same commit. Never copy sway, tmux or nvim binds
+  into it; keep it to about 50 lines.
 
-## Machines
+## TODO for the next session on the Mac (then delete this section)
+The work-only lines below used to live in the shared zsh files (main @76fda80,
+`zsh/.zshrc` lines 41-60 and `zsh/aliases.zsh` lines 48-52). Move what is still needed into the
+Mac's `~/.zshrc.local`, drop the `fmt-itaipu` alias (Metals/Scala setup is retired), then
+delete this section.
 
-One tracked config serves every machine. A change made on one must not break the others.
+```zsh
 
-| Host key | Hardware | OS | Form |
-|---|---|---|---|
-| `carlos` | MacBook, Apple Silicon (arm64) | macOS | laptop (work) |
-| `thinkpunk` | ThinkPad T14 Gen 6, Intel Core Ultra 5 235U (x86_64), Intel Arc iGPU | Fedora | laptop |
+# Source nucli environment (managed by Jamf)
+[ -f "${HOME}/.nurc" ] && source "${HOME}/.nurc"
 
-The host key is `hostname -s` on macOS and `uname -n` on Linux. Fedora's default hostname is `fedora`; set a real one (`hostnamectl set-hostname`) before running `sessionizer-add`. Every machine needs a unique one, or it reads and writes another machine's `projects.yaml` entries.
+# >>> Nubank SSL Inspection CA — managed by: nu zscaler setup env >>>
+# mode: baseline
+# Commented out on this machine — no Zscaler cert bundle present here, and the
+# missing file was breaking AWS CLI/curl/npm SSL validation. Re-enable (or let
+# `nu zscaler setup env` regenerate this block) on a machine that has it.
+# NUBANK_CA_CERT="$HOME/dev/nu/.nu/certificates/zscaler/ca-bundle-with-zscaler.pem"
 
-Rules for non-breaking changes:
-- **Branch on capability, never on hostname.** OS via `uname` (`Darwin`/`Linux`), tools via `command -v`, laptop via `/sys/class/power_supply/BAT*`, display server via `$XDG_SESSION_TYPE`. Same "present only when the hardware is" rule as hyprland-configs.
-- **No architecture assumptions.** The Linux machine is x86_64, the Mac is arm64. Anything that downloads a binary picks it by `uname -m`; Homebrew paths stay behind an existence check (`env.zsh`).
-- **Machine-local values live in gitignored files** (`zsh/.local`, `zsh/nubank.zsh`), never in tracked config. The only tracked absolute paths are `projects.yaml` entries under their own host key.
-- **New dependency → both lists in `install.sh`** (`BREW_DEPS`, `DNF_DEPS`), with the Fedora name checked via `dnf info`. Not in the Fedora repos → `DNF_COPRS` (`"owner/project:package"`). If it only exists on one OS, guard its use with `command -v`.
-- **Laptop-only features stay behind a battery check.** Nothing in this repo is laptop-specific today; display scaling belongs to the compositor, so `alacritty.toml` keeps one font size.
-- **Verify the platforms you can't run.** `bash -n` + `/bin/bash -n` (3.2), `zsh -n`, shellcheck. If a change touches an OS branch you couldn't execute, say so in the handoff.
 
-## Sessionizer & cross-machine projects
+# BASELINE — Essential SSL/TLS trust
+# export SSL_CERT_FILE="$NUBANK_CA_CERT"
+export SSL_CERT_DIR="/etc/ssl/certs"
+# export REQUESTS_CA_BUNDLE="$NUBANK_CA_CERT"              # Python requests, urllib3
+# export CURL_CA_BUNDLE="$NUBANK_CA_CERT"                  # curl, libcurl
+# export AWS_CA_BUNDLE="$NUBANK_CA_CERT"                   # AWS CLI, boto3, AWS SDKs
+# export NODE_EXTRA_CA_CERTS="$NUBANK_CA_CERT"             # Node.js, Bun, Claude Code, Cursor, VS Code, Copilot
+# <<< Nubank SSL Inspection CA <<<
+alias claude-cloud='unset ANTHROPIC_BASE_URL; unset ANTHROPIC_AUTH_TOKEN; unset ANTHROPIC_DEFAULT_HAIKU_MODEL; unset ANTHROPIC_DEFAULT_SONNET_MODEL; unset ANTHROPIC_DEFAULT_OPUS_MODEL; unset ANTHROPIC_MODEL; claude'
 
-This is the architectural choice that everything else hangs on. **Read this section before touching `projects.yaml`, `sessionizer-add`, `new-project.sh`, or `tmux-sessionizer`.**
-
-`sessionizer/projects.yaml` is a registry of projects shared across all my machines. Each project has one ID and a `locations` map keyed by the host key (see Machines):
-
-```yaml
-projects:
-  - id: term-configs
-    locations:
-      carlos:  /Users/carlos.garcia/Documents/configs/term-configs
-      laptop:  ~/code/term-configs
-  - id: itaipu
-    locations:
-      carlos:  /Users/carlos.garcia/dev/nu/itaipu
+# scalafmt for itaipu files while inside a linked git worktree (sbt-git/JGit can't read worktrees).
+# Auto-resolves the main checkout; run from anywhere in the worktree. See the script header for usage.
+alias fmt-itaipu='/Users/carlos.garcia/Documents/projects/2025-11-risk-adjusted-margin-reorg/scripts/fmt-itaipu-worktree.zsh'
 ```
-
-**The intent:** the same logical project lives at different absolute paths on different machines. The YAML maps `id` → `(machine, path)`. The file is git-tracked and synced via push/pull. `tmux-sessionizer` filters by the host key and surfaces only the entries that exist on the current machine.
-
-**Behavior of `sessionizer-add`:**
-- If `id` doesn't exist → adds new project entry with `(this machine, this path)`.
-- If `id` exists but no entry for this machine → adds this machine's path to the existing project (preserving other machines' entries).
-- If this machine already has an entry → warns, no-op.
-
-**THE RULE FOR AGENTS (Claude on any machine):**
-
-> **When editing `projects.yaml`, you ONLY add or update entries for the current machine's hostname. You NEVER remove or modify entries for other hostnames.**
-
-If you see `locations.foo: /Users/foo/...` on a machine called `bar`, that's data for machine `foo` — leave it alone. It's not stale, it's not wrong, it's just not yours. Removing it breaks the cross-machine sync the next time `foo` pulls.
-
-Past incident: a Claude session on a second MacBook decided unknown hostnames in `projects.yaml` were "stale" and pruned them. The next pull on the primary machine wiped its project list. This caveat exists because of that.
-
-If you genuinely need to delete a hostname's entries (machine retired), do it manually — never automate.
-
-## Hydration: `.tmux-sessionizer` per project
-
-Optional executable script at the root of any project. `tmux-sessionizer` runs it once when creating the session (re-attach skips it). Pattern:
-
-```bash
-#!/usr/bin/env bash
-tmux rename-window -t "$TMUX_SESSION" 'editor'
-tmux send-keys    -t "$TMUX_SESSION:editor" 'nvim .' Enter
-
-tmux new-window   -t "$TMUX_SESSION" -n 'claude' -c "$PROJECT_DIR"
-tmux send-keys    -t "$TMUX_SESSION:claude" 'claude --ide' Enter
-
-tmux new-window   -t "$TMUX_SESSION" -n 'shell'  -c "$PROJECT_DIR"
-tmux select-window -t "$TMUX_SESSION:editor"
-```
-
-Rules:
-- Use `$TMUX_SESSION` for targeting (set by the sessionizer before invocation).
-- Use `$PROJECT_DIR` for `-c` (also set by the sessionizer — this machine's project path). Never hardcode an absolute path; it's git-tracked and breaks when the repo syncs to another machine.
-- Rename window 1 (it always exists); don't create a duplicate `editor`.
-- End by selecting the window you want focused.
-- Include `claude --ide` so Claude Code auto-connects to Neovim's `claudecode.nvim` WebSocket bridge.
-- Make it executable: `chmod +x .tmux-sessionizer`.
-
-If no `.tmux-sessionizer` exists, the default layout is `editor` (nvim .) + `shell`.
-
-## tmux
-
-Prefix: `` ` `` (backtick, send-prefix via double-backtick). Picked for speed — one key, no modifier.
-
-| Binding         | Action                                                           |
-|-----------------|------------------------------------------------------------------|
-| `` `f ``        | Sessionizer (fzf project picker)                                 |
-| `` `g ``        | lazygit popup                                                    |
-| `` `t ``        | Floating shell popup (current pane's cwd)                        |
-| `` `? ``        | tmux keys cheatsheet                                             |
-| `` `m ``        | htop popup                                                       |
-| `` `c ``        | New window in current path                                       |
-| `` `n / p ``    | Next / prev window                                               |
-| `` `v / `s ``   | Split right / down                                               |
-| `` `z ``        | Zoom pane                                                        |
-| `` `x / `X ``   | Kill pane / window                                               |
-| `` `r ``        | Reload tmux.conf                                                 |
-| `` `C-s / `C-r``| Save / restore session (tmux-resurrect)                          |
-| `C-h/j/k/l`     | Pane navigation (no prefix, vim-tmux-navigator aware)            |
-
-Window 1-9 jump via `` `1 ``…`` `9 ``. Resize panes (repeatable) via `` `H/J/K/L ``. Last window `` `^ ``.
-
-Status bar: session name on left (iris background), git branch + clock on right (iris/foam/subtle). Inactive panes have darker bg so active appears to float.
-
-## Known caveats
-
-**Bash 3.2 compatibility (macOS default)**
-macOS ships `/bin/bash` 3.2 (last GPLv2 release, frozen since 2007). Homebrew bash lives at `/opt/homebrew/bin/bash` but isn't on PATH before Homebrew is installed. Script syntax must work on 3.2.
-
-Burnt: `_apply_map` in `install.sh` originally used `local -n map=$1` (namedref, bash 4.3+) → cryptic `local: -n: invalid option` on fresh MacBook. Fix: pass array contents as `"${ARRAY[@]}"` positional args, not array name. Pattern:
-
-```bash
-# Wrong (bash 4.3+):
-_fn() { local -n arr=$1; for x in "${arr[@]}"; do ...; done; }
-_fn MY_ARRAY
-
-# Right (bash 3.2+):
-_fn() { for x in "$@"; do ...; done; }
-_fn "${MY_ARRAY[@]}"
-```
-
-Use `bash -n script.sh` and `/bin/bash -n script.sh` to catch this before commit.
-
-**`projects.yaml`: additive across machines — never remove other hostnames' entries**
-See "Sessionizer & cross-machine projects" above. This is the #1 thing an agent can break.
-
-**`sessionizer-add` reads `pwd`**
-`cd` into the project directory first. Running it elsewhere registers the wrong path. The `entry_id` is `basename "$(pwd)"`.
-
-**`new-project.sh` parses Claude output**
-The script shells out to `claude --print --dangerously-skip-permissions` and `grep`s for a `HYDRATE:` line at the tail. If Claude's wrapping ever changes, this breaks silently. Prefer `sessionizer-add → Scaffold` for new projects — it's the actively-maintained path.
-
-**Sensitive: never commit**
-`zsh/nubank.zsh` (work overlay) is gitignored. Contains paths like `$NU_HOME`, `$NUCLI_HOME`, customer-specific aliases, and work S3 prefixes. Don't echo it in commits, don't include its contents in PRs, don't hard-code its paths into shared scripts. If you reference work patterns, gate behind `[[ -f "$ZSH_CONFIG_DIR/nubank.zsh" ]]`.
-
-Same rule applies to anything containing real customer IDs, account IDs, S3 paths from work pipelines, or API tokens.
-
-**`palette.sh` is the single source of color truth**
-Never reintroduce inline hex literals in shell scripts. Source `palette.sh`, use `$_iris`, `$_foam`, etc. Adding a new color: edit `palette.sh` first. Same applies for tmux color strings — keep them centralized in `tmux.conf` near the Gruvbox palette comment block.
-
-**TPM auto-installs plugins on first tmux launch**
-The bottom of `tmux.conf` clones TPM if missing. First tmux session: prefix + I to install plugins. After that: no-op. If plugins look broken, run `~/.tmux/plugins/tpm/bin/install_plugins`.
-
-**`tm` no longer auto-launches on shell start**
-`tm` (the sessionizer) is defined as a function in `zsh/tmux.zsh` and is invoked manually. `.zshrc` used to call it unconditionally on every new shell — removed because it caused annoying bugs. New shells land on a bare prompt now.
-
-**`CLAUDE.md` is a local shim**
-`CLAUDE.md` (`@AGENTS.md`) and `.claude/` are gitignored; `install.sh` writes the shim when missing. After pulling this change, re-run `install.sh` (or `echo @AGENTS.md > CLAUDE.md`) on each machine.
-
-**tmux-thumbs needs cargo**
-`` `Space `` (thumbs) compiles a Rust binary on first use; `install.sh` doesn't install Rust. Without `cargo`, thumbs prompts and fails. Optional: `rustup default stable`, then trigger it once.
-
-**Status helpers write to `~/.cache/zsh_bg_jobs`**
-`_bg_write_count` (in `zsh/shell.zsh`) is a precmd hook that writes a count of background jobs to a cache file, read by tmux's status bar. If the status bar shows a stale job count, the file may be stale; `touch ~/.cache/zsh_bg_jobs` or just type `enter` to retrigger.
-
-**Sessionizer hostname keys**
-`MACHINE_NAME` is `hostname -s` on macOS, `uname -n` on Linux. If your hostname changes (e.g., macOS prompts to rename your Mac), existing entries in `projects.yaml` don't auto-migrate. Add a new entry under the new hostname; the old one becomes harmless dead weight (won't show up for any machine).
-
-## Debugging strategy
-
-1. **`install.sh` failures**: re-run with `bash -x scripts/install.sh` to see exact failing line. If error mentions "invalid option" or "namedref" → bash version. Check `bash --version`; install via `brew install bash` and re-run. The Homebrew bash auto-resolves via the script's `#!/usr/bin/env bash` shebang once Homebrew's bin is on PATH.
-2. **Sessionizer not finding a project**: run `uname -n` (Linux) or `hostname -s` (macOS) and grep `sessionizer/projects.yaml` for that exact key. If missing or wrong → `cd` into the project and run `sessionizer-add`.
-3. **tmux config not reloading**: prefix + r reloads. `tmux source ~/.tmux.conf` from any shell also works. `tmux show-options -g` to inspect live config.
-4. **TPM not installing**: prefix + I from inside tmux. If still nothing, `ls ~/.tmux/plugins/` to confirm TPM cloned, then `~/.tmux/plugins/tpm/bin/install_plugins`.
-5. **`claude --ide` doesn't connect** (from a project hydrated by `.tmux-sessionizer`): `ls ~/.claude/ide/*.lock`. If empty, Neovim isn't running with `claudecode.nvim` loaded yet — start Neovim first, then `/ide` inside Claude.

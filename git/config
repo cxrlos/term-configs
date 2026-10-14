@@ -1,0 +1,63 @@
+# Shared git settings (linked as ~/.config/git/config). Identity and signing key are
+# machine-local in ~/.config/git/config.local (personal on thinkpunk, work on the Mac).
+[include]
+    path = config.local
+[init]
+    defaultBranch = main
+[core]
+    editor = nvim
+    pager = delta
+[interactive]
+    diffFilter = delta --color-only
+[delta]
+    navigate = true
+    line-numbers = true
+    # Tokyo Night (folke/tokyonight.nvim extras/delta)
+    minus-style = syntax "#4a272f"
+    minus-non-emph-style = syntax "#4a272f"
+    minus-emph-style = syntax "#713137"
+    minus-empty-line-marker-style = syntax "#4a272f"
+    line-numbers-minus-style = "#914c54"
+    plus-style = syntax "#243e4a"
+    plus-non-emph-style = syntax "#243e4a"
+    plus-emph-style = syntax "#2c5a66"
+    plus-empty-line-marker-style = syntax "#243e4a"
+    line-numbers-plus-style = "#449dab"
+    line-numbers-zero-style = "#3b4261"
+[commit]
+    gpgSign = true
+    verbose = true
+[tag]
+    gpgSign = true
+    sort = version:refname
+[gpg]
+    format = ssh
+[gpg "ssh"]
+    allowedSignersFile = ~/.config/git/allowed_signers
+[push]
+    default = current
+    autoSetupRemote = true
+    followTags = true
+[pull]
+    rebase = true
+[fetch]
+    prune = true
+    pruneTags = true
+    all = true
+[rebase]
+    autoStash = true
+    autoSquash = true
+    updateRefs = true
+[merge]
+    conflictStyle = zdiff3
+[diff]
+    algorithm = histogram
+    colorMoved = default
+[rerere]
+    enabled = true
+[branch]
+    sort = -committerdate
+[column]
+    ui = auto
+[help]
+    autocorrect = prompt

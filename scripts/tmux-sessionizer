@@ -1,262 +1,86 @@
 #!/usr/bin/env bash
+# Pick a git repo under $TS_ROOTS (colon-separated) level by level (org, then repo) and switch
+# to its tmux session. Main checkouts get windows editor | shell. Linked worktrees (`wt new`)
+# get editor | agent | shell: the agent window runs `agent-run` (scrubbed env, $AGENT).
+# A repo's `.tmux-sessionizer` hook adds extras, but only once allowed (`--allow DIR`), like
+# direnv: any edit to the hook needs a new allow. Sessions are named by path under the root
+# (~/dev/nu/api -> nu/api). `*` marks open sessions. Enter opens, Esc goes up. An empty query
+# shows the current level; typing searches the full path of every repo below it.
+# Usage: tmux-sessionizer [-d] [dir] | --allow dir     (-d: create detached, print the name)
+IFS=: read -r -a roots <<< "${TS_ROOTS:-$HOME/dev}"
+allow_db=${XDG_STATE_HOME:-$HOME/.local/state}/tmux-sessionizer/allow
+open=$(tmux list-sessions -F '#S' 2>/dev/null)
 
-SCRIPT_PATH="${BASH_SOURCE[0]}"
-[[ -L "$SCRIPT_PATH" ]] && SCRIPT_PATH="$(readlink "$SCRIPT_PATH")"
-REPO_DIR="$(cd "$(dirname "$SCRIPT_PATH")/.." && pwd)"
-YAML="$REPO_DIR/sessionizer/projects.yaml"
-INITIATIVE_BIN="$REPO_DIR/scripts/initiative"
-GWT_BIN="$REPO_DIR/scripts/gwt"
-# shellcheck source=zsh/palette.sh
-. "$REPO_DIR/zsh/palette.sh"
+hash() { if command -v sha256sum >/dev/null; then sha256sum "$1"; else shasum -a 256 "$1"; fi | cut -d' ' -f1; }
+rel() { local r; for r in "${roots[@]}"; do case $1 in "$r"/*) printf '%s' "${1#"$r"/}"; return ;; esac; done; basename "$1"; }
+repos_under() { find "$1" -mindepth 2 -maxdepth 4 -name .git -prune 2>/dev/null | sed 's|/\.git$||'; }
 
-RESURRECT_DIR="${TMUX_RESURRECT_DIR:-}"
-if [[ -z "$RESURRECT_DIR" ]]; then
-    if [[ -d "$HOME/.tmux/resurrect" ]]; then
-        RESURRECT_DIR="$HOME/.tmux/resurrect"
-    else
-        RESURRECT_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/tmux/resurrect"
-    fi
+if [ "$1" = --allow ]; then
+    f=$(cd "$2" && pwd)/.tmux-sessionizer; [ -f "$f" ] || { echo "no hook in $2" >&2; exit 1; }
+    mkdir -p "${allow_db%/*}"; echo "$(hash "$f") $f" >> "$allow_db"; echo "allowed $f"; exit 0
 fi
-RESTORE_SCRIPT="${TMUX_RESURRECT_RESTORE:-$HOME/.tmux/plugins/tmux-resurrect/scripts/restore.sh}"
+detach=; [ "$1" = -d ] && { detach=1; shift; }
 
-if [[ "$(uname)" == "Darwin" ]]; then
-    MACHINE_NAME=$(hostname -s)
-else
-    MACHINE_NAME=$(uname -n)
-fi
-
-# ── YAML readers ─────────────────────────────────────────────────────────────
-
-_read_projects() {
-    [[ -f "$YAML" ]] || return
-
-    local dir
-    while IFS= read -r dir; do
-        dir="${dir/#\~/$HOME}"
-        [[ -n "$dir" && -d "$dir" ]] && echo "$dir"
-    done < <(yq -r ".projects[].locations[\"$MACHINE_NAME\"] // \"\"" "$YAML")
-}
-
-# ── Hydration ────────────────────────────────────────────────────────────────
-
-_default_layout() {
-    local name="$1" dir="$2"
-    tmux rename-window -t "$name:1" editor
-    tmux send-keys -t "$name:editor" 'nvim .' Enter
-    tmux new-window -t "$name" -n shell -c "$dir"
-    tmux select-window -t "$name:editor"
-}
-
-_hydrate() {
-    local name="$1" dir="$2"
-    local script="$dir/.tmux-sessionizer"
-    if [[ -x "$script" ]]; then
-        TMUX_SESSION="$name" PROJECT_DIR="$dir" bash "$script"
-    else
-        _default_layout "$name" "$dir"
-    fi
-}
-
-# ── Session helpers ──────────────────────────────────────────────────────────
-
-_attach_or_switch() {
-    local name="$1"
-    if [[ -n "${TMUX:-}" ]]; then
-        tmux switch-client -t "$name"
-    else
-        tmux attach-session -t "$name"
-    fi
-}
-
-_do_restore() {
-    tmux start-server 2>/dev/null
-    tmux new-session -ds _restore 2>/dev/null
-    if [[ -x "$RESTORE_SCRIPT" ]]; then
-        "$RESTORE_SCRIPT" 2>/dev/null
-        local first
-        first=$(tmux list-sessions -F "#{session_name}" 2>/dev/null | grep -v '^_restore$' | head -1)
-        if [[ -n "$first" ]]; then
-            tmux kill-session -t _restore 2>/dev/null
-            _attach_or_switch "$first"
-            exit 0
-        fi
-    fi
-    _attach_or_switch _restore
-    exit 0
-}
-
-_open_session() {
-    local selected="$1" name="${2:-}"
-    [[ -d "$selected" ]] || exit 1
-    [[ -z "$name" ]] && name=$(basename "$selected")
-    name=$(printf '%s' "$name" | tr './' '__')
-
-    if [[ -n "${TMUX:-}" ]]; then
-        if ! tmux has-session -t="$name" 2>/dev/null; then
-            tmux new-session -ds "$name" -c "$selected"
-            _hydrate "$name" "$selected"
-        fi
-        tmux switch-client -t "$name"
-    else
-        if tmux has-session -t="$name" 2>/dev/null; then
-            tmux attach-session -t "$name"
+entries() { # one line per child of the given dirs: mark<TAB>label<TAB>kind<TAB>path
+    local base c n r name m
+    for base in "$@"; do for c in "$base"/*/; do
+        c=${c%/}; [ -d "$c" ] || continue
+        if [ -e "$c/.git" ]; then r=$c; n=1
+        else r=$(repos_under "$c"); n=$(printf '%s' "$r" | grep -c .); fi
+        [ "$n" -eq 0 ] && continue
+        if [ "$n" -eq 1 ]; then
+            name=$(rel "$r" | tr '.:' '__'); printf '%s' "$open" | grep -qxF "$name" && m='*' || m=' '
+            printf '%s\t%s %s\t%s\t%s\n' "$m" "$m" "$(rel "$r")" repo "$r"
         else
-            tmux new-session -ds "$name" -c "$selected"
-            _hydrate "$name" "$selected"
-            tmux attach-session -t "$name"
+            name=$(rel "$c" | tr '.:' '__'); printf '%s' "$open" | grep -q "^$name/" && m='*' || m=' '
+            printf '%s\t%s %s/  (%s)\t%s\t%s\n' "$m" "$m" "$(rel "$c")" "$n" dir "$c"
         fi
-    fi
+    done; done | sort -t$'\t' -k1,1r -k2,2 | cut -f2-
 }
 
-_hydrate_initiative() {
-    local name="$1" ws="$2" resolved="$3"
-    local kind repo path status adddirs="" first=""
-
-    tmux rename-window -t "$name:1" notes
-    tmux send-keys -t "$name:notes" 'nvim .' Enter
-
-    while IFS=$'\t' read -r kind repo path status; do
-        [[ "$kind" == "checkout" ]] || continue
-        if [[ "$status" == "missing" ]]; then
-            _warn "checkout '$repo' missing ($path) — skipping window"
-            continue
-        fi
-        [[ "$status" == "fellback" ]] && _warn "worktree for '$repo' missing — opening main checkout"
-        tmux new-window -t "$name" -n "$repo" -c "$path"
-        tmux send-keys -t "$name:$repo" 'nvim .' Enter
-        [[ -z "$first" ]] && first="$repo"
-        adddirs="$adddirs --add-dir $path"
-    done <<EOF
-$resolved
-EOF
-
-    tmux new-window -t "$name" -n claude -c "$ws"
-    tmux send-keys -t "$name:claude" "claude --ide$adddirs" Enter
-    tmux new-window -t "$name" -n shell -c "$ws"
-
-    if [[ -n "$first" ]]; then
-        tmux select-window -t "$name:$first"
-    else
-        tmux select-window -t "$name:notes"
-    fi
+flat() { # every repo below the given dirs, full path: label<TAB>kind<TAB>path
+    local base r name m
+    for base in "$@"; do repos_under "$base"; [ -e "$base/.git" ] && echo "$base"; done | sort -u |
+        while read -r r; do
+            name=$(rel "$r" | tr '.:' '__'); printf '%s' "$open" | grep -qxF "$name" && m='*' || m=' '
+            printf '%s\t%s %s\t%s\t%s\n' "$m" "$m" "$(rel "$r")" repo "$r"
+        done | sort -t$'\t' -k1,1r -k2,2 | cut -f2-
 }
 
-_open_initiative() {
-    local id="$1" name resolved ws
-    name=$(printf '%s' "$id" | tr './' '__')
-    resolved=$("$INITIATIVE_BIN" resolve "$id") || {
-        _err "cannot resolve initiative '$id'"
-        exit 1
-    }
-    ws=$(printf '%s\n' "$resolved" | awk -F'\t' '$1=="workspace"{print $2; exit}')
-    [[ -d "$ws" ]] || {
-        _err "workspace missing: $ws"
-        exit 1
-    }
+case $1 in --level) shift; entries "$@"; exit ;; --flat) shift; flat "$@"; exit ;; esac
+self=$(command -v "$0")
 
-    if [[ -n "${TMUX:-}" ]]; then
-        if ! tmux has-session -t="$name" 2>/dev/null; then
-            tmux new-session -ds "$name" -c "$ws"
-            _hydrate_initiative "$name" "$ws" "$resolved"
-        fi
-        tmux switch-client -t "$name"
-    else
-        if tmux has-session -t="$name" 2>/dev/null; then
-            tmux attach-session -t "$name"
+pick() { # browse from the given dirs; prints the chosen repo path
+    local line kind path qdirs d
+    qdirs=; for d in "$@"; do qdirs="$qdirs $(printf '%q' "$d")"; done
+    while :; do
+        line=$(entries "$@" | fzf --prompt="${prompt:-project}> " --delimiter='\t' --with-nth=1 \
+            --header='enter: open · esc: up · type: search full paths' \
+            --bind "change:reload:if [ -n {q} ]; then $self --flat$qdirs; else $self --level$qdirs; fi") || return 1
+        kind=$(printf '%s' "$line" | cut -f2); path=$(printf '%s' "$line" | cut -f3)
+        [ "$kind" = repo ] && { printf '%s' "$path"; return 0; }
+        prompt=$(rel "$path") pick "$path" && return 0
+    done
+}
+
+if [ $# -ge 1 ]; then dir=$(cd "$1" && pwd) || exit 1; else dir=$(pick "${roots[@]}") || exit 0; fi
+name=$(rel "$dir" | tr '.:' '__')
+
+if ! tmux has-session -t "=$name" 2>/dev/null; then
+    tmux new-session -ds "$name" -c "$dir" -n editor
+    tmux send-keys -t "=$name:editor" "${EDITOR:-nvim}" Enter
+    if [ -f "$dir/.git" ]; then   # linked worktree: the only place agents run
+        tmux new-window -d -t "=$name:" -n agent -c "$dir" "agent-run; exec \"\$SHELL\""
+    fi
+    tmux new-window -d -t "=$name:" -n shell -c "$dir"
+    hook=$dir/.tmux-sessionizer
+    if [ -x "$hook" ]; then
+        if grep -qxF "$(hash "$hook") $hook" "$allow_db" 2>/dev/null; then
+            (cd "$dir" && TS_SESSION=$name TS_DIR=$dir ./.tmux-sessionizer)
         else
-            tmux new-session -ds "$name" -c "$ws"
-            _hydrate_initiative "$name" "$ws" "$resolved"
-            tmux attach-session -t "$name"
+            tmux display-message -t "=$name" "hook not allowed: tmux-sessionizer --allow $dir"
         fi
     fi
-}
-
-_pick_worktree() {
-    local repo="$1" wts choice slug
-    wts=$("$GWT_BIN" list --repo "$repo" 2>/dev/null)
-    choice=$(
-        {
-            echo "[main] $(basename "$repo")"
-            printf '%s\n' "$wts" | sed 's/^/[worktree] /'
-            echo "[+ new worktree]"
-        } | grep -v '^\[worktree\] $' | grep -v '^$' |
-            fzf --prompt="  " --header="  worktree" $_fzf_colors
-    ) || return 1
-    case "$choice" in
-        "[main] "*) printf '%s\n' "$repo" ;;
-        "[+ new worktree]")
-            printf '  new worktree slug: ' >&2
-            read -r slug
-            slug=$("$GWT_BIN" slug "$slug")
-            [[ -z "$slug" ]] && return 1
-            "$GWT_BIN" add "$slug" --repo "$repo"
-            ;;
-        "[worktree] "*) printf '%s\n' "$repo/.worktrees/${choice#"[worktree] "}" ;;
-        *) return 1 ;;
-    esac
-}
-
-# ── Main ─────────────────────────────────────────────────────────────────────
-
-if [[ "${1:-}" == "--initiatives" ]]; then
-    selected=$(
-        "$INITIATIVE_BIN" list 2>/dev/null | sed 's/^/[initiative] /' | grep -v '^$' |
-            fzf --prompt="  " --header="  projects" $_fzf_colors
-    ) || exit 0
-elif [[ $# -eq 1 ]]; then
-    selected=$1
-else
-    restore=""
-    [[ -f "$RESURRECT_DIR/last" ]] && restore="[restore] last saved"
-
-    sessions=$(tmux list-sessions -F "[session] #{session_name}" 2>/dev/null)
-    inits=$("$INITIATIVE_BIN" list 2>/dev/null | sed 's/^/[initiative] /')
-    dirs=$(_read_projects | sed "s|$HOME|~|" | sort)
-
-    selected=$(
-        {
-            echo "[new] add project"
-            echo "$restore"
-            echo "$sessions"
-            echo "$inits"
-            echo "$dirs"
-        } | grep -v '^$' |
-            fzf --prompt="  " \
-                --header="  switch or open project" \
-                $_fzf_colors
-    ) || exit 0
 fi
-
-[[ -z "$selected" ]] && exit 0
-
-if [[ "$selected" == "[new] add project" ]]; then
-    printf '\n  cd into your project directory, then run:\n\n'
-    printf '    %ssessionizer-add%s\n\n' $'\033[1m' $'\033[0m'
-    exit 0
-fi
-
-if [[ "$selected" == "[restore] last saved" ]]; then
-    _do_restore
-fi
-
-if [[ "$selected" == "[session] "* ]]; then
-    _attach_or_switch "${selected#"[session] "}"
-    exit 0
-fi
-
-if [[ "$selected" == "[initiative] "* ]]; then
-    _open_initiative "${selected#"[initiative] "}"
-    exit 0
-fi
-
-selected="${selected/#\~/$HOME}"
-if [[ -d "$selected/.worktrees" ]]; then
-    target=$(_pick_worktree "$selected") || exit 0
-    if [[ "$target" == "$selected" ]]; then
-        _open_session "$target"
-    else
-        _open_session "$target" "$(basename "$selected")-$(basename "$target")"
-    fi
-else
-    _open_session "$selected"
-fi
+[ -n "$detach" ] && { echo "$name"; exit 0; }
+if [ -n "$TMUX" ]; then tmux switch-client -t "=$name"; else tmux attach -t "=$name"; fi

@@ -1,0 +1,2 @@
+[global]
+hide_env_diff = true   # keep the one-line "loading" notice, drop the variable list
