@@ -4,7 +4,8 @@
 # get editor | agent | shell: the agent window runs `agent-run` (scrubbed env, $AGENT).
 # A repo's `.tmux-sessionizer` hook adds extras, but only once allowed (`--allow DIR`), like
 # direnv: any edit to the hook needs a new allow. Sessions are named by path under the root
-# (~/dev/nu/api -> nu/api). `*` marks open sessions. Enter opens, Esc goes up.
+# (~/dev/nu/api -> nu/api). `*` marks open sessions. Enter opens, Esc goes up. An empty query
+# shows the current level; typing searches the full path of every repo below it.
 # Usage: tmux-sessionizer [-d] [dir] | --allow dir     (-d: create detached, print the name)
 IFS=: read -r -a roots <<< "${TS_ROOTS:-$HOME/dev}"
 allow_db=${XDG_STATE_HOME:-$HOME/.local/state}/tmux-sessionizer/allow
@@ -37,11 +38,25 @@ entries() { # one line per child of the given dirs: mark<TAB>label<TAB>kind<TAB>
     done; done | sort -t$'\t' -k1,1r -k2,2 | cut -f2-
 }
 
+flat() { # every repo below the given dirs, full path: label<TAB>kind<TAB>path
+    local base r name m
+    for base in "$@"; do repos_under "$base"; [ -e "$base/.git" ] && echo "$base"; done | sort -u |
+        while read -r r; do
+            name=$(rel "$r" | tr '.:' '__'); printf '%s' "$open" | grep -qxF "$name" && m='*' || m=' '
+            printf '%s\t%s %s\t%s\t%s\n' "$m" "$m" "$(rel "$r")" repo "$r"
+        done | sort -t$'\t' -k1,1r -k2,2 | cut -f2-
+}
+
+case $1 in --level) shift; entries "$@"; exit ;; --flat) shift; flat "$@"; exit ;; esac
+self=$(command -v "$0")
+
 pick() { # browse from the given dirs; prints the chosen repo path
-    local line kind path
+    local line kind path qdirs d
+    qdirs=; for d in "$@"; do qdirs="$qdirs $(printf '%q' "$d")"; done
     while :; do
         line=$(entries "$@" | fzf --prompt="${prompt:-project}> " --delimiter='\t' --with-nth=1 \
-            --header='enter: open · esc: up') || return 1
+            --header='enter: open · esc: up · type: search full paths' \
+            --bind "change:reload:if [ -n {q} ]; then $self --flat$qdirs; else $self --level$qdirs; fi") || return 1
         kind=$(printf '%s' "$line" | cut -f2); path=$(printf '%s' "$line" | cut -f3)
         [ "$kind" = repo ] && { printf '%s' "$path"; return 0; }
         prompt=$(rel "$path") pick "$path" && return 0

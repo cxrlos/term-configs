@@ -33,7 +33,7 @@ Elsewhere: sway keys `Super+?` · tmux keys `prefix ?` · nvim keys `<leader>` a
 - Commits and tags are SSH-signed (`git log --show-signature`)
 
 ## Projects and worktrees (tmux)
-- `tm` / prefix f: org → repo (Enter opens, Esc up, `*` open). prefix s: session tree
+- `tm` / prefix f: org → repo (Enter opens, Esc up, `*` open; typing searches full paths). prefix s: tree
 - Main checkout = editor, shell. `wt new feat "Add X"` → `<repo>.wt/feat-add-x` session
   from fresh origin default (`--from upstream` / `--from origin/rel`); editor, agent, shell.
   Agent edits only; you commit. `wt rm` cleans up (refuses if dirty or unpushed)
