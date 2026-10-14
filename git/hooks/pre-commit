@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# Block commits whose staged changes contain a secret (gitleaks), then run the repo's own hook.
+# A false positive: add `gitleaks:allow` as a comment on that line, or `git commit --no-verify` once.
+if ! command -v gitleaks >/dev/null; then
+    echo "pre-commit: gitleaks isn't installed (run term-configs/install.sh); commit blocked" >&2
+    exit 1
+fi
+gitleaks git --pre-commit --staged --redact --no-banner --log-level warn --verbose || exit 1
+HOOK_NAME=pre-commit exec "$(dirname "$0")/chain" "$@"

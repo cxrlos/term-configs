@@ -30,7 +30,9 @@ Elsewhere: sway keys `Super+?` · tmux keys `prefix ?` · nvim keys `<leader>` a
 ## Git (nvim owns review/staging/history; these are the shell bits)
 - `gnb`: new branch `type/slug`: pick the type, type a description
 - `gh pr create` / `gh pr checkout <n>` / `gh pr view --web`
-- Commits and tags are SSH-signed (`git log --show-signature`)
+- Commits and tags are SSH-signed (`git log --show-signature`); pre-push refuses unsigned ones
+- gitleaks blocks commits with secrets. False positive: `# gitleaks:allow` on the line, or `git commit --no-verify` once
+- delta diffs are side-by-side, links Ctrl+click; one narrow diff: `git -c delta.side-by-side=false diff`
 
 ## Projects and worktrees (tmux)
 - `tm` / prefix f: org → repo (Enter opens, Esc up, `*` open; typing searches full paths). prefix s: tree

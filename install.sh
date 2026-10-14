@@ -21,7 +21,7 @@ esac
 
 # ── Packages: Fedora list here, macOS in Brewfile (keep both in sync) ─────────────
 DNF_PKGS="zsh git alacritty neovim tmux fzf ripgrep fd-find zoxide atuin direnv oh-my-posh
-  git-delta git-absorb gh just jq zsh-autosuggestions zsh-syntax-highlighting wl-clipboard
+  git-delta git-absorb gitleaks gh just jq zsh-autosuggestions zsh-syntax-highlighting wl-clipboard
   curl fontconfig"
 section packages
 if [ $os = fedora ]; then
@@ -62,7 +62,7 @@ fi
 
 # ── Links: "repo path:home path". Real files in the way are backed up, never deleted ──
 LINKS="zsh/.zshenv:.zshenv zsh/.zprofile:.zprofile zsh/.zshrc:.zshrc
-  git/config:.config/git/config ssh/config:.ssh/config tmux/tmux.conf:.config/tmux/tmux.conf
+  git/config:.config/git/config git/hooks:.config/git/hooks ssh/config:.ssh/config tmux/tmux.conf:.config/tmux/tmux.conf
   oh-my-posh/prompt.toml:.config/oh-my-posh/prompt.toml atuin/config.toml:.config/atuin/config.toml
   direnv/direnv.toml:.config/direnv/direnv.toml scripts/tmux-sessionizer:.local/bin/tmux-sessionizer
   scripts/wt:.local/bin/wt scripts/agent-run:.local/bin/agent-run"

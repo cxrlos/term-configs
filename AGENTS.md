@@ -13,6 +13,7 @@ Terminal setup shared by two machines: `thinkpunk` (Fedora 44, sway) and the mac
 | `ghostty/config` | `~/.config/ghostty/config` (macOS) | Terminal (macOS); mirrors Alacritty: Commit Mono, built-in `TokyoNight Night` theme |
 | `zsh/.zshenv`, `zsh/.zprofile`, `zsh/.zshrc` | `~/.zshenv`, `~/.zprofile`, `~/.zshrc` | Env for every zsh; login (re-applies `zsh/path.zsh` after macOS path_helper); interactive shell |
 | `git/config` | `~/.config/git/config` | Shared git settings; includes machine-local `config.local` (identity, signing key) |
+| `git/hooks/` | `~/.config/git/hooks` (`core.hooksPath`) | Every repo: gitleaks pre-commit, signed-only pre-push; other hook names → `chain`, which runs the repo's own `.git/hooks/<name>` |
 | `ssh/config` | `~/.ssh/config` | Shared ssh client; includes machine-local `config.local` |
 | `tmux/tmux.conf` | `~/.config/tmux/tmux.conf` | Sessions, windows, copy mode; no plugins; every bind has `-N` |
 | `scripts/tmux-sessionizer` | `~/.local/bin/tmux-sessionizer` (`tm`, prefix f) | Repos under `$TS_ROOTS`, browsed org → repo; session named by path (`nu/api`). Main checkout: editor, shell. Linked worktree: editor, agent, shell. Repo `.tmux-sessionizer` hook runs only after `--allow` (hash-pinned) |
@@ -48,7 +49,7 @@ Machine-only shell config goes in `~/.zshrc.local` (never committed).
 
 ## Keybind documentation
 - Every binding documents itself: tmux `bind -N "…"`, nvim `desc = "…"`, sway (fedora-configs)
-  `bindsym … # Description`. A bind added or changed without its note is incomplete.
+  `bindsym … exec … # Description` (built-in sway commands: no trailing text; see fedora-configs AGENTS.md). A bind added or changed without its note is incomplete.
 - Things with no binding source (zsh vi mode, atuin/fzf/zoxide, CLI tools, Alacritty keys)
   live ONLY in `CHEATSHEET.md`. Whenever such a command, alias or keybind is created, updated
   or deleted, update `CHEATSHEET.md` in the same commit. Never copy sway, tmux or nvim binds

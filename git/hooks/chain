@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# core.hooksPath (git/config) hides each repo's own .git/hooks. Every client hook name is a
+# symlink to this file, which runs the repo's hook of that name (git-lfs, pre-commit, …) if any.
+# pre-commit and pre-push run their own check first, then exec this.
+hook="$(git rev-parse --git-common-dir)/hooks/${HOOK_NAME:-$(basename "$0")}"
+if [ -x "$hook" ]; then exec "$hook" "$@"; fi
+exit 0

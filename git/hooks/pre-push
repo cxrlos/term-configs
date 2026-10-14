@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# Refuse to push unsigned (or badly signed) commits, then run the repo's own hook. Only commits
+# that no remote has yet are checked, so teammates' history and GitHub merges never trip it.
+input=$(cat)
+bad=
+while read -r lref lsha rref rsha; do
+    case $lsha in "" | *[!0]*) ;; *) continue ;; esac   # all zeros: deleting a ref
+    [ -n "$lsha" ] || continue
+    not=--remotes
+    case $rsha in *[!0]*) git cat-file -e "$rsha" 2>/dev/null && not="$not ^$rsha" ;; esac
+    for c in $(git rev-list "$lsha" --not $not); do
+        case $(git log -1 --format=%G? "$c") in N | B) bad="$bad
+  $(git log -1 --format='%h %G? %s' "$c")" ;; esac
+    done
+done <<EOT
+$input
+EOT
+if [ -n "$bad" ]; then
+    echo "pre-push: unsigned (N) or bad (B) signatures; re-sign with: git rebase --exec 'git commit --amend --no-edit -S' <base>$bad" >&2
+    exit 1
+fi
+printf '%s\n' "$input" | HOOK_NAME=pre-push exec "$(dirname "$0")/chain" "$@"
