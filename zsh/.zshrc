@@ -52,8 +52,18 @@ for km in viins vicmd; do
 done
 
 alias ls='eza --icons=auto --group-directories-first' ll='ls -la --git --header' la='ls -a' lt='ls --tree --level=2 --git-ignore'
-alias vi=nvim vim=nvim g=lazygit
+alias vi=nvim vim=nvim
 alias cheat="less ${${(%):-%N}:A:h:h}/CHEATSHEET.md" # repo root, resolved through the ~/.zshrc symlink
+
+# gnb: new branch named type/slug ("feat" + "Add CLI flag" -> feat/add-cli-flag)
+gnb() {
+    setopt localoptions extendedglob
+    local type desc
+    type=$(print -l feat fix chore refactor docs test ci | fzf --prompt='type> ' --height=10) || return
+    read -r "desc?description: "; [[ -n $desc ]] || return 1
+    desc=${${(L)desc}//[^a-z0-9]##/-}
+    git switch -c "$type/${${desc#-}%-}"
+}
 
 # Plugins from dnf/brew; syntax highlighting must load last
 _zp() { local f; for f in /usr/share/$1/$1.zsh ${HOMEBREW_PREFIX:+$HOMEBREW_PREFIX/share/$1/$1.zsh}; do [[ -r $f ]] && { source $f; return }; done }

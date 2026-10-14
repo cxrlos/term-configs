@@ -12,4 +12,4 @@ normal = { family = "JetBrainsMono Nerd Font Mono" }
 size = 10.0
 
 [keyboard]
-bindings = [{ key = "Return", mods = "Shift", chars = "\u001B\r" }] # newline in Claude Code
+bindings = [{ key = "Return", mods = "Shift", chars = "\u001B\r" }] # newline in agent TUIs

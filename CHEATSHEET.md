@@ -26,9 +26,9 @@ Elsewhere: sway keys `Super+?` · tmux keys `prefix ?` · nvim keys `<leader>` a
 - `ls` `ll` (git status) `la` `lt` (tree)
 - `tldr cmd`: practical examples (`tldr --update` refreshes the pages)
 
-## Git (lazygit owns it)
-- `g`: lazygit. `?` lists every key, mine included: branches `N` new type/slug branch,
-  `C` check out a PR, `G` delete gone branches · files `X` absorb staged fixes
+## Git (nvim owns review/staging/history; these are the shell bits)
+- `gnb`: new branch `type/slug`: pick the type, type a description
+- `gh pr create` / `gh pr checkout <n>` / `gh pr view --web`
 - Commits and tags are SSH-signed (`git log --show-signature`)
 
 ## Per project
