@@ -1,14 +1,16 @@
 # term-configs
 
 Terminal setup shared by two machines: `thinkpunk` (Fedora 44, sway) and the macOS work Mac
-(`carlos`). Being rebuilt element by element on branch `rebuild` (draft PR #19); main still
-holds the old config until the rebuild merges.
+(`carlos`). `./install.sh` sets up either machine (packages, font, links) and is safe to re-run;
+`./install.sh --check` reports what's missing without changing anything.
 
 ## Layout
 | Path | Linked to | What |
 |---|---|---|
+| `install.sh` | — | Installer (bash 3.2). Fedora packages (`DNF_PKGS`), pinned + hash-checked font, links (real files are backed up to `~/.local/state/term-configs/`), then what's left for you |
+| `Brewfile` | — | macOS packages and casks (`brew bundle`) |
 | `alacritty/` | `~/.config/alacritty` | Terminal; Tokyo Night theme in `tokyonight.toml` (folke/tokyonight.nvim extras) |
-| `zsh/.zshenv`, `zsh/.zshrc` | `~/.zshenv`, `~/.zshrc` | Env/PATH for every zsh; interactive shell |
+| `zsh/.zshenv`, `zsh/.zprofile`, `zsh/.zshrc` | `~/.zshenv`, `~/.zprofile`, `~/.zshrc` | Env for every zsh; login (re-applies `zsh/path.zsh` after macOS path_helper); interactive shell |
 | `git/config` | `~/.config/git/config` | Shared git settings; includes machine-local `config.local` (identity, signing key) |
 | `ssh/config` | `~/.ssh/config` | Shared ssh client; includes machine-local `config.local` |
 | `tmux/tmux.conf` | `~/.config/tmux/tmux.conf` | Sessions, windows, copy mode; no plugins; every bind has `-N` |
@@ -40,7 +42,8 @@ Machine-only shell config goes in `~/.zshrc.local` (never committed).
   must stay bash 3.2 compatible.
 - One owner per feature (terminal, shell, tmux, nvim, desktop). Don't configure a tool's
   default, and don't rebuild something a tool already does.
-- Packaged tools only (dnf / brew). No plugin managers.
+- Packaged tools only (dnf / brew). No plugin managers. A new tool goes in both `DNF_PKGS`
+  (install.sh) and `Brewfile`; a new linked file goes in `LINKS` (install.sh) and the table above.
 
 ## Keybind documentation
 - Every binding documents itself: tmux `bind -N "…"`, nvim `desc = "…"`, sway (fedora-configs)
