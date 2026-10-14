@@ -1,0 +1,51 @@
+# Shared git settings (linked as ~/.config/git/config). Identity and signing key are
+# machine-local in ~/.config/git/config.local (personal on thinkpunk, work on the Mac).
+[include]
+    path = config.local
+[init]
+    defaultBranch = main
+[core]
+    editor = nvim
+    pager = delta
+[interactive]
+    diffFilter = delta --color-only
+[delta]
+    navigate = true
+    line-numbers = true
+[commit]
+    gpgSign = true
+    verbose = true
+[tag]
+    gpgSign = true
+    sort = version:refname
+[gpg]
+    format = ssh
+[gpg "ssh"]
+    allowedSignersFile = ~/.config/git/allowed_signers
+[push]
+    default = current
+    autoSetupRemote = true
+    followTags = true
+[pull]
+    rebase = true
+[fetch]
+    prune = true
+    pruneTags = true
+    all = true
+[rebase]
+    autoStash = true
+    autoSquash = true
+    updateRefs = true
+[merge]
+    conflictStyle = zdiff3
+[diff]
+    algorithm = histogram
+    colorMoved = default
+[rerere]
+    enabled = true
+[branch]
+    sort = -committerdate
+[column]
+    ui = auto
+[help]
+    autocorrect = prompt

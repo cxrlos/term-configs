@@ -9,6 +9,9 @@ holds the old config until the rebuild merges.
 |---|---|---|
 | `alacritty/` | `~/.config/alacritty` | Terminal; gruvbox theme in `gruvbox.toml` |
 | `zsh/.zshenv`, `zsh/.zshrc` | `~/.zshenv`, `~/.zshrc` | Env/PATH for every zsh; interactive shell |
+| `git/config` | `~/.config/git/config` | Shared git settings; includes machine-local `config.local` (identity, signing key) |
+| `ssh/config` | `~/.ssh/config` | Shared ssh client; includes machine-local `config.local` |
+| `lazygit/config.yml` | `~/.config/lazygit/config.yml` | lazygit owns git; custom commands carry a `description` (shown on `?`) |
 | `CHEATSHEET.md` | `cheat` alias | Keys and commands that have no keybind source |
 
 Machine-only shell config goes in `~/.zshrc.local` (never committed).
@@ -22,7 +25,8 @@ Machine-only shell config goes in `~/.zshrc.local` (never committed).
 - Packaged tools only (dnf / brew). No plugin managers.
 
 ## Keybind documentation
-- Every binding documents itself: tmux `bind -N "…"`, nvim `desc = "…"`, sway (fedora-configs)
+- Every binding documents itself: tmux `bind -N "…"`, nvim `desc = "…"`, lazygit custom
+  command `description`, sway (fedora-configs)
   `bindsym … # Description`. A bind added or changed without its note is incomplete.
 - Things with no binding source (zsh vi mode, atuin/fzf/zoxide, CLI tools, Alacritty keys)
   live ONLY in `CHEATSHEET.md`. Whenever such a command, alias or keybind is created, updated

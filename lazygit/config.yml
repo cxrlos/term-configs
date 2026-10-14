@@ -1,0 +1,64 @@
+# lazygit owns git. `g` opens it; `?` inside lists every key, custom ones included.
+gui:
+  nerdFontsVersion: "3"
+  showRandomTip: false
+  theme:
+    activeBorderColor: ["#8ec07c", bold]
+    inactiveBorderColor: ["#504945"]
+    selectedLineBgColor: ["#3c3836"]
+    optionsTextColor: ["#83a598"]
+git:
+  paging:
+    colorArg: always
+    pager: delta --paging=never
+os:
+  editPreset: nvim
+customCommands:
+  - key: N
+    context: localBranches
+    description: "New branch: type/slug"
+    prompts:
+      - type: menu
+        key: Type
+        title: Branch type
+        options:
+          - value: feat
+          - value: fix
+          - value: chore
+          - value: refactor
+          - value: docs
+          - value: test
+          - value: ci
+      - type: input
+        key: Desc
+        title: Description
+    command: >-
+      git switch -c {{.Form.Type}}/$(printf '%s' {{.Form.Desc | quote}}
+      | tr '[:upper:]' '[:lower:]' | tr -cs '[:alnum:]' '-' | sed 's/^-//;s/-$//')
+  - key: C
+    context: localBranches
+    description: Check out a pull request
+    prompts:
+      - type: menuFromCommand
+        key: PR
+        title: Pull request
+        command: gh pr list --limit 50
+        filter: '^(?P<number>\d+)\t(?P<title>[^\t]*)\t(?P<branch>[^\t]*)'
+        valueFormat: "{{ .number }}"
+        labelFormat: "#{{ .number }} {{ .title }} ({{ .branch }})"
+    command: gh pr checkout {{.Form.PR}}
+  - key: G
+    context: localBranches
+    description: Delete branches whose remote is gone
+    prompts:
+      - type: confirm
+        title: Delete gone branches
+        body: Delete every local branch whose upstream was deleted?
+    command: >-
+      git fetch --prune && git for-each-ref --format='%(refname:short) %(upstream:track)' refs/heads
+      | awk '$2=="[gone]"{print $1}' | while read -r b; do git branch -D "$b"; done
+  - key: X
+    context: files
+    description: Absorb staged changes into the commits they fix
+    command: git absorb --and-rebase
+    output: log
