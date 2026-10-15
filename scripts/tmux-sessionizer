@@ -3,7 +3,8 @@
 # to its tmux session. Main checkouts get windows editor | shell. Linked worktrees (`wt new`)
 # get editor | agent | shell: the agent window runs `agent-run` (scrubbed env, $AGENT).
 # A repo's `.tmux-sessionizer` hook adds extras, but only once allowed (`--allow DIR`), like
-# direnv: any edit to the hook needs a new allow. Sessions are named by path under the root
+# direnv: any edit to the hook needs a new allow. A worktree's hook counts as allowed when it's
+# identical to the one allowed in its main checkout (so setup can run in every `wt new`). Sessions are named by path under the root
 # (~/dev/nu/api -> nu/api). `*` marks open sessions. Enter opens, Esc goes up. An empty query
 # shows the current level; typing searches the full path of every repo below it.
 # Usage: tmux-sessionizer [-d] [dir] | --allow dir     (-d: create detached, print the name)
@@ -75,7 +76,10 @@ if ! tmux has-session -t "=$name" 2>/dev/null; then
     tmux new-window -d -t "=$name:" -n shell -c "$dir"
     hook=$dir/.tmux-sessionizer
     if [ -x "$hook" ]; then
-        if grep -qxF "$(hash "$hook") $hook" "$allow_db" 2>/dev/null; then
+        main=$(git -C "$dir" rev-parse --path-format=absolute --git-common-dir 2>/dev/null); main=${main%/.git}
+        h=$(hash "$hook")
+        if grep -qxF "$h $hook" "$allow_db" 2>/dev/null ||
+            grep -qxF "$h ${main:-/nonexistent}/.tmux-sessionizer" "$allow_db" 2>/dev/null; then
             (cd "$dir" && TS_SESSION=$name TS_DIR=$dir ./.tmux-sessionizer)
         else
             tmux display-message -t "=$name" "hook not allowed: tmux-sessionizer --allow $dir"

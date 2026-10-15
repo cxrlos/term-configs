@@ -6,6 +6,8 @@
 #   New branches start from the freshly fetched default branch of origin, or of --from R:
 #   a remote (`--from upstream`) or a remote branch (`--from origin/release-2.1`).
 #   wt rm [dir]                   refuses if dirty or unpushed; deletes the branch if merged
+#   Setup (deps, venv, terraform init) runs from the repo's allowed .tmux-sessionizer hook
+#   (see examples/tmux-sessionizer), never from wt itself.
 slug() { printf '%s' "$*" | tr 'A-Z' 'a-z' | tr -cs 'a-z0-9' '-' | sed 's/^-*//;s/-*$//'; }
 main_of() { local c; c=$(git -C "$1" rev-parse --path-format=absolute --git-common-dir) && printf '%s' "${c%/.git}"; }
 cmd=$1; shift
@@ -38,9 +40,6 @@ new)
     if [ -f "$dir/.envrc" ] && command -v direnv >/dev/null; then
         if cmp -s "$main/.envrc" "$dir/.envrc"; then direnv allow "$dir"
         else echo "wt: .envrc differs from the main checkout; review it, then: direnv allow $dir" >&2; fi
-    fi
-    if [ -f "$dir/justfile" ] && (cd "$dir" && just --summary 2>/dev/null | tr ' ' '\n' | grep -qx setup); then
-        (cd "$dir" && just setup)
     fi
     s=$(tmux-sessionizer -d "$dir")
     if [ -t 1 ] && [ -n "$TMUX" ]; then tmux switch-client -t "=$s"; else echo "session: $s"; fi ;;
