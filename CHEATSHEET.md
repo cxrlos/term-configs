@@ -39,7 +39,8 @@ Elsewhere: sway keys `Super+?` · tmux keys `prefix ?` · nvim keys `<leader>` a
 - Main checkout = editor, shell. `wt new feat "Add X"` → `<repo>.wt/feat-add-x` session
   from fresh origin default (`--from upstream` / `--from origin/rel`); editor, agent, shell.
   Agent edits only; you commit. `wt rm` cleans up (refuses if dirty or unpushed)
-- Repo hook `.tmux-sessionizer` runs only after `tmux-sessionizer --allow <dir>`
+- `wt pr 123` → PR #123 in `<repo>.wt/pr-123`, untrusted: nvim runs no language servers/formatters, no hook
+- Repo hook `.tmux-sessionizer` runs only after `tmux-sessionizer --allow <dir>` (worktrees: if identical; template: examples/)
 
 ## Per project
 - `.envrc` + `direnv allow`: env vars load on cd and unload on leave
