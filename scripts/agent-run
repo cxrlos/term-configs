@@ -1,13 +1,28 @@
 #!/usr/bin/env bash
 # agent-run: start $AGENT with an allowlisted environment (no SSH agent, GitHub token, D-Bus,
-# tmux socket or anything else not listed). Hygiene only: the sandbox (later) is enforcement.
-# Keeps direnv's non-secret project env (PATH_add, venv, PORT). bash 3.2-safe.
+# tmux socket or anything else not listed). Keeps direnv's non-secret project env (PATH_add,
+# venv, PORT). bash 3.2-safe.
+# Linux: also inside bubblewrap, basics only. The whole filesystem stays readable and writable
+# (cross-repo work) and the network stays on; hidden are the control sockets in
+# $XDG_RUNTIME_DIR (nvim, Alacritty, D-Bus/keyring, ssh-agent, DMS, PipeWire) and tmux's, the
+# key material (~/.ssh, ~/.gnupg, keyrings), and other processes (own PID namespace). Side
+# effects: the agent can't sign commits (humans commit) or paste images from the clipboard.
 : "${AGENT:?AGENT not set}"
 run="${AGENT_WRAP-} $AGENT"   # captured before the scrub below unsets AGENT
+sandbox=
+if [ "$(uname)" = Linux ] && command -v bwrap >/dev/null; then
+    uid=$(id -u)
+    sandbox="bwrap --dev-bind / / --unshare-pid --proc /proc --die-with-parent"
+    for d in "${XDG_RUNTIME_DIR:-/run/user/$uid}" "/tmp/tmux-$uid" "$HOME/.ssh" "$HOME/.gnupg" \
+        "$HOME/.local/share/keyrings"; do
+        [ -d "$d" ] && sandbox="$sandbox --tmpfs $d"
+    done
+    sandbox="$sandbox --"
+fi
 eval "$(direnv export bash 2>/dev/null)"
 keep=" HOME PATH TERM COLORTERM LANG USER SHELL TMPDIR EDITOR VISUAL PORT VIRTUAL_ENV COMPOSE_PROJECT_NAME UV_CACHE_DIR ${AGENT_ENV_PASS-} "
 for v in $(compgen -e); do
     case "$keep" in *" $v "*) ;; *) unset "$v" ;; esac
 done
 export DO_NOT_TRACK=1 LANG="${LANG:-C.UTF-8}"
-exec $run "$@"
+exec $sandbox $run "$@"

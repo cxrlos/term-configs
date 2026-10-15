@@ -22,7 +22,7 @@ esac
 # ── Packages: Fedora list here, macOS in Brewfile (keep both in sync) ─────────────
 DNF_PKGS="zsh git alacritty neovim tmux fzf ripgrep fd-find zoxide atuin direnv oh-my-posh
   git-delta git-absorb gitleaks gh just jq zsh-autosuggestions zsh-syntax-highlighting wl-clipboard
-  curl fontconfig unzip tree-sitter-cli gcc nodejs22-npm ruff nodejs-bash-language-server ShellCheck shfmt"
+  curl fontconfig unzip tree-sitter-cli gcc nodejs22-npm ruff nodejs-bash-language-server ShellCheck shfmt bubblewrap"
 section packages
 if [ $os = fedora ]; then
     missing=
