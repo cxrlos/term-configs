@@ -5,10 +5,14 @@
 #   wt new [--from R] <branch>               existing or new branch
 #   New branches start from the freshly fetched default branch of origin, or of --from R:
 #   a remote (`--from upstream`) or a remote branch (`--from origin/release-2.1`).
+#   wt pr <number>                a PR's head (origin pull/N/head) as branch pr/N, marked untrusted:
+#                                 nvim starts no language servers or formatters there (they could
+#                                 run the PR's own tools); no direnv allow, no repo hook
 #   wt rm [dir]                   refuses if dirty or unpushed; deletes the branch if merged
 #   Setup (deps, venv, terraform init) runs from the repo's allowed .tmux-sessionizer hook
 #   (see examples/tmux-sessionizer), never from wt itself.
 slug() { printf '%s' "$*" | tr 'A-Z' 'a-z' | tr -cs 'a-z0-9' '-' | sed 's/^-*//;s/-*$//'; }
+untrusted=${XDG_STATE_HOME:-$HOME/.local/state}/wt/untrusted   # one checkout path per line; read by nvim
 main_of() { local c; c=$(git -C "$1" rev-parse --path-format=absolute --git-common-dir) && printf '%s' "${c%/.git}"; }
 cmd=$1; shift
 case $cmd in
@@ -43,13 +47,24 @@ new)
     fi
     s=$(tmux-sessionizer -d "$dir")
     if [ -t 1 ] && [ -n "$TMUX" ]; then tmux switch-client -t "=$s"; else echo "session: $s"; fi ;;
+pr)
+    [ $# -eq 1 ] || { echo "usage: wt pr <number>" >&2; exit 2; }
+    n=${1#\#}; main=$(main_of .) || exit 1
+    b=pr/$n; dir="$main.wt/pr-$n"
+    [ -e "$dir" ] && { echo "wt: $dir exists" >&2; exit 1; }
+    git -C "$main" fetch -q origin "+pull/$n/head:$b" || { echo "wt: can't fetch PR #$n from origin" >&2; exit 1; }
+    git -C "$main" worktree add -q "$dir" "$b" || exit 1
+    mkdir -p "${untrusted%/*}"; echo "$dir" >> "$untrusted"
+    echo "wt: PR #$n in $dir (untrusted: no language servers or formatters)"
+    s=$(tmux-sessionizer -d "$dir")
+    if [ -t 1 ] && [ -n "$TMUX" ]; then tmux switch-client -t "=$s"; else echo "session: $s"; fi ;;
 rm)
     dir=$(git -C "${1:-.}" rev-parse --show-toplevel) || exit 1
     main=$(main_of "$dir") || exit 1
     [ "$dir" != "$main" ] || { echo "wt: $dir is the main checkout" >&2; exit 1; }
     [ -z "$(git -C "$dir" status --porcelain)" ] || { echo "wt: $dir has uncommitted changes" >&2; exit 1; }
     b=$(git -C "$dir" branch --show-current)
-    if [ -n "$b" ]; then   # unpushed = commits on neither origin/<branch> nor origin's default branch
+    if [ -n "$b" ] && [ "${b#pr/}" = "$b" ]; then   # unpushed = on neither origin/<branch> nor the default branch (pr/N: someone else's)
         git -C "$dir" fetch -q origin 2>/dev/null
         ref=origin/$b; git -C "$dir" rev-parse -q --verify "$ref" >/dev/null || ref=origin/HEAD
         [ -z "$(git -C "$dir" log --oneline "$ref..HEAD")" ] || { echo "wt: $b has commits not on $ref (push first)" >&2; exit 1; }
@@ -57,7 +72,10 @@ rm)
     s=$(tmux list-sessions -F '#{session_path}|#S' 2>/dev/null | awk -F'|' -v d="$dir" '$1==d {print $2}')
     git -C "$main" worktree remove "$dir" || exit 1
     rmdir "$main.wt" 2>/dev/null   # last worktree gone: drop the empty <repo>.wt
-    if [ -n "$b" ]; then
+    if [ -f "$untrusted" ]; then grep -vxF "$dir" "$untrusted" > "$untrusted.tmp"; mv "$untrusted.tmp" "$untrusted"; fi
+    if [ -n "$b" ] && [ "${b#pr/}" != "$b" ]; then
+        git -C "$main" branch -D -q "$b"   # a PR checkout: nothing of ours to keep
+    elif [ -n "$b" ]; then
         if [ "$(cd "$main" && gh pr view "$b" --json state -q .state 2>/dev/null)" = MERGED ]; then
             git -C "$main" branch -D "$b"
         else
@@ -65,5 +83,5 @@ rm)
         fi
     fi
     [ -z "$s" ] || tmux kill-session -t "=$s" ;;   # last: may be our own session
-*) echo "usage: wt new [--from REMOTE|REMOTE/BRANCH] <type> <description> | <branch> ; wt rm [dir]" >&2; exit 2 ;;
+*) echo "usage: wt new [--from REMOTE|REMOTE/BRANCH] <type> <description> | <branch> ; wt pr <number> ; wt rm [dir]" >&2; exit 2 ;;
 esac

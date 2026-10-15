@@ -75,7 +75,10 @@ if ! tmux has-session -t "=$name" 2>/dev/null; then
     fi
     tmux new-window -d -t "=$name:" -n shell -c "$dir"
     hook=$dir/.tmux-sessionizer
-    if [ -x "$hook" ]; then
+    untrusted=${XDG_STATE_HOME:-$HOME/.local/state}/wt/untrusted   # wt pr checkouts: never run their hook
+    if [ -x "$hook" ] && grep -qxF "$dir" "$untrusted" 2>/dev/null; then
+        tmux display-message -t "=$name" "untrusted checkout (wt pr): hook not run"
+    elif [ -x "$hook" ]; then
         main=$(git -C "$dir" rev-parse --path-format=absolute --git-common-dir 2>/dev/null); main=${main%/.git}
         h=$(hash "$hook")
         if grep -qxF "$h $hook" "$allow_db" 2>/dev/null ||
