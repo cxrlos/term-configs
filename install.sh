@@ -22,7 +22,7 @@ esac
 # ── Packages: Fedora list here, macOS in Brewfile (keep both in sync) ─────────────
 DNF_PKGS="zsh git alacritty neovim tmux fzf ripgrep fd-find zoxide atuin direnv oh-my-posh
   git-delta git-absorb gitleaks gh just jq zsh-autosuggestions zsh-syntax-highlighting wl-clipboard
-  curl fontconfig"
+  curl fontconfig unzip tree-sitter-cli gcc nodejs22-npm ruff nodejs-bash-language-server ShellCheck shfmt"
 section packages
 if [ $os = fedora ]; then
     missing=
@@ -60,9 +60,60 @@ if [ $os = fedora ]; then
     fi
 fi
 
+# ── Language servers and formatters for nvim (macOS: Brewfile). Pinned; to upgrade, change version + hash ──
+# npm packages land in ~/.local (commands in ~/.local/bin); --ignore-scripts: nothing runs on install.
+# Pins are the newest release at least two weeks old when bumped (time for bad releases to be
+# pulled). typescript stays on 6.x: 7 has no tsserver, which ts_ls drives.
+NPM_PKGS="typescript-language-server@6.0.1 typescript@6.0.3 basedpyright@1.40.1
+  vscode-langservers-extracted@4.10.0 yaml-language-server@1.24.0 prettier@3.9.9"
+# Release binaries: name version sha256 url path-in-archive (- = the file itself).
+# GitHub: the release's sha256 digest. HashiCorp: SHA256SUMS, GPG-verified against their key.
+BINS="lua-language-server 3.19.1 e9235d2d72ef55bc41cf8c99cda2ed64777682024b4bb81f5dea425060c5cbb8 https://github.com/LuaLS/lua-language-server/releases/download/3.19.1/lua-language-server-3.19.1-linux-x64.tar.gz bin/lua-language-server
+stylua 2.5.2 bcb0d855e91f102f28a370e850f8566b3b44b79e6274d806ea5246837c0fd5ab https://github.com/JohnnyMorganz/StyLua/releases/download/v2.5.2/stylua-linux-x86_64.zip stylua
+marksman 2026-02-08 be5098e8213219269c47fc0d916a66fa31ce0602ec967475c722260aabf26087 https://github.com/artempyanykh/marksman/releases/download/2026-02-08/marksman-linux-x64 -
+terraform 1.16.4 dc94af0eef1147718ad7c8daea792ed199e3e0492eec180d0adafa2a65a879df https://releases.hashicorp.com/terraform/1.16.4/terraform_1.16.4_linux_amd64.zip terraform
+terraform-ls 0.39.0 7750edc736845fd8c04ff0fc6332423c12d8275b358668c8c17e8aedc43ef971 https://releases.hashicorp.com/terraform-ls/0.39.0/terraform-ls_0.39.0_linux_amd64.zip terraform-ls"
+if [ $os = fedora ]; then
+    section "language servers"
+    missing=
+    for p in $NPM_PKGS; do
+        v=$(jq -r .version "$HOME/.local/lib/node_modules/${p%@*}/package.json" 2>/dev/null || true)
+        [ "$v" = "${p##*@}" ] || missing="$missing $p"
+    done
+    npm=$(command -v npm || command -v npm-22 || true)
+    if [ -z "$missing" ]; then note "npm: pinned versions present"
+    elif [ -n "$check" ]; then todo "npm missing or wrong version:$missing"
+    elif [ -z "$npm" ]; then todo "npm not installed (nodejs22-npm); re-run after the dnf step"
+    else
+        "$npm" install --global --prefix "$HOME/.local" --ignore-scripts --no-fund --no-audit $missing >/dev/null
+        note "npm installed:$missing"
+    fi
+    while read -r name ver sha url path; do
+        dir=$HOME/.local/opt/$name-$ver link=$HOME/.local/bin/$name
+        if [ "$path" = - ]; then target=$dir/$name; else target=$dir/$path; fi
+        if [ "$(readlink "$link" 2>/dev/null)" = "$target" ] && [ -x "$target" ]; then note "$name $ver ok"; continue; fi
+        if [ -n "$check" ]; then todo "$name $ver missing"; continue; fi
+        tmp=$(mktemp -d) && file=$tmp/${url##*/}
+        curl -fsSL -o "$file" "$url"
+        echo "$sha  $file" | sha256sum -c --quiet - ||
+            { echo "$name download doesn't match the pinned SHA-256; not installing" >&2; exit 1; }
+        rm -rf "$dir" && mkdir -p "$dir" "$HOME/.local/bin"
+        case $file in
+            *.tar.gz) tar -xzf "$file" -C "$dir" ;;
+            *.zip) unzip -q "$file" -d "$dir" ;;
+            *) install -m 755 "$file" "$dir/$name" ;;
+        esac
+        rm -rf "$tmp"
+        ln -sfn "$target" "$link"
+        note "$name $ver installed"
+    done <<EOF
+$BINS
+EOF
+fi
+
 # ── Links: "repo path:home path". Real files in the way are backed up, never deleted ──
 LINKS="zsh/.zshenv:.zshenv zsh/.zprofile:.zprofile zsh/.zshrc:.zshrc
-  git/config:.config/git/config git/hooks:.config/git/hooks ssh/config:.ssh/config tmux/tmux.conf:.config/tmux/tmux.conf
+  git/config:.config/git/config git/ignore:.config/git/ignore git/hooks:.config/git/hooks ssh/config:.ssh/config tmux/tmux.conf:.config/tmux/tmux.conf
   oh-my-posh/prompt.toml:.config/oh-my-posh/prompt.toml atuin/config.toml:.config/atuin/config.toml
   direnv/direnv.toml:.config/direnv/direnv.toml scripts/tmux-sessionizer:.local/bin/tmux-sessionizer
   scripts/wt:.local/bin/wt scripts/agent-run:.local/bin/agent-run"
@@ -108,6 +159,7 @@ case $(basename "${SHELL-}") in
     zsh) ;;
     *) todo "login shell is ${SHELL-unset}; run: chsh -s \"\$(command -v zsh)\"" ;;
 esac
+rust-analyzer --version >/dev/null 2>&1 || note "Rust: rustup component add rust-analyzer (LSP for nvim)"
 [ -f "$HOME/.zshrc.local" ] || note "optional: ~/.zshrc.local (TS_ROOTS, work-only env)"
 [ -f "$HOME/.ssh/config.local" ] || note "optional: ~/.ssh/config.local (machine-only hosts)"
 
