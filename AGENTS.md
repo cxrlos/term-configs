@@ -13,6 +13,7 @@ Terminal setup shared by two machines: `thinkpunk` (Fedora 44, sway) and the mac
 | `ghostty/config` | `~/.config/ghostty/config` (macOS) | Terminal (macOS); mirrors Alacritty: Commit Mono, built-in `TokyoNight Night` theme |
 | `zsh/.zshenv`, `zsh/.zprofile`, `zsh/.zshrc` | `~/.zshenv`, `~/.zprofile`, `~/.zshrc` | Env for every zsh; login (re-applies `zsh/path.zsh` after macOS path_helper); interactive shell |
 | `git/config` | `~/.config/git/config` | Shared git settings; includes machine-local `config.local` (identity, signing key) |
+| `git/ignore` | `~/.config/git/ignore` | Global ignores: `.review.md` (nvim review notes for the agent) |
 | `git/hooks/` | `~/.config/git/hooks` (`core.hooksPath`) | Every repo: gitleaks pre-commit, signed-only pre-push; other hook names → `chain`, which runs the repo's own `.git/hooks/<name>` |
 | `ssh/config` | `~/.ssh/config` | Shared ssh client; includes machine-local `config.local` |
 | `tmux/tmux.conf` | `~/.config/tmux/tmux.conf` | Sessions, windows, copy mode; no plugins; every bind has `-N` |

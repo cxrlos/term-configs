@@ -22,7 +22,7 @@ esac
 # ── Packages: Fedora list here, macOS in Brewfile (keep both in sync) ─────────────
 DNF_PKGS="zsh git alacritty neovim tmux fzf ripgrep fd-find zoxide atuin direnv oh-my-posh
   git-delta git-absorb gitleaks gh just jq zsh-autosuggestions zsh-syntax-highlighting wl-clipboard
-  curl fontconfig unzip tree-sitter-cli gcc nodejs22-npm ruff nodejs-bash-language-server ShellCheck"
+  curl fontconfig unzip tree-sitter-cli gcc nodejs22-npm ruff nodejs-bash-language-server ShellCheck shfmt"
 section packages
 if [ $os = fedora ]; then
     missing=
@@ -60,16 +60,18 @@ if [ $os = fedora ]; then
     fi
 fi
 
-# ── Language servers for nvim (macOS: Brewfile). Pinned; to upgrade, change version + hash ──
+# ── Language servers and formatters for nvim (macOS: Brewfile). Pinned; to upgrade, change version + hash ──
 # npm packages land in ~/.local (commands in ~/.local/bin); --ignore-scripts: nothing runs on install.
-# typescript stays on 6.x: 7 has no tsserver, which ts_ls drives.
-NPM_PKGS="typescript-language-server@6.0.2 typescript@6.0.3 basedpyright@1.40.2
-  vscode-langservers-extracted@4.10.0 yaml-language-server@1.25.0"
+# Pins are the newest release at least two weeks old when bumped (time for bad releases to be
+# pulled). typescript stays on 6.x: 7 has no tsserver, which ts_ls drives.
+NPM_PKGS="typescript-language-server@6.0.1 typescript@6.0.3 basedpyright@1.40.1
+  vscode-langservers-extracted@4.10.0 yaml-language-server@1.24.0 prettier@3.9.9"
 # Release binaries: name version sha256 url path-in-archive (- = the file itself).
 # GitHub: the release's sha256 digest. HashiCorp: SHA256SUMS, GPG-verified against their key.
-BINS="lua-language-server 3.19.2 93ad326b10f6c00911dd8c450fa098332dbd8f9f45d1052f5636a2d54479b947 https://github.com/LuaLS/lua-language-server/releases/download/3.19.2/lua-language-server-3.19.2-linux-x64.tar.gz bin/lua-language-server
+BINS="lua-language-server 3.19.1 e9235d2d72ef55bc41cf8c99cda2ed64777682024b4bb81f5dea425060c5cbb8 https://github.com/LuaLS/lua-language-server/releases/download/3.19.1/lua-language-server-3.19.1-linux-x64.tar.gz bin/lua-language-server
+stylua 2.5.2 bcb0d855e91f102f28a370e850f8566b3b44b79e6274d806ea5246837c0fd5ab https://github.com/JohnnyMorganz/StyLua/releases/download/v2.5.2/stylua-linux-x86_64.zip stylua
 marksman 2026-02-08 be5098e8213219269c47fc0d916a66fa31ce0602ec967475c722260aabf26087 https://github.com/artempyanykh/marksman/releases/download/2026-02-08/marksman-linux-x64 -
-terraform 1.16.6 38034b38d03096399a7a1264a14561a8029b2b496fd1f169452656e53968f1b7 https://releases.hashicorp.com/terraform/1.16.6/terraform_1.16.6_linux_amd64.zip terraform
+terraform 1.16.4 dc94af0eef1147718ad7c8daea792ed199e3e0492eec180d0adafa2a65a879df https://releases.hashicorp.com/terraform/1.16.4/terraform_1.16.4_linux_amd64.zip terraform
 terraform-ls 0.39.0 7750edc736845fd8c04ff0fc6332423c12d8275b358668c8c17e8aedc43ef971 https://releases.hashicorp.com/terraform-ls/0.39.0/terraform-ls_0.39.0_linux_amd64.zip terraform-ls"
 if [ $os = fedora ]; then
     section "language servers"
@@ -111,7 +113,7 @@ fi
 
 # ── Links: "repo path:home path". Real files in the way are backed up, never deleted ──
 LINKS="zsh/.zshenv:.zshenv zsh/.zprofile:.zprofile zsh/.zshrc:.zshrc
-  git/config:.config/git/config git/hooks:.config/git/hooks ssh/config:.ssh/config tmux/tmux.conf:.config/tmux/tmux.conf
+  git/config:.config/git/config git/ignore:.config/git/ignore git/hooks:.config/git/hooks ssh/config:.ssh/config tmux/tmux.conf:.config/tmux/tmux.conf
   oh-my-posh/prompt.toml:.config/oh-my-posh/prompt.toml atuin/config.toml:.config/atuin/config.toml
   direnv/direnv.toml:.config/direnv/direnv.toml scripts/tmux-sessionizer:.local/bin/tmux-sessionizer
   scripts/wt:.local/bin/wt scripts/agent-run:.local/bin/agent-run"
