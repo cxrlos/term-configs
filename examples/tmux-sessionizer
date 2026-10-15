@@ -1,0 +1,21 @@
+#!/bin/sh
+# Example .tmux-sessionizer hook: copy to a repo's root, chmod +x, commit it, then allow it once in
+# the main checkout: tmux-sessionizer --allow <repo>. It runs when the project's tmux session is
+# created; worktrees (wt new) run it too while it's identical to the allowed copy. Any edit needs
+# a new --allow. Env: TS_SESSION (session name), TS_DIR (checkout path); cwd is the checkout.
+
+# New worktree: install what the language servers need, in its own window, so the editor opens
+# at once. Keep the commands in the repo's justfile (`just setup`) or inline them here.
+if [ -f .git ]; then   # .git is a file in linked worktrees
+    tmux new-window -d -t "=$TS_SESSION:" -n setup \
+        'just setup && echo "setup done" || echo "setup FAILED"; exec "$SHELL"'
+fi
+
+# Per-project extras, e.g. a dev server window:
+# tmux new-window -d -t "=$TS_SESSION:" -n server 'just dev; exec "$SHELL"'
+
+# Example justfile recipe (pick what the repo uses):
+#   setup:
+#       pnpm install --frozen-lockfile    # or npm ci
+#       uv sync                           # Python: creates .venv; .envrc can `source .venv/bin/activate`
+#       terraform -chdir=infra init -backend=false

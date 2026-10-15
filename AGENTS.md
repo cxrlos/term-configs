@@ -18,7 +18,8 @@ Terminal setup shared by two machines: `thinkpunk` (Fedora 44, sway) and the mac
 | `ssh/config` | `~/.ssh/config` | Shared ssh client; includes machine-local `config.local` |
 | `tmux/tmux.conf` | `~/.config/tmux/tmux.conf` | Sessions, windows, copy mode; no plugins; every bind has `-N` |
 | `scripts/tmux-sessionizer` | `~/.local/bin/tmux-sessionizer` (`tm`, prefix f) | Repos under `$TS_ROOTS`, browsed org → repo; session named by path (`nu/api`). Main checkout: editor, shell. Linked worktree: editor, agent, shell. Repo `.tmux-sessionizer` hook runs only after `--allow` (hash-pinned) |
-| `scripts/wt` | `~/.local/bin/wt` | Worktree per task at `<repo>.wt/<branch>`; `wt new`, `wt rm` |
+| `scripts/wt` | `~/.local/bin/wt` | Worktree per task at `<repo>.wt/<branch>`; `wt new`, `wt rm`. Setup runs from the repo's allowed hook, not from wt |
+| `examples/tmux-sessionizer` | — | Template repo hook: `setup` window in new worktrees (`just setup`), optional extras |
 | `scripts/agent-run` | `~/.local/bin/agent-run` | Starts `$AGENT` with an allowlisted env (no ssh-agent, tokens, D-Bus, tmux) |
 | `oh-my-posh/prompt.toml` | `~/.config/oh-my-posh/prompt.toml` | Prompt (Fedora/brew `oh-my-posh`): path, git, slow-command time, ❯; upgrade notices off |
 | `atuin/config.toml` | `~/.config/atuin/config.toml` | History search UI (Ctrl+R): AI off, secret filter; non-defaults only |
