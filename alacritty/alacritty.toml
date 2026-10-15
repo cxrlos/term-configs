@@ -12,7 +12,14 @@ normal = { family = "CommitMono Nerd Font Mono" }
 size = 10.0
 
 [keyboard]
-bindings = [{ key = "Return", mods = "Shift", chars = "\u001B\r" }] # newline in agent TUIs
+bindings = [
+  { key = "Return", mods = "Shift", chars = "\u001B\r" }, # newline in agent TUIs
+  # Ctrl+Shift+h/j/k/l as CSI u, distinct from Ctrl+h/j/k/l: resize panes/splits (tmux, nvim)
+  { key = "H", mods = "Control|Shift", chars = "\u001B[104;6u" },
+  { key = "J", mods = "Control|Shift", chars = "\u001B[106;6u" },
+  { key = "K", mods = "Control|Shift", chars = "\u001B[107;6u" },
+  { key = "L", mods = "Control|Shift", chars = "\u001B[108;6u" },
+]
 
 # Mouse: the wheel scrolls, clicks do nothing (same in tmux and nvim). Selection can't be
 # disabled, only cancelled the moment it starts; copy with tmux copy mode or vi mode.

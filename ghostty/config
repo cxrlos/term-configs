@@ -7,6 +7,11 @@ window-padding-x = 6
 window-padding-y = 6
 macos-option-as-alt = true
 keybind = shift+enter=text:\x1b\r
+# Ctrl+Shift+h/j/k/l as CSI u (as in alacritty.toml): resize panes/splits
+keybind = ctrl+shift+h=csi:104;6u
+keybind = ctrl+shift+j=csi:106;6u
+keybind = ctrl+shift+k=csi:107;6u
+keybind = ctrl+shift+l=csi:108;6u
 
 # Mouse: the wheel scrolls, clicks do as little as Ghostty allows (tmux takes the mouse and
 # ignores clicks). Shift+drag selection and middle-click paste can't be disabled.
