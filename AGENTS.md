@@ -56,37 +56,3 @@ Machine-only shell config goes in `~/.zshrc.local` (never committed).
   live ONLY in `CHEATSHEET.md`. Whenever such a command, alias or keybind is created, updated
   or deleted, update `CHEATSHEET.md` in the same commit. Never copy sway, tmux or nvim binds
   into it; keep it to about 50 lines.
-
-## TODO for the next session on the Mac (then delete this section)
-The work-only lines below used to live in the shared zsh files (main @76fda80,
-`zsh/.zshrc` lines 41-60 and `zsh/aliases.zsh` lines 48-52). Move what is still needed into the
-Mac's `~/.zshrc.local`, drop the `fmt-itaipu` alias (Metals/Scala setup is retired), then
-delete this section.
-
-```zsh
-
-# Source nucli environment (managed by Jamf)
-[ -f "${HOME}/.nurc" ] && source "${HOME}/.nurc"
-
-# >>> Nubank SSL Inspection CA — managed by: nu zscaler setup env >>>
-# mode: baseline
-# Commented out on this machine — no Zscaler cert bundle present here, and the
-# missing file was breaking AWS CLI/curl/npm SSL validation. Re-enable (or let
-# `nu zscaler setup env` regenerate this block) on a machine that has it.
-# NUBANK_CA_CERT="$HOME/dev/nu/.nu/certificates/zscaler/ca-bundle-with-zscaler.pem"
-
-
-# BASELINE — Essential SSL/TLS trust
-# export SSL_CERT_FILE="$NUBANK_CA_CERT"
-export SSL_CERT_DIR="/etc/ssl/certs"
-# export REQUESTS_CA_BUNDLE="$NUBANK_CA_CERT"              # Python requests, urllib3
-# export CURL_CA_BUNDLE="$NUBANK_CA_CERT"                  # curl, libcurl
-# export AWS_CA_BUNDLE="$NUBANK_CA_CERT"                   # AWS CLI, boto3, AWS SDKs
-# export NODE_EXTRA_CA_CERTS="$NUBANK_CA_CERT"             # Node.js, Bun, Claude Code, Cursor, VS Code, Copilot
-# <<< Nubank SSL Inspection CA <<<
-alias claude-cloud='unset ANTHROPIC_BASE_URL; unset ANTHROPIC_AUTH_TOKEN; unset ANTHROPIC_DEFAULT_HAIKU_MODEL; unset ANTHROPIC_DEFAULT_SONNET_MODEL; unset ANTHROPIC_DEFAULT_OPUS_MODEL; unset ANTHROPIC_MODEL; claude'
-
-# scalafmt for itaipu files while inside a linked git worktree (sbt-git/JGit can't read worktrees).
-# Auto-resolves the main checkout; run from anywhere in the worktree. See the script header for usage.
-alias fmt-itaipu='/Users/carlos.garcia/Documents/projects/2025-11-risk-adjusted-margin-reorg/scripts/fmt-itaipu-worktree.zsh'
-```
