@@ -1,2 +1,5 @@
 # Global git ignore (core.excludesFile default). Machine-wide, for files tools create in any repo.
 .review.md
+.DS_Store
+._*
+**/.claude/settings.local.json

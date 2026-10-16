@@ -12,9 +12,9 @@ Terminal setup shared by two machines: `thinkpunk` (Fedora 44, sway) and the mac
 | `alacritty/` | `~/.config/alacritty` | Terminal (Fedora); Tokyo Night theme in `tokyonight.toml` (folke/tokyonight.nvim extras) |
 | `ghostty/config` | `~/.config/ghostty/config` (macOS) | Terminal (macOS); mirrors Alacritty: Commit Mono, built-in `TokyoNight Night` theme |
 | `zsh/.zshenv`, `zsh/.zprofile`, `zsh/.zshrc` | `~/.zshenv`, `~/.zprofile`, `~/.zshrc` | Env for every zsh; login (re-applies `zsh/path.zsh` after macOS path_helper); interactive shell |
-| `git/config` | `~/.config/git/config` | Shared git settings; includes machine-local `config.local` (identity, signing key) |
-| `git/ignore` | `~/.config/git/ignore` | Global ignores: `.review.md` (nvim review notes for the agent) |
-| `git/hooks/` | `~/.config/git/hooks` (`core.hooksPath`) | Every repo: gitleaks pre-commit, signed-only pre-push; other hook names → `chain`, which runs the repo's own `.git/hooks/<name>` |
+| `git/config` | `~/.config/git/config` | Shared git settings; includes machine-local `config.local` (identity, signing key) last, so it overrides anything shared |
+| `git/ignore` | `~/.config/git/ignore` | Global ignores: `.review.md` (nvim review notes for the agent), macOS `.DS_Store`/`._*`, local agent settings (`.claude/settings.local.json`) |
+| `git/hooks/` | `~/.config/git/hooks` (`core.hooksPath`) | Every repo: gitleaks pre-commit, signed-only pre-push; other hook names → `chain`, which runs the repo's own `.git/hooks/<name>`. A managed `core.hooksPath` in `~/.gitconfig` (work DLP) wins over these until git ≥ 2.54 config hooks; never override it |
 | `ssh/config` | `~/.ssh/config` | Shared ssh client; includes machine-local `config.local` |
 | `tmux/tmux.conf` | `~/.config/tmux/tmux.conf` | Sessions, windows, copy mode; no plugins; every bind has `-N` |
 | `scripts/tmux-sessionizer` | `~/.local/bin/tmux-sessionizer` (`tm`, prefix f) | Repos under `$TS_ROOTS`, browsed org → repo; session named by path (`nu/api`). Main checkout: editor, shell. Linked worktree: editor, agent, shell. Repo `.tmux-sessionizer` hook runs only after `--allow` (hash-pinned) |
