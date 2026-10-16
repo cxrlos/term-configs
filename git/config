@@ -2,8 +2,6 @@
 # machine-local in ~/.config/git/config.local: personal by default; on the Mac it also has
 # [includeIf "hasconfig:remote.*.url:git@github.com:<work-org>/**"] path = config.work
 # (work email + key), so identity follows the repo's remote, never its directory.
-[include]
-    path = config.local
 [init]
     defaultBranch = main
 [core]
@@ -69,3 +67,7 @@
     ui = auto
 [help]
     autocorrect = prompt
+# Last: later values win, so config.local (and its config.work) can override anything above,
+# e.g. gpg.format = openpgp for a work GPG key.
+[include]
+    path = config.local
